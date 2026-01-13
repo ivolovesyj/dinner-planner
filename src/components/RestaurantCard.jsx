@@ -172,7 +172,7 @@ const RestaurantCard = ({ data, rank, userId, onVote }) => {
                     <div className="card-header">
                         <h3 className="card-title">{data.name}</h3>
                         <div className="card-meta-row">
-                            <span className="card-price">{data.priceRange}</span>
+                            {/* <span className="card-price">{data.priceRange}</span> Removed per user request */}
                             {data.author && <span className="card-author">추천: {data.author}</span>}
                         </div>
                     </div>
