@@ -22,8 +22,8 @@ const Footer = () => {
     return (
         <>
             <footer style={{
-                padding: '20px', textAlign: 'center', background: '#f9f9f9',
-                borderTop: '1px solid #eee', marginTop: '80px', color: '#888'
+                padding: '12px 20px', textAlign: 'center', background: '#f9f9f9',
+                borderTop: '1px solid #eee', marginTop: '120px', color: '#888'
             }}>
                 <div style={{ marginBottom: '8px' }}>
                     <span onClick={() => setLegalModal('terms')} style={linkStyle}>이용약관</span>
