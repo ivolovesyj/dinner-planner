@@ -245,7 +245,6 @@ function App() {
   // --- Render: Landing Page ---
   if (!roomId) {
     return (
-    return (
       <div className="landing-container">
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
           <h1 className="landing-title">뭐먹을래?</h1>
@@ -343,9 +342,8 @@ function App() {
           </div>
         )}
       </main>
-      {/* Nickname Modal - Force input if no nickname */}
-      {!nickname && <NicknameModal onSave={handleSaveNickname} />}
 
+      {/* Nickname Modal - Force input if no nickname */}
       {!nickname && <NicknameModal onSave={handleSaveNickname} />}
       <Footer />
     </div>
