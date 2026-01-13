@@ -208,14 +208,7 @@ function App() {
     }
   }, [roomId]);
 
-  // Auto-refresh for real-time sync (Polling)
-  useEffect(() => {
-    if (!roomId) return;
-    const interval = setInterval(() => {
-      fetchRoomData(roomId, false); // Silent update every 3s
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [roomId]);
+
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href);
