@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
+import axios from 'axios';
 import './RestaurantCard.css';
 import { ThumbsUp, ThumbsDown, ChevronDown, ChevronUp, MapPin, Trash2 } from 'lucide-react';
 
@@ -94,9 +95,28 @@ const RestaurantCard = ({ data, rank, userId, onVote, onDelete }) => {
 
     // --- Sponsored Card Render ---
     if (data.isSponsored) {
+        const handleAdClick = (e) => {
+            // Track Click
+            try {
+                // Determine API BASE using the same logic as App.jsx or relative path
+                // For safety/simplicity, using full path if needed, or just relative /api
+                // We'll use relative /api assuming proxy/CORS setup or hardcode for now
+                const API_BASE = 'https://gooddinner.fly.dev/api';
+                axios.post(`${API_BASE}/ads/${data.id}/click`);
+            } catch (err) {
+                // Ignore tracking errors
+            }
+        };
+
         return (
             <div className="card sponsored-card">
-                <a href={data.url} target="_blank" rel="noopener noreferrer" className="card-link-wrapper">
+                <a
+                    href={data.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="card-link-wrapper"
+                    onClick={handleAdClick}
+                >
                     <div className="card-image-container">
                         <div className="sponsored-badge">추천 (광고)</div>
                         <img src={data.image} alt={data.name} className="card-image" />

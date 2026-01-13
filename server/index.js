@@ -121,8 +121,8 @@ const readRoom = async (roomId) => {
                 // Inject without mutating DB (since we used .lean())
                 room.restaurants.splice(injectionIndex, 0, adData);
 
-                // (Optional) Fire async impression tracker here if needed
-                // AdCampaign.updateOne({ _id: ad._id }, { $inc: { impressions: 1 } }).exec();
+                // Track Impression (Async - fire and forget)
+                AdCampaign.updateOne({ _id: ad._id }, { $inc: { impressions: 1 } }).exec();
             }
         }
 
@@ -630,6 +630,20 @@ app.post('/api/parse', async (req, res) => {
     } catch (error) {
         console.error('Error parsing URL:', error.message);
         res.status(500).json({ error: 'Failed to parse URL', details: error.message });
+    }
+});
+
+// 6. Ad Click Tracking
+app.post('/api/ads/:adId/click', async (req, res) => {
+    const { adId } = req.params;
+    try {
+        // adId format: "ad_OBJECTID"
+        const realId = adId.replace('ad_', '');
+        await AdCampaign.updateOne({ _id: realId }, { $inc: { clicks: 1 } });
+        res.status(200).json({ status: 'ok' });
+    } catch (error) {
+        console.error('Ad click ref failed:', error);
+        res.status(500).json({ error: 'Track failed' });
     }
 });
 
