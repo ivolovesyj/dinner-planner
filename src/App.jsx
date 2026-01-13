@@ -15,8 +15,8 @@ function App() {
   const [userId, setUserId] = useState(null);
   const pollIntervalRef = useRef(null);
 
-  // API Base URL - use environment variable in production, fallback to Fly.io
-  const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? 'https://gooddinner.fly.dev' : '/api');
+  // API Base URL - FORCE Fly.io for now to bypass stale Vercel env var
+  const API_BASE = 'https://gooddinner.fly.dev';
 
   // Generate or retrieve userId
   useEffect(() => {
