@@ -10,18 +10,17 @@ import * as cheerio from 'cheerio';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Use env var (from fly.toml) or fallback to local
-const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data', 'rooms');
+import 'dotenv/config'; // Load env vars
+import mongoose from 'mongoose';
+import Room from './models/Room.js';
 
-console.log('Using DATA_DIR:', DATA_DIR);
+// Connect to MongoDB
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/dinner_planner';
+// Note: User needs to set MONGO_URI in production (Fly.io secrets)
 
-// Ensure data directory exists
-try {
-    await fs.mkdir(DATA_DIR, { recursive: true });
-    console.log('Data directory verified.');
-} catch (err) {
-    console.error('Failed to create data directory:', err);
-}
+mongoose.connect(MONGO_URI)
+    .then(() => console.log('✅ Connected to MongoDB'))
+    .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -44,25 +43,29 @@ app.get('/', (req, res) => {
     res.json({ status: 'ok', service: 'dinner-planner-api' });
 });
 
-// Helper: Read Room Data
+// Helper: Read Room Data (MongoDB)
 const readRoom = async (roomId) => {
     try {
-        const filePath = path.join(DATA_DIR, `${roomId}.json`);
-        console.log(`[DEBUG] Reading room: ${filePath}`);
-        const data = await fs.readFile(filePath, 'utf-8');
-        return JSON.parse(data);
+        const room = await Room.findOne({ roomId }).lean();
+        return room;
     } catch (error) {
-        console.warn(`[DEBUG] Read failed for ${roomId}: ${error.code} (Path: ${path.join(DATA_DIR, `${roomId}.json`)})`);
-        if (error.code === 'ENOENT') return null; // Room not found
-        throw error;
+        console.error(`Read failed for ${roomId}:`, error);
+        return null;
     }
 };
 
-// Helper: Write Room Data
+// Helper: Write Room Data (MongoDB)
 const writeRoom = async (roomId, data) => {
-    const filePath = path.join(DATA_DIR, `${roomId}.json`);
-    console.log(`[DEBUG] Writing room: ${filePath}`);
-    await fs.writeFile(filePath, JSON.stringify(data, null, 2));
+    try {
+        // Update or insert. 
+        // Note: 'data' contains the full object including restaurants. 
+        // In a real optimized DB app, we would push/pull distinct items, 
+        // but to maintain compatibility with the previous "overwrite" logic:
+        await Room.findOneAndUpdate({ roomId }, data, { upsert: true, new: true });
+    } catch (error) {
+        console.error(`Write failed for ${roomId}:`, error);
+        throw error;
+    }
 };
 
 // --- Reusable Parse Logic ---

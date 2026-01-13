@@ -5,6 +5,7 @@ import { Search, Loader2, Share, Users, RefreshCw } from 'lucide-react';
 import RestaurantCard from './components/RestaurantCard';
 import NicknameModal from './components/NicknameModal'; // Import Modal
 import { crawlNaverPlace } from './utils/mockCrawler';
+import { logEvent, logPageView } from './utils/ga4'; // GA4 Imports
 
 function App() {
   const [restaurants, setRestaurants] = useState([]);
@@ -57,6 +58,11 @@ function App() {
     return () => stopPolling();
   }, []);
 
+  // GA4 Page View Tracking
+  useEffect(() => {
+    logPageView();
+  }, [window.location.pathname, window.location.search]);
+
   const startPolling = (id) => {
     if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
     pollIntervalRef.current = setInterval(() => {
@@ -97,6 +103,10 @@ function App() {
 
       setRoomId(newRoomId);
       setRestaurants([]);
+
+      // Track Create Room
+      logEvent('Room', 'Create', newRoomId);
+
       startPolling(newRoomId);
     } catch (err) {
       alert("모임 생성 실패: " + err.message);
@@ -133,6 +143,10 @@ function App() {
         author: nickname, // Pass nickname
         userId // Pass userId for ownership
       });
+
+      // Track Add Restaurant
+      logEvent('Participation', 'Add Restaurant', url);
+
       fetchRoomData(roomId, true);
       setInputVal("");
     } catch (error) {
@@ -146,6 +160,7 @@ function App() {
     const url = window.location.href;
     navigator.clipboard.writeText(url).then(() => {
       alert("링크가 복사되었습니다! 친구들에게 공유하세요 🔗");
+      logEvent('Participation', 'Share', 'Copy Link');
     });
   };
 
@@ -182,6 +197,10 @@ function App() {
         reason, // Dislike reason
         nickname // Pass nickname for identity tracking
       });
+
+      // Track Vote
+      logEvent('Participation', 'Vote', type);
+
       fetchRoomData(roomId, true); // Immediate refresh
     } catch (err) {
       console.error("Vote failed", err);
