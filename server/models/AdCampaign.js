@@ -8,6 +8,9 @@ const AdCampaignSchema = new mongoose.Schema({
     linkUrl: { type: String, required: true },     // Destination URL
     sponsorName: { type: String, required: true }, // "Burger King"
 
+    // Ownership
+    ownerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Advertiser' },
+
     // Targeting
     targetStations: [String], // e.g., ["강남", "홍대", "신림"] - Station names (normalized)
     radius: { type: Number, default: 1000 },      // in meters (future use)

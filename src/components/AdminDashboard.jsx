@@ -6,13 +6,21 @@ const API_BASE = 'https://gooddinner.fly.dev/api';
 const AdminDashboard = () => {
     const [campaigns, setCampaigns] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [adminName, setAdminName] = useState('');
+    const [role, setRole] = useState('');
 
     useEffect(() => {
         const token = localStorage.getItem('adminToken');
+        const name = localStorage.getItem('adminName');
+        const userRole = localStorage.getItem('adminRole');
+
         if (!token) {
             window.location.href = '/admin/login';
             return;
         }
+
+        setAdminName(name || 'Partner');
+        setRole(userRole || 'advertiser');
 
         const fetchStats = async () => {
             try {
@@ -35,6 +43,8 @@ const AdminDashboard = () => {
 
     const logout = () => {
         localStorage.removeItem('adminToken');
+        localStorage.removeItem('adminName');
+        localStorage.removeItem('adminRole');
         window.location.href = '/admin/login';
     };
 
@@ -42,8 +52,13 @@ const AdminDashboard = () => {
 
     return (
         <div style={{ padding: '40px', maxWidth: '1000px', margin: '0 auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '40px' }}>
-                <h1>📊 Advertising Dashboard</h1>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
+                <div>
+                    <h1 style={{ marginBottom: '5px' }}>📊 Advertising Dashboard</h1>
+                    <span style={{ color: '#666', fontSize: '14px' }}>
+                        Welcome, <strong>{adminName}</strong> ({role === 'admin' ? 'Super Admin' : 'Partner'})
+                    </span>
+                </div>
                 <button onClick={logout} style={{
                     padding: '8px 16px', borderRadius: '8px', border: '1px solid #ddd',
                     background: 'white', cursor: 'pointer'

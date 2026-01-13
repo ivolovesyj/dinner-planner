@@ -14,10 +14,11 @@ import 'dotenv/config'; // Load env vars
 import mongoose from 'mongoose';
 import Room from './models/Room.js';
 import AdCampaign from './models/AdCampaign.js';
+import Advertiser from './models/Advertiser.js'; // New Model
 import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key-1234';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin1234'; // Set this in Fly.io secrets!
+// Removed ADMIN_PASSWORD constant - moved to DB
 
 // Auth Middleware
 const authMiddleware = (req, res, next) => {
@@ -43,7 +44,25 @@ mongoose.connect(MONGO_URI, {
     serverSelectionTimeoutMS: 5000, // Fail fast after 5s
     socketTimeoutMS: 45000,
 })
-    .then(() => console.log('✅ MongoDB Connected Successfully'))
+    .then(async () => {
+        console.log('✅ MongoDB Connected Successfully');
+        // --- Seed Logic: Ensure Super Admin Exists ---
+        try {
+            const adminExists = await Advertiser.findOne({ username: 'admin' });
+            if (!adminExists) {
+                console.log('⚠️ No admin found. Creating default Super Admin...');
+                await Advertiser.create({
+                    username: 'admin',
+                    password: process.env.ADMIN_PASSWORD || 'admin1234', // Using prev env var as initial pass
+                    companyName: 'Platform Super Admin',
+                    role: 'admin'
+                });
+                console.log('✅ Super Admin created: username=admin');
+            }
+        } catch (err) {
+            console.error('Seed Admin Setup Failed:', err);
+        }
+    })
     .catch(err => console.error('❌ MongoDB Initial Connection Error:', err));
 
 mongoose.connection.on('error', err => {
@@ -54,7 +73,7 @@ mongoose.connection.on('disconnected', () => {
 });
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 
 // CORS configuration - allow Vercel frontend
 app.use(cors({
@@ -667,13 +686,34 @@ app.post('/api/ads/:adId/click', async (req, res) => {
 // --- ADMIN APIs ---
 
 // 7. Admin Login
-app.post('/api/admin/login', (req, res) => {
-    const { password } = req.body;
-    if (password === ADMIN_PASSWORD) {
-        const token = jwt.sign({ role: 'admin' }, JWT_SECRET, { expiresIn: '24h' });
-        res.json({ token });
-    } else {
-        res.status(401).json({ error: 'Invalid password' });
+// 7. Login (Multi-User)
+app.post('/api/admin/login', async (req, res) => {
+    const { username, password } = req.body;
+
+    try {
+        // Find user by username (or default to 'admin' if only password provided - Legacy Support)
+        const targetUser = username
+            ? await Advertiser.findOne({ username })
+            : await Advertiser.findOne({ username: 'admin' });
+
+        if (!targetUser) {
+            return res.status(401).json({ error: 'User not found' });
+        }
+
+        if (targetUser.password === password) { // Plaintext for MVP. Hash later.
+            const token = jwt.sign({
+                id: targetUser._id,
+                username: targetUser.username,
+                role: targetUser.role
+            }, JWT_SECRET, { expiresIn: '24h' });
+
+            res.json({ token, role: targetUser.role, name: targetUser.companyName });
+        } else {
+            res.status(401).json({ error: 'Invalid password' });
+        }
+    } catch (err) {
+        console.error('Login Error:', err);
+        res.status(500).json({ error: 'Login failed' });
     }
 });
 
