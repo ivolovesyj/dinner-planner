@@ -19,9 +19,13 @@ try {
 }
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
-app.use(cors());
+// CORS configuration - allow Vercel frontend
+app.use(cors({
+    origin: ['https://dinner-planner-nine.vercel.app', 'http://localhost:5173'],
+    credentials: true
+}));
 app.use(express.json());
 
 // Helper: Read Room Data
