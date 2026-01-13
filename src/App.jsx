@@ -15,8 +15,8 @@ function App() {
   const [userId, setUserId] = useState(null);
   const pollIntervalRef = useRef(null);
 
-  // API Base URL
-  const API_BASE = '/api';
+  // API Base URL - use environment variable in production, fallback to /api for local dev
+  const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
   // Generate or retrieve userId
   useEffect(() => {
