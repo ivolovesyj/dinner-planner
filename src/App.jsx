@@ -15,8 +15,8 @@ function App() {
   const [userId, setUserId] = useState(null);
   const pollIntervalRef = useRef(null);
 
-  // API Base URL - FORCE Fly.io for now to bypass stale Vercel env var
-  const API_BASE = 'https://gooddinner.fly.dev';
+  // API Base URL - FORCE Fly.io/api for now to bypass stale Vercel env var
+  const API_BASE = 'https://gooddinner.fly.dev/api';
 
   // Generate or retrieve userId
   useEffect(() => {
