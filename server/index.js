@@ -749,6 +749,19 @@ app.get('/api/admin/campaigns', authMiddleware, async (req, res) => {
     }
 });
 
+// 9. Get Feedback (Admin Only)
+app.get('/api/admin/feedbacks', authMiddleware, async (req, res) => {
+    try {
+        if (req.user.role !== 'admin') {
+            return res.status(403).json({ error: 'Admin only' });
+        }
+        const feedbacks = await Feedback.find().sort({ createdAt: -1 }).lean();
+        res.json(feedbacks);
+    } catch (error) {
+        res.status(500).json({ error: 'Fetch failed' });
+    }
+});
+
 // Start server
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Proxy server running on http://localhost:${PORT}`);
