@@ -51,8 +51,16 @@ const writeRoom = async (roomId, data) => {
     await fs.writeFile(filePath, JSON.stringify(data, null, 2));
 };
 
+const urlCache = new Map(); // Simple in-memory cache
+
 // --- Reusable Parse Logic ---
 const parseUrl = async (url) => {
+    // Check cache first
+    if (urlCache.has(url)) {
+        console.log(`Cache hit for URL: ${url}`);
+        return urlCache.get(url);
+    }
+
     console.log(`Step 1: Fetching initial URL: ${url}`);
 
     // Step 1: Resolve redirects
@@ -60,7 +68,7 @@ const parseUrl = async (url) => {
         headers: {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
         },
-        timeout: 3000
+        timeout: 10000 // Increased to 10s
     });
 
     let finalUrl = initialResponse.request.res.responseUrl;
@@ -80,7 +88,7 @@ const parseUrl = async (url) => {
         try {
             const kakaoResp = await axios.get(finalUrl, {
                 headers: { 'User-Agent': 'facebookexternalhit/1.1;line-poker/1.0' },
-                timeout: 3000
+                timeout: 10000 // Increased to 10s
             });
             const $k = cheerio.load(kakaoResp.data);
             const kakaoTitle = $k('meta[property="og:title"]').attr('content') || $k('title').text() || '';
@@ -96,7 +104,7 @@ const parseUrl = async (url) => {
                         headers: {
                             'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1'
                         },
-                        timeout: 3000
+                        timeout: 10000 // Increased to 10s
                     });
                     const idMatch = searchResp.data.match(/m\.place\.naver\.com\/(?:restaurant|place)\/(\d+)/);
                     return idMatch ? idMatch[1] : null;
@@ -140,7 +148,7 @@ const parseUrl = async (url) => {
                     'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1',
                     'Referer': 'https://m.place.naver.com/'
                 },
-                timeout: 3000
+                timeout: 10000 // Increased to 10s
             });
 
             const $ = cheerio.load(mobileResponse.data);
@@ -348,6 +356,11 @@ const parseUrl = async (url) => {
             tags: ["Scraped"],
             likes: 0, dislikes: 0, dislikeReasons: []
         };
+    }
+
+    // Cache the result if valid
+    if (data) {
+        urlCache.set(url, data);
     }
 
     return data;
