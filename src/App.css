@@ -1,0 +1,328 @@
+.app-container {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+  background-color: var(--ios-bg);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+  /* Subtle shadow on desktop */
+}
+
+.app-header {
+  padding: calc(var(--safe-area-top) + 16px) 16px 16px;
+  background-color: rgba(242, 242, 247, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.app-header h1 {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+/* Header Input Styles */
+.header-input-container {
+  margin-top: 12px;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.header-input {
+  width: 100%;
+  padding: 14px 20px;
+  border-radius: 24px;
+  /* More pill-shaped */
+  border: none;
+  background-color: var(--ios-blue);
+  /* Button color by default */
+  font-size: 16px;
+  font-weight: 600;
+  color: #FFF;
+  /* White text for button look */
+  outline: none;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+  /* Blue shadow */
+  text-align: center;
+  /* Center placeholder/text */
+  cursor: pointer;
+}
+
+.header-input::placeholder {
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.header-input:focus,
+.header-input:not(:placeholder-shown) {
+  background-color: #FFF;
+  color: #000;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  text-align: left;
+  padding-left: 44px;
+  /* Space for search icon */
+  padding-right: 60px;
+  /* Space for add button */
+  cursor: text;
+}
+
+/* Hide search icon when it looks like a button */
+.header-input:placeholder-shown:not(:focus)+.search-icon {
+  opacity: 0;
+}
+
+/* Search icon behavior */
+.search-icon {
+  position: absolute;
+  left: 16px;
+  color: var(--ios-gray-text);
+  pointer-events: none;
+  z-index: 10;
+  transition: opacity 0.2s;
+}
+
+.header-submit-btn {
+  position: absolute;
+  right: 8px;
+  background-color: var(--ios-blue);
+  color: white;
+  border: none;
+  border-radius: 16px;
+  padding: 6px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  opacity: 0;
+  transform: scale(0.9);
+  transition: all 0.2s;
+  pointer-events: none;
+}
+
+.header-submit-btn.visible {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
+}
+
+.header-submit-btn:active {
+  transform: scale(0.95);
+}
+
+.loading-spinner {
+  position: absolute;
+  right: 12px;
+  color: var(--ios-blue);
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.app-content {
+  flex: 1;
+  padding: 16px;
+  /* Removed extra padding bottom since FAB is gone */
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 60vh;
+  color: var(--ios-gray-text);
+  text-align: center;
+  font-size: 15px;
+}
+
+/* Removed FAB styles */
+
+.loading-message {
+  width: 100%;
+  padding: 14px 20px;
+  background-color: var(--ios-bg);
+  border-radius: 24px;
+  color: var(--ios-blue);
+  font-weight: 600;
+  text-align: center;
+  font-size: 15px;
+  animation: pulse 1.5s infinite ease-in-out;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.6;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0.6;
+  }
+}
+
+/* Landing Page */
+.landing-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  padding: 20px;
+  background: var(--ios-bg);
+}
+
+.landing-title {
+  font-size: 32px;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--ios-blue), #5E5CE6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 8px;
+  letter-spacing: -1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.landing-title::before {
+  font-size: 32px;
+  -webkit-text-fill-color: initial;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.1));
+  animation: rotateFood 3s infinite;
+}
+
+@keyframes rotateFood {
+
+  0%,
+  14% {
+    content: '🍚';
+  }
+
+  15%,
+  28% {
+    content: '🍜';
+  }
+
+  29%,
+  42% {
+    content: '🍕';
+  }
+
+  43%,
+  56% {
+    content: '🍔';
+  }
+
+  57%,
+  70% {
+    content: '🥘';
+  }
+
+  71%,
+  84% {
+    content: '🍱';
+  }
+
+  85%,
+  100% {
+    content: '🍛';
+  }
+}
+
+.landing-subtitle {
+  color: var(--ios-gray-text);
+  margin-bottom: 32px;
+  font-size: 16px;
+}
+
+.create-room-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--ios-blue);
+  color: white;
+  border: none;
+  padding: 16px 32px;
+  border-radius: 30px;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0, 122, 255, 0.4);
+  transition: transform 0.2s;
+}
+
+.create-room-btn:active {
+  transform: scale(0.95);
+}
+
+.create-room-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Header Updates */
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  color: var(--ios-blue);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
+.icon-btn:hover {
+  background: rgba(0, 122, 255, 0.1);
+}
+
+.error-badge {
+  background-color: #FF3B30;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.share-hint {
+  margin-top: 16px;
+  color: var(--ios-blue);
+  font-weight: 600;
+  cursor: pointer;
+  padding: 8px 16px;
+  background: rgba(0, 122, 255, 0.1);
+  border-radius: 20px;
+}

@@ -1,0 +1,9 @@
+node_modules
+dist
+.env
+.env.local
+.env.production
+server/data/rooms/*.json
+server_debug.txt
+*.log
+.DS_Store
