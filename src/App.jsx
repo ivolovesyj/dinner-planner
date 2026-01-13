@@ -4,10 +4,17 @@ import './App.css';
 import { Search, Loader2, Share, Users, RefreshCw } from 'lucide-react';
 import RestaurantCard from './components/RestaurantCard';
 import NicknameModal from './components/NicknameModal'; // Import Modal
+import AdminLogin from './components/AdminLogin';
+import AdminDashboard from './components/AdminDashboard';
 import { crawlNaverPlace } from './utils/mockCrawler';
 import { logEvent, logPageView } from './utils/ga4'; // GA4 Imports
 
 function App() {
+  // --- Simple Router ---
+  const path = window.location.pathname;
+  if (path === '/admin/login') return <AdminLogin />;
+  if (path === '/admin/dashboard') return <AdminDashboard />;
+
   const [restaurants, setRestaurants] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [inputVal, setInputVal] = useState("");

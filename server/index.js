@@ -12,9 +12,26 @@ const __dirname = path.dirname(__filename);
 
 import 'dotenv/config'; // Load env vars
 import mongoose from 'mongoose';
-import mongoose from 'mongoose';
 import Room from './models/Room.js';
 import AdCampaign from './models/AdCampaign.js';
+import jwt from 'jsonwebtoken';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key-1234';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin1234'; // Set this in Fly.io secrets!
+
+// Auth Middleware
+const authMiddleware = (req, res, next) => {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ error: 'Auth required' });
+
+    try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        req.user = decoded;
+        next();
+    } catch (err) {
+        res.status(403).json({ error: 'Invalid token' });
+    }
+};
 
 // Connect to MongoDB
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/dinner_planner';
@@ -644,6 +661,36 @@ app.post('/api/ads/:adId/click', async (req, res) => {
     } catch (error) {
         console.error('Ad click ref failed:', error);
         res.status(500).json({ error: 'Track failed' });
+    }
+});
+
+// --- ADMIN APIs ---
+
+// 7. Admin Login
+app.post('/api/admin/login', (req, res) => {
+    const { password } = req.body;
+    if (password === ADMIN_PASSWORD) {
+        const token = jwt.sign({ role: 'admin' }, JWT_SECRET, { expiresIn: '24h' });
+        res.json({ token });
+    } else {
+        res.status(401).json({ error: 'Invalid password' });
+    }
+});
+
+// 8. Get All Campaigns (Protected)
+app.get('/api/admin/campaigns', authMiddleware, async (req, res) => {
+    try {
+        const campaigns = await AdCampaign.find().sort({ createdAt: -1 }).lean();
+
+        // Calculate CTR for each
+        const withStats = campaigns.map(c => ({
+            ...c,
+            ctr: c.impressions > 0 ? ((c.clicks / c.impressions) * 100).toFixed(1) : '0.0'
+        }));
+
+        res.json(withStats);
+    } catch (error) {
+        res.status(500).json({ error: 'Fetch failed' });
     }
 });
 
