@@ -11,6 +11,7 @@
 
 /* Rank Badge */
 /* Rank Badge - Big Medal Style */
+/* Rank Badge - Big Medal Style */
 .rank-badge {
     position: absolute;
     top: 10px;
@@ -20,26 +21,35 @@
     height: 44px;
     border-radius: 50%;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    /* Change to row */
     align-items: center;
+    /* Center vertically */
     justify-content: center;
     background: white;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    /* Border to make it pop */
     border: 2px solid white;
-    /* Text */
     line-height: 1;
+    gap: 1px;
+    /* Small gap */
 }
 
 .rank-badge .rank-num {
-    font-size: 18px;
+    font-size: 20px;
+    /* Slightly larger */
     font-weight: 800;
+    margin-bottom: 2px;
+    /* Visual fix */
 }
 
 .rank-badge .rank-label {
-    font-size: 9px;
-    font-weight: 600;
-    margin-top: -2px;
+    font-size: 11px;
+    /* Larger label */
+    font-weight: 700;
+    margin-top: 4px;
+    /* Push label down slightly to align with baseline visual */
+    color: inherit;
+    opacity: 0.9;
 }
 
 /* Gold */
