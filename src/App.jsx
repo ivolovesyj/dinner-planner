@@ -102,6 +102,11 @@ function App() {
       return;
     }
 
+    const isKakao = url.includes('kakao.com') || url.includes('kko.to');
+    if (isKakao) {
+      alert("카카오맵 링크는 변환 작업으로 인해 10초 정도 걸릴 수 있습니다. 잠시만 기다려주세요! 🕒");
+    }
+
     setIsLoading(true);
     try {
       const res = await axios.post(`${API_BASE}/rooms/${roomId}/restaurants`, { url });

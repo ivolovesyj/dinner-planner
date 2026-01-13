@@ -51,16 +51,8 @@ const writeRoom = async (roomId, data) => {
     await fs.writeFile(filePath, JSON.stringify(data, null, 2));
 };
 
-const urlCache = new Map(); // Simple in-memory cache
-
 // --- Reusable Parse Logic ---
 const parseUrl = async (url) => {
-    // Check cache first
-    if (urlCache.has(url)) {
-        console.log(`Cache hit for URL: ${url}`);
-        return urlCache.get(url);
-    }
-
     console.log(`Step 1: Fetching initial URL: ${url}`);
 
     // Step 1: Resolve redirects
@@ -356,11 +348,6 @@ const parseUrl = async (url) => {
             tags: ["Scraped"],
             likes: 0, dislikes: 0, dislikeReasons: []
         };
-    }
-
-    // Cache the result if valid
-    if (data) {
-        urlCache.set(url, data);
     }
 
     return data;
