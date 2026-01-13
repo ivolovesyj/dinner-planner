@@ -173,12 +173,35 @@ const RestaurantCard = ({ data, rank, userId, onVote, onDelete }) => {
                     </button>
                 )}
 
-                <div className="card-badge">{data.category}</div>
-
+                {/* Top Left: Rank Medal (Big & Clear) */}
+                {rank <= 3 && (
+                    <div className={`rank-badge ${getRankClass()}`}>
+                        <span className="rank-num">{rank}</span>
+                        <span className="rank-label">위</span>
+                    </div>
+                )}
+                
+                {/* Top Right: Image Counter */}
                 {images.length > 1 && (
                     <div className="image-counter">
                         {currentImageIndex + 1} / {images.length}
                     </div>
+                )}
+
+                {/* Bottom Left: Category Badge */}
+                <div className="card-badge">{data.category}</div>
+
+                {/* Bottom Right: Delete Button (If Owner) */}
+                {isOwner && (
+                    <button
+                        className="delete-btn"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onDelete(data.id);
+                        }}
+                    >
+                        <Trash2 size={16} />
+                    </button>
                 )}
             </div>
 
