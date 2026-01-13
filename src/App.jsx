@@ -108,9 +108,12 @@ function App() {
   const handleAddLink = async (url) => {
     if (!url || !roomId) return;
 
+    setIsLoading(true); // Start loading immediately
+
     // Check local duplicate (optional, server checks too)
     const isDuplicate = restaurants.some(r => r.url === url);
     if (isDuplicate) {
+      setIsLoading(false); // Reset loading state
       alert("이미 등록된 식당입니다!");
       setInputVal("");
       return;
@@ -118,10 +121,11 @@ function App() {
 
     const isKakao = url.includes('kakao.com') || url.includes('kko.to');
     if (isKakao) {
+      // Allow UI to update to "Loading..." before alert blocks
+      await new Promise(resolve => setTimeout(resolve, 50));
       alert("카카오맵 링크는 변환 작업으로 인해 10초 정도 걸릴 수 있습니다. 잠시만 기다려주세요! 🕒");
     }
 
-    setIsLoading(true);
     try {
       // Send author (nickname) and userId along with URL
       const res = await axios.post(`${API_BASE}/rooms/${roomId}/restaurants`, {
@@ -156,7 +160,7 @@ function App() {
 
       // Auto-submit if in a room
       if (roomId) {
-        setTimeout(() => handleAddLink(extractedUrl), 100);
+        handleAddLink(extractedUrl);
       }
     }
   };
