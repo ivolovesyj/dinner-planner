@@ -12,15 +12,29 @@ const __dirname = path.dirname(__filename);
 
 import 'dotenv/config'; // Load env vars
 import mongoose from 'mongoose';
+import mongoose from 'mongoose';
 import Room from './models/Room.js';
+import AdCampaign from './models/AdCampaign.js';
 
 // Connect to MongoDB
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/dinner_planner';
 // Note: User needs to set MONGO_URI in production (Fly.io secrets)
 
-mongoose.connect(MONGO_URI)
-    .then(() => console.log('✅ Connected to MongoDB'))
-    .catch(err => console.error('❌ MongoDB Connection Error:', err));
+// Enhanced Connection Logic
+console.log('Attempting to connect to MongoDB...');
+mongoose.connect(MONGO_URI, {
+    serverSelectionTimeoutMS: 5000, // Fail fast after 5s
+    socketTimeoutMS: 45000,
+})
+    .then(() => console.log('✅ MongoDB Connected Successfully'))
+    .catch(err => console.error('❌ MongoDB Initial Connection Error:', err));
+
+mongoose.connection.on('error', err => {
+    console.error('❌ MongoDB Runtime Error:', err);
+});
+mongoose.connection.on('disconnected', () => {
+    console.warn('⚠️ MongoDB Disconnected');
+});
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -47,6 +61,71 @@ app.get('/', (req, res) => {
 const readRoom = async (roomId) => {
     try {
         const room = await Room.findOne({ roomId }).lean();
+        if (!room) return null;
+
+        // --- Ad Injection Logic ---
+        // 1. Identify Context (Stations)
+        const stationCounts = {};
+        const stationRegex = /([가-힣\d]+역)/;
+
+        room.restaurants.forEach(r => {
+            // Check 'station' field first
+            if (r.station) {
+                const match = r.station.match(stationRegex);
+                if (match) {
+                    const st = match[1];
+                    stationCounts[st] = (stationCounts[st] || 0) + 1;
+                }
+            }
+            // Check title/name
+            else if (r.name) {
+                const match = r.name.match(stationRegex);
+                if (match) {
+                    const st = match[1];
+                    stationCounts[st] = (stationCounts[st] || 0) + 1;
+                }
+            }
+        });
+
+        // Sort stations by frequency (most popular first)
+        const sortedStations = Object.keys(stationCounts).sort((a, b) => stationCounts[b] - stationCounts[a]);
+        const targetStation = sortedStations[0]; // Pick the top one for now
+
+        if (targetStation) {
+            // 2. Fetch Active Ads for this station
+            const ad = await AdCampaign.findOne({
+                active: true,
+                targetStations: targetStation
+            }).lean();
+
+            // 3. Inject Ad
+            if (ad) {
+                // Determine injection index (e.g., 2nd position or last)
+                // Let's put it at index 1 (2nd item) if possible, or append
+                const injectionIndex = Math.min(room.restaurants.length, 1);
+
+                const adData = {
+                    id: `ad_${ad._id}`,
+                    isSponsored: true,
+                    name: ad.title,
+                    description: ad.description,
+                    image: ad.imageUrl,
+                    url: ad.linkUrl,
+                    sponsorName: ad.sponsorName,
+                    // Minimal fields to prevent UI errors
+                    likes: 0, dislikes: 0, tags: ['Sponsored'],
+                    category: 'Advertisement',
+                    menu: 'Sponsored'
+                };
+
+                // Inject without mutating DB (since we used .lean())
+                room.restaurants.splice(injectionIndex, 0, adData);
+
+                // (Optional) Fire async impression tracker here if needed
+                // AdCampaign.updateOne({ _id: ad._id }, { $inc: { impressions: 1 } }).exec();
+            }
+        }
+
         return room;
     } catch (error) {
         console.error(`Read failed for ${roomId}:`, error);

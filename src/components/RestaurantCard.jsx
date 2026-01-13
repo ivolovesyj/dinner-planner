@@ -92,6 +92,31 @@ const RestaurantCard = ({ data, rank, userId, onVote, onDelete }) => {
         return 'rank-default';
     };
 
+    // --- Sponsored Card Render ---
+    if (data.isSponsored) {
+        return (
+            <div className="card sponsored-card">
+                <a href={data.url} target="_blank" rel="noopener noreferrer" className="card-link-wrapper">
+                    <div className="card-image-container">
+                        <div className="sponsored-badge">추천 (광고)</div>
+                        <img src={data.image} alt={data.name} className="card-image" />
+                    </div>
+                    <div className="card-info-clickable">
+                        <div className="card-header">
+                            <h3 className="card-title">{data.name}</h3>
+                            <div className="card-meta-row">
+                                <span className="card-sponsor-name">Sponsored by {data.sponsorName}</span>
+                            </div>
+                        </div>
+                        <div className="card-content">
+                            <p className="sponsored-desc">{data.description}</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        );
+    }
+
     return (
         <div className="card">
             {/* Lightbox Modal - Rendered outside card via Portal */}
