@@ -6,6 +6,7 @@ import RestaurantCard from './components/RestaurantCard';
 import NicknameModal from './components/NicknameModal'; // Import Modal
 import AdminLogin from './components/AdminLogin';
 import AdminDashboard from './components/AdminDashboard';
+import Footer from './components/Footer'; // Import Footer
 import { crawlNaverPlace } from './utils/mockCrawler';
 import { logEvent, logPageView } from './utils/ga4'; // GA4 Imports
 
@@ -253,6 +254,7 @@ function App() {
           <Users size={20} />
           새 모임 만들기
         </button>
+        <Footer />
       </div>
     );
   }
@@ -341,6 +343,8 @@ function App() {
       {/* Nickname Modal - Force input if no nickname */}
       {!nickname && <NicknameModal onSave={handleSaveNickname} />}
 
+      {!nickname && <NicknameModal onSave={handleSaveNickname} />}
+      <Footer />
     </div>
   );
 }
