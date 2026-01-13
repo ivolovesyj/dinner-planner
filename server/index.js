@@ -33,6 +33,12 @@ app.use(cors({
 }));
 app.use(express.json());
 
+// Global Request Logger
+app.use((req, res, next) => {
+    console.log(`[REQUEST] ${req.method} ${req.originalUrl || req.url}`);
+    next();
+});
+
 // Health check endpoint for Railway
 app.get('/', (req, res) => {
     res.json({ status: 'ok', service: 'dinner-planner-api' });
