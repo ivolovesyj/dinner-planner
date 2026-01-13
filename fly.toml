@@ -5,6 +5,9 @@ primary_region = 'sjc'
 
 [build]
 
+[env]
+  DATA_DIR = "/data/rooms"
+
 [mounts]
   source = "dinner_data"
   destination = "/data"

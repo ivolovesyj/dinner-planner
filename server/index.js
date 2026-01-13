@@ -10,12 +10,15 @@ import * as cheerio from 'cheerio';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Use persistent volume '/data' if on Fly.io, otherwise local 'data'
-const DATA_DIR = process.env.FLY_APP_NAME ? '/data/rooms' : path.join(__dirname, 'data', 'rooms');
+// Use env var (from fly.toml) or fallback to local
+const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data', 'rooms');
+
+console.log('Using DATA_DIR:', DATA_DIR);
 
 // Ensure data directory exists
 try {
     await fs.mkdir(DATA_DIR, { recursive: true });
+    console.log('Data directory verified.');
 } catch (err) {
     console.error('Failed to create data directory:', err);
 }
