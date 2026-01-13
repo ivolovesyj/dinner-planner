@@ -1,7 +1,7 @@
 # Fly.io app configuration
 
-app = "dinner-planner"
-primary_region = "sea"
+app = "gooddinner"
+primary_region = "sjc"
 
 [build]
 

@@ -170,7 +170,10 @@ const RestaurantCard = ({ data, rank, userId, onVote }) => {
                 <div className="card-info-clickable">
                     <div className="card-header">
                         <h3 className="card-title">{data.name}</h3>
-                        <span className="card-price">{data.priceRange}</span>
+                        <div className="card-meta-row">
+                            <span className="card-price">{data.priceRange}</span>
+                            {data.author && <span className="card-author">추천: {data.author}</span>}
+                        </div>
                     </div>
                     <div className="card-location-row">
                         {data.station && (
@@ -255,7 +258,10 @@ const RestaurantCard = ({ data, rank, userId, onVote }) => {
                         {showReasons && (
                             <ul className="reasons-list">
                                 {data.dislikeReasons.map((item, idx) => (
-                                    <li key={idx}>"{item.reason}"</li>
+                                    <li key={idx}>
+                                        <span className="reason-author">{item.nickname || '익명'}</span>
+                                        <span className="reason-text">{item.reason}</span>
+                                    </li>
                                 ))}
                             </ul>
                         )}

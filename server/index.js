@@ -380,7 +380,7 @@ app.get('/api/rooms/:roomId', async (req, res) => {
 // 3. Add Restaurant to Room
 app.post('/api/rooms/:roomId/restaurants', async (req, res) => {
     const { roomId } = req.params;
-    const { url } = req.body;
+    const { url, author } = req.body;
 
     if (!url) return res.status(400).json({ error: 'URL required' });
 
@@ -392,6 +392,9 @@ app.post('/api/rooms/:roomId/restaurants', async (req, res) => {
         // NOTE: A more robust check might parse the URL first to get a canonical ID
         // But for now, let's parse first.
         const newData = await parseUrl(url);
+
+        // Add author info
+        newData.author = author || '익명';
 
         // Simple duplicate check by Name or ID
         const exists = roomData.restaurants.find(r => r.name === newData.name || r.id === newData.id);
@@ -414,7 +417,7 @@ app.post('/api/rooms/:roomId/restaurants', async (req, res) => {
 // 4. Vote (with user tracking and toggle)
 app.post('/api/rooms/:roomId/vote', async (req, res) => {
     const { roomId } = req.params;
-    const { restaurantId, type, userId, reason } = req.body; // type: 'up' or 'down', userId from frontend
+    const { restaurantId, type, userId, reason, nickname } = req.body; // type: 'up' or 'down', userId from frontend
 
     if (!userId) return res.status(400).json({ error: 'userId required' });
 
@@ -469,6 +472,7 @@ app.post('/api/rooms/:roomId/vote', async (req, res) => {
                 if (reason) {
                     restaurant.dislikeReasons.push({
                         userId,
+                        nickname: nickname || '익명',
                         reason,
                         timestamp: new Date().toISOString()
                     });

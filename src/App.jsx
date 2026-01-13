@@ -3,6 +3,7 @@ import axios from 'axios';
 import './App.css';
 import { Search, Loader2, Share2, Users, RefreshCw } from 'lucide-react';
 import RestaurantCard from './components/RestaurantCard';
+import NicknameModal from './components/NicknameModal'; // Import Modal
 import { crawlNaverPlace } from './utils/mockCrawler';
 
 function App() {
@@ -13,20 +14,33 @@ function App() {
   const [roomId, setRoomId] = useState(null);
   const [roomError, setRoomError] = useState(null);
   const [userId, setUserId] = useState(null);
+  const [nickname, setNickname] = useState(null); // Nickname State
   const pollIntervalRef = useRef(null);
 
   // API Base URL - FORCE Fly.io/api for now to bypass stale Vercel env var
   const API_BASE = 'https://gooddinner.fly.dev/api';
 
-  // Generate or retrieve userId
+  // Generate or retrieve userId AND Nickname
   useEffect(() => {
+    // UserId
     let storedUserId = localStorage.getItem('dinnerPlannerUserId');
     if (!storedUserId) {
       storedUserId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       localStorage.setItem('dinnerPlannerUserId', storedUserId);
     }
     setUserId(storedUserId);
+
+    // Nickname
+    const storedNickname = localStorage.getItem('dinnerPlannerNickname');
+    if (storedNickname) {
+      setNickname(storedNickname);
+    }
   }, []);
+
+  const handleSaveNickname = (name) => {
+    localStorage.setItem('dinnerPlannerNickname', name);
+    setNickname(name);
+  };
 
   // 1. Check URL for Room ID on Mount
   useEffect(() => {
@@ -109,11 +123,11 @@ function App() {
 
     setIsLoading(true);
     try {
-      const res = await axios.post(`${API_BASE}/rooms/${roomId}/restaurants`, { url });
-      // Server returns updated room data, but we can also just let polling catch it.
-      // For immediate feedback, let's use the result if it returns the list or the full object.
-      // Our implementation returns 'roomData' (which allows immediate update).
-      // However, to keep it simple we can just trigger a fetch.
+      // Send author (nickname) along with URL
+      const res = await axios.post(`${API_BASE}/rooms/${roomId}/restaurants`, {
+        url,
+        author: nickname // Pass nickname
+      });
       fetchRoomData(roomId, true);
       setInputVal("");
     } catch (error) {
@@ -160,7 +174,8 @@ function App() {
         restaurantId: id,
         type,
         userId,
-        reason
+        reason, // Dislike reason
+        nickname // Pass nickname for identity tracking
       });
       fetchRoomData(roomId, true); // Immediate refresh
     } catch (err) {
@@ -255,6 +270,9 @@ function App() {
           </div>
         )}
       </main>
+      {/* Nickname Modal - Force input if no nickname */}
+      {!nickname && <NicknameModal onSave={handleSaveNickname} />}
+
     </div>
   );
 }
