@@ -25,7 +25,7 @@ function App() {
     // UserId
     let storedUserId = localStorage.getItem('dinnerPlannerUserId');
     if (!storedUserId) {
-      storedUserId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)} `;
+      storedUserId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       localStorage.setItem('dinnerPlannerUserId', storedUserId);
     }
     setUserId(storedUserId);
@@ -71,7 +71,7 @@ function App() {
   const fetchRoomData = async (id, silent = false) => {
     if (!silent) setIsLoading(true);
     try {
-      const res = await axios.get(`${API_BASE} /rooms/${id} `);
+      const res = await axios.get(`${API_BASE}/rooms/${id}`);
       setRestaurants(res.data.restaurants || []);
       setRoomError(null);
     } catch (err) {
