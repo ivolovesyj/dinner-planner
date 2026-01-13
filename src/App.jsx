@@ -290,16 +290,25 @@ function App() {
                 const scoreB = (b.likes || 0) - (b.dislikes || 0);
                 return scoreB - scoreA;
               })
-              .map((rest, index) => (
-                <RestaurantCard
-                  key={rest.id}
-                  data={rest}
-                  rank={index + 1}
-                  userId={userId}
-                  onVote={handleVote}
-                  onDelete={handleDeleteRestaurant} // Pass delete handler
-                />
-              ))}
+              .map((rest, index, array) => {
+                // Calculate Rank: Standard Competition Ranking (1, 1, 3)
+                const score = (rest.likes || 0) - (rest.dislikes || 0);
+                const firstIndex = array.findIndex(r =>
+                  ((r.likes || 0) - (r.dislikes || 0)) === score
+                );
+                const rank = firstIndex + 1;
+
+                return (
+                  <RestaurantCard
+                    key={rest.id}
+                    data={rest}
+                    rank={rank}
+                    userId={userId}
+                    onVote={handleVote}
+                    onDelete={handleDeleteRestaurant} // Pass delete handler
+                  />
+                );
+              })}
           </div>
         )}
       </main>
