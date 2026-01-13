@@ -173,14 +173,14 @@ const RestaurantCard = ({ data, rank, userId, onVote, onDelete }) => {
                     </button>
                 )}
 
-                {/* Top Left: Rank Medal (Big & Clear) */}
-                {rank <= 3 && (
-                    <div className={`rank-badge ${getRankClass()}`}>
+                {/* Top Left: Rank Medal (Big & Clear) - Only show if voted */}
+                {rank <= 3 && (data.likes || 0) > 0 && (
+                    <div className={`rank-badge rank-${rank === 1 ? 'gold' : rank === 2 ? 'silver' : 'bronze'}`}>
                         <span className="rank-num">{rank}</span>
                         <span className="rank-label">위</span>
                     </div>
                 )}
-                
+
                 {/* Top Right: Image Counter */}
                 {images.length > 1 && (
                     <div className="image-counter">
