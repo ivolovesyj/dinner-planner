@@ -28,6 +28,11 @@ app.use(cors({
 }));
 app.use(express.json());
 
+// Health check endpoint for Railway
+app.get('/', (req, res) => {
+    res.json({ status: 'ok', service: 'dinner-planner-api' });
+});
+
 // Helper: Read Room Data
 const readRoom = async (roomId) => {
     try {
