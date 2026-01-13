@@ -14,7 +14,8 @@ import 'dotenv/config'; // Load env vars
 import mongoose from 'mongoose';
 import Room from './models/Room.js';
 import AdCampaign from './models/AdCampaign.js';
-import Advertiser from './models/Advertiser.js'; // New Model
+import Advertiser from './models/Advertiser.js';
+import Feedback from './models/Feedback.js'; // New Model
 import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key-1234';
@@ -680,6 +681,20 @@ app.post('/api/ads/:adId/click', async (req, res) => {
     } catch (error) {
         console.error('Ad click ref failed:', error);
         res.status(500).json({ error: 'Track failed' });
+    }
+});
+
+// 6.5 Submit Feedback
+app.post('/api/feedback', async (req, res) => {
+    const { content, contact } = req.body;
+    if (!content) return res.status(400).json({ error: 'Content required' });
+
+    try {
+        await Feedback.create({ content, contact });
+        res.json({ status: 'ok' });
+    } catch (error) {
+        console.error('Feedback failed:', error);
+        res.status(500).json({ error: 'Save failed' });
     }
 });
 
