@@ -5,6 +5,7 @@ import { ThumbsUp, ThumbsDown, ChevronDown, ChevronUp, MapPin } from 'lucide-rea
 
 const RestaurantCard = ({ data, rank, userId, onVote }) => {
     const [showReasons, setShowReasons] = useState(false);
+    const [showMenu, setShowMenu] = useState(false); // Validated separate state
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [touchStart, setTouchStart] = useState(0);
@@ -201,7 +202,7 @@ const RestaurantCard = ({ data, rank, userId, onVote }) => {
                 {data.menu && (
                     <div className="card-menu-section">
                         <ul className="menu-list">
-                            {data.menu.split(', ').slice(0, showReasons ? undefined : 3).map((item, idx) => (
+                            {data.menu.split(', ').slice(0, showMenu ? undefined : 3).map((item, idx) => (
                                 <li key={idx} className="menu-item">
                                     <span className="menu-dot">•</span>
                                     {item}
@@ -213,10 +214,10 @@ const RestaurantCard = ({ data, rank, userId, onVote }) => {
                                 className="menu-more-btn"
                                 onClick={(e) => {
                                     e.preventDefault();
-                                    setShowReasons(!showReasons);
+                                    setShowMenu(!showMenu);
                                 }}
                             >
-                                {showReasons ? '접기' : `+ ${data.menu.split(', ').length - 3}개 더보기`}
+                                {showMenu ? '접기' : `+ ${data.menu.split(', ').length - 3}개 더보기`}
                             </button>
                         )}
                     </div>
