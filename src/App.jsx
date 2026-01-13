@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import './App.css';
-import { Search, Loader2, Share2, Users, RefreshCw } from 'lucide-react';
+import { Search, Loader2, Share, Users, RefreshCw } from 'lucide-react';
 import RestaurantCard from './components/RestaurantCard';
 import NicknameModal from './components/NicknameModal'; // Import Modal
 import { crawlNaverPlace } from './utils/mockCrawler';
@@ -25,7 +25,7 @@ function App() {
     // UserId
     let storedUserId = localStorage.getItem('dinnerPlannerUserId');
     if (!storedUserId) {
-      storedUserId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      storedUserId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)} `;
       localStorage.setItem('dinnerPlannerUserId', storedUserId);
     }
     setUserId(storedUserId);
@@ -71,7 +71,7 @@ function App() {
   const fetchRoomData = async (id, silent = false) => {
     if (!silent) setIsLoading(true);
     try {
-      const res = await axios.get(`${API_BASE}/rooms/${id}`);
+      const res = await axios.get(`${API_BASE} /rooms/${id} `);
       setRestaurants(res.data.restaurants || []);
       setRoomError(null);
     } catch (err) {
@@ -197,6 +197,27 @@ function App() {
     }
   };
 
+  // Initial fetch
+  useEffect(() => {
+    if (roomId) {
+      fetchRoomData(roomId);
+    }
+  }, [roomId]);
+
+  // Auto-refresh for real-time sync (Polling)
+  useEffect(() => {
+    if (!roomId) return;
+    const interval = setInterval(() => {
+      fetchRoomData(roomId, false); // Silent update every 3s
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [roomId]);
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(window.location.href);
+    alert("링크가 복사되었습니다! 친구들에게 공유하세요 😆");
+  };
+
   // --- Render: Landing Page ---
   if (!roomId) {
     return (
@@ -206,7 +227,7 @@ function App() {
         {roomError && <div className="error-badge">{roomError}</div>}
 
         <button className="create-room-btn" onClick={createRoom} disabled={isLoading}>
-          {isLoading ? <Loader2 className="animate-spin" /> : <Users size={20} />}
+          <Users size={20} />
           새 모임 만들기
         </button>
       </div>
@@ -220,8 +241,8 @@ function App() {
         <div className="header-top">
           <h1 onClick={() => window.location.href = '/'} style={{ cursor: 'pointer' }}>뭐먹을래?</h1>
           <div className="header-actions">
-            <button className="icon-btn" onClick={handleShare} title="링크 공유">
-              <Share2 size={20} />
+            <button className="icon-btn" onClick={handleCopyLink} title="링크 공유">
+              <Share size={20} />
             </button>
           </div>
         </div>
