@@ -512,7 +512,31 @@
     font-size: 13px;
 }
 
-.reason-text {
-    color: #555;
-    font-size: 13px;
+
+.delete-btn {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(255, 59, 48, 0.95);
+    color: white;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 20;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s, background 0.2s;
+}
+
+.delete-btn:active {
+    transform: scale(0.9);
+    background: rgba(255, 59, 48, 1);
+}
+
+.delete-btn:hover {
+    transform: scale(1.05);
 }

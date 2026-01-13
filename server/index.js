@@ -380,7 +380,7 @@ app.get('/api/rooms/:roomId', async (req, res) => {
 // 3. Add Restaurant to Room
 app.post('/api/rooms/:roomId/restaurants', async (req, res) => {
     const { roomId } = req.params;
-    const { url, author } = req.body;
+    const { url, author, userId } = req.body;
 
     if (!url) return res.status(400).json({ error: 'URL required' });
 
@@ -395,6 +395,7 @@ app.post('/api/rooms/:roomId/restaurants', async (req, res) => {
 
         // Add author info
         newData.author = author || '익명';
+        newData.ownerId = userId; // Store ownership for deletion
 
         // Simple duplicate check by Name or ID
         const exists = roomData.restaurants.find(r => r.name === newData.name || r.id === newData.id);
@@ -411,6 +412,40 @@ app.post('/api/rooms/:roomId/restaurants', async (req, res) => {
     } catch (error) {
         console.error('Add failed:', error);
         res.status(500).json({ error: 'Failed to add restaurant' });
+    }
+});
+
+// 3.5 Delete Restaurant (Owner Only)
+app.delete('/api/rooms/:roomId/restaurants/:restaurantId', async (req, res) => {
+    const { roomId, restaurantId } = req.params;
+    const { userId } = req.body;
+
+    if (!userId) return res.status(400).json({ error: 'User ID required' });
+
+    try {
+        const roomData = await readRoom(roomId);
+        if (!roomData) return res.status(404).json({ error: 'Room not found' });
+
+        const index = roomData.restaurants.findIndex(r => r.id === restaurantId);
+        if (index === -1) return res.status(404).json({ error: 'Restaurant not found' });
+
+        const restaurant = roomData.restaurants[index];
+
+        // Verify Ownership
+        // Allow if ownerId matches OR if it's an old item without ownerId (optional: maybe just restrict?)
+        // Let's restrict to owner only.
+        if (restaurant.ownerId && restaurant.ownerId !== userId) {
+            return res.status(403).json({ error: 'Only the author can delete this' });
+        }
+
+        // Remove it
+        roomData.restaurants.splice(index, 1);
+        await writeRoom(roomId, roomData);
+        res.json(roomData);
+
+    } catch (error) {
+        console.error('Delete failed:', error);
+        res.status(500).json({ error: 'Delete failed' });
     }
 });
 

@@ -123,10 +123,11 @@ function App() {
 
     setIsLoading(true);
     try {
-      // Send author (nickname) along with URL
+      // Send author (nickname) and userId along with URL
       const res = await axios.post(`${API_BASE}/rooms/${roomId}/restaurants`, {
         url,
-        author: nickname // Pass nickname
+        author: nickname, // Pass nickname
+        userId // Pass userId for ownership
       });
       fetchRoomData(roomId, true);
       setInputVal("");
@@ -180,6 +181,19 @@ function App() {
       fetchRoomData(roomId, true); // Immediate refresh
     } catch (err) {
       console.error("Vote failed", err);
+    }
+  };
+
+  const handleDeleteRestaurant = async (restaurantId) => {
+    if (!window.confirm("정말 이 식당을 삭제하시겠습니까?")) return;
+
+    try {
+      await axios.delete(`${API_BASE}/rooms/${roomId}/restaurants/${restaurantId}`, {
+        data: { userId } // Pass userId for ownership verification
+      });
+      fetchRoomData(roomId, true);
+    } catch (err) {
+      alert("삭제 실패: 본인이 등록한 식당만 삭제할 수 있습니다.");
     }
   };
 
@@ -265,6 +279,7 @@ function App() {
                   rank={index + 1}
                   userId={userId}
                   onVote={handleVote}
+                  onDelete={handleDeleteRestaurant} // Pass delete handler
                 />
               ))}
           </div>

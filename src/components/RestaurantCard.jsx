@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import './RestaurantCard.css';
-import { ThumbsUp, ThumbsDown, ChevronDown, ChevronUp, MapPin } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, ChevronDown, ChevronUp, MapPin, Trash2 } from 'lucide-react';
 
-const RestaurantCard = ({ data, rank, userId, onVote }) => {
+const RestaurantCard = ({ data, rank, userId, onVote, onDelete }) => {
     const [showReasons, setShowReasons] = useState(false);
     const [showMenu, setShowMenu] = useState(false); // Validated separate state
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [touchStart, setTouchStart] = useState(0);
     const [touchEnd, setTouchEnd] = useState(0);
+
+    const isOwner = userId && data.ownerId && userId === data.ownerId;
 
     const images = data.images && data.images.length > 0 ? data.images : [data.image];
 
@@ -156,6 +158,19 @@ const RestaurantCard = ({ data, rank, userId, onVote }) => {
                             ))}
                         </div>
                     </>
+                )}
+
+                {/* Delete Button - Top Right */}
+                {isOwner && (
+                    <button
+                        className="delete-btn"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onDelete(data.id);
+                        }}
+                    >
+                        <Trash2 size={16} />
+                    </button>
                 )}
 
                 <div className="card-badge">{data.category}</div>
