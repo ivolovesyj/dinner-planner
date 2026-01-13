@@ -9,7 +9,9 @@ import * as cheerio from 'cheerio';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const DATA_DIR = path.join(__dirname, 'data', 'rooms');
+
+// Use persistent volume '/data' if on Fly.io, otherwise local 'data'
+const DATA_DIR = process.env.FLY_APP_NAME ? '/data/rooms' : path.join(__dirname, 'data', 'rooms');
 
 // Ensure data directory exists
 try {
