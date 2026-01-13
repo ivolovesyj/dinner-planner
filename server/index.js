@@ -42,9 +42,11 @@ app.get('/', (req, res) => {
 const readRoom = async (roomId) => {
     try {
         const filePath = path.join(DATA_DIR, `${roomId}.json`);
+        console.log(`[DEBUG] Reading room: ${filePath}`);
         const data = await fs.readFile(filePath, 'utf-8');
         return JSON.parse(data);
     } catch (error) {
+        console.warn(`[DEBUG] Read failed for ${roomId}: ${error.code} (Path: ${path.join(DATA_DIR, `${roomId}.json`)})`);
         if (error.code === 'ENOENT') return null; // Room not found
         throw error;
     }
@@ -53,6 +55,7 @@ const readRoom = async (roomId) => {
 // Helper: Write Room Data
 const writeRoom = async (roomId, data) => {
     const filePath = path.join(DATA_DIR, `${roomId}.json`);
+    console.log(`[DEBUG] Writing room: ${filePath}`);
     await fs.writeFile(filePath, JSON.stringify(data, null, 2));
 };
 
