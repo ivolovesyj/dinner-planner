@@ -245,15 +245,18 @@ function App() {
   // --- Render: Landing Page ---
   if (!roomId) {
     return (
+    return (
       <div className="landing-container">
-        <h1 className="landing-title">뭐먹을래?</h1>
-        <p className="landing-subtitle">친구들과 함께 결정하는 오늘의 메뉴</p>
-        {roomError && <div className="error-badge">{roomError}</div>}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+          <h1 className="landing-title">뭐먹을래?</h1>
+          <p className="landing-subtitle">친구들과 함께 결정하는 오늘의 메뉴</p>
+          {roomError && <div className="error-badge">{roomError}</div>}
 
-        <button className="create-room-btn" onClick={createRoom} disabled={isLoading}>
-          <Users size={20} />
-          새 모임 만들기
-        </button>
+          <button className="create-room-btn" onClick={createRoom} disabled={isLoading}>
+            <Users size={20} />
+            새 모임 만들기
+          </button>
+        </div>
         <Footer />
       </div>
     );
