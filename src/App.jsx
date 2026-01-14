@@ -273,7 +273,7 @@ function App() {
             display: 'inline-block', background: '#e5e8eb', color: '#4e5968',
             padding: '6px 12px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: '600', marginBottom: '20px'
           }}>
-            ✨ 간편한 모임 결정
+            ✨ 간편한 모임 장소 결정
           </span>
 
           <h1>이번 모임은 어디서?<br />
