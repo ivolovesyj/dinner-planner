@@ -248,13 +248,17 @@ function App() {
   const [isIconPop, setIsIconPop] = useState(false);
 
   useEffect(() => {
-    if (roomId) return; // Don't run if in room
+    if (roomId) return;
+
+    // Warm up the server (wake up Fly.io)
+    axios.get(API_BASE.replace('/api', '')).catch(() => { });
+
+    // Icon rotation logic
     const icons = ['🍔', '🍕', '🍣', '🍜', '🥘', '🍖', '🍤', '🥓', '🍝', '🌮'];
     let index = 0;
     const interval = setInterval(() => {
       index = (index + 1) % icons.length;
       setIsIconPop(false);
-      // Trigger reflow/re-render for animation reset
       setTimeout(() => {
         setCurrentIcon(icons[index]);
         setIsIconPop(true);
@@ -284,9 +288,18 @@ function App() {
           {roomError && <div className="error-badge">{roomError}</div>}
 
           <div style={{ width: '100%', marginTop: '20px' }}>
-            <button className="btn-primary" onClick={createRoom} disabled={isLoading}>
-              투표방 만들고 친구 초대하기
-              <span id="changing-icon" className={isIconPop ? 'icon-pop' : ''}>{currentIcon}</span>
+            <button className="btn-primary" onClick={createRoom} disabled={isLoading} style={{ opacity: isLoading ? 0.7 : 1 }}>
+              {isLoading ? (
+                <>
+                  <Loader2 className="animate-spin" size={20} />
+                  모임방 만드는 중...
+                </>
+              ) : (
+                <>
+                  투표방 만들고 친구 초대하기
+                  <span id="changing-icon" className={isIconPop ? 'icon-pop' : ''}>{currentIcon}</span>
+                </>
+              )}
             </button>
           </div>
         </section>
