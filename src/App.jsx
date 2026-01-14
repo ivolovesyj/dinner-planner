@@ -243,19 +243,91 @@ function App() {
   };
 
   // --- Render: Landing Page ---
+  // Rotating Icon Logic
+  const [currentIcon, setCurrentIcon] = useState('🍔');
+  const [isIconPop, setIsIconPop] = useState(false);
+
+  useEffect(() => {
+    if (roomId) return; // Don't run if in room
+    const icons = ['🍔', '🍕', '🍣', '🍜', '🥘', '🍖', '🍤', '🥓', '🍝', '🌮'];
+    let index = 0;
+    const interval = setInterval(() => {
+      index = (index + 1) % icons.length;
+      setIsIconPop(false);
+      // Trigger reflow/re-render for animation reset
+      setTimeout(() => {
+        setCurrentIcon(icons[index]);
+        setIsIconPop(true);
+      }, 50);
+    }, 700);
+    return () => clearInterval(interval);
+  }, [roomId]);
+
   if (!roomId) {
     return (
       <div className="landing-container">
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
-          <h1 className="landing-title">뭐먹을래?</h1>
-          <p className="landing-subtitle">친구들과 함께 결정하는 오늘의 메뉴</p>
+
+        {/* Hero Section */}
+        <section className="hero">
+          <span style={{
+            display: 'inline-block', background: '#e5e8eb', color: '#4e5968',
+            padding: '6px 12px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: '600', marginBottom: '20px'
+          }}>
+            ✨ 간편한 모임 결정
+          </span>
+
+          <h1>이번 모임은 어디서?<br />
+            <span className="mobile-block">후보 올리고</span> <span className="mobile-block highlight">투표로 정하자!</span>
+          </h1>
+
+          <p>친구들과 함께 식당을 고르고<br />다수결로 결정하세요.</p>
           {roomError && <div className="error-badge">{roomError}</div>}
 
-          <button className="create-room-btn" onClick={createRoom} disabled={isLoading}>
-            <Users size={20} />
-            새 모임 만들기
-          </button>
-        </div>
+          <div style={{ width: '100%', marginTop: '20px' }}>
+            <button className="btn-primary" onClick={createRoom} disabled={isLoading}>
+              투표방 만들고 친구 초대하기
+              <span id="changing-icon" className={isIconPop ? 'icon-pop' : ''}>{currentIcon}</span>
+            </button>
+          </div>
+        </section>
+
+        {/* Process Section */}
+        <section className="process-section">
+          <h2 className="section-title">누구나 쉽고 빠르게</h2>
+
+          <div className="steps-container">
+            {/* Step 1 */}
+            <div className="step-item">
+              <span className="step-badge">STEP 1</span>
+              <div className="step-icon-box">
+                <img src="/assets/step_1.png" alt="방 만들기" />
+              </div>
+              <div className="step-title">방 만들기</div>
+              <div className="step-desc">투표방을 만들고<br />링크를 친구에게 공유해보세요.</div>
+            </div>
+
+            {/* Step 2 */}
+            <div className="step-item">
+              <span className="step-badge">STEP 2</span>
+              <div className="step-icon-box">
+                <img src="/assets/step_2.png" alt="후보 추가" />
+              </div>
+              <div className="step-title">후보 추가</div>
+              <div className="step-desc">네이버 지도 링크만 붙여넣으면<br />간편하게 후보가 등록돼요.</div>
+            </div>
+
+            {/* Step 3 */}
+            <div className="step-item">
+              <span className="step-badge">STEP 3</span>
+              <div className="step-icon-box">
+                <img src="/assets/step_3.png" alt="투표 하기" />
+              </div>
+              <div className="step-title">투표 및 결정</div>
+              <div className="step-desc">실시간으로 투표하고<br />가장 인기 있는 곳을 확정해요!</div>
+            </div>
+          </div>
+        </section>
+
         <Footer />
       </div>
     );
