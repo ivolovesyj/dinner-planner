@@ -250,8 +250,9 @@ function App() {
   useEffect(() => {
     if (roomId) return;
 
-    // Warm up the server (wake up Fly.io)
-    axios.get(API_BASE.replace('/api', '')).catch(() => { });
+    // Warm up the server AND Database (wake up Fly.io & Mongo)
+    // We request a non-existent room to force a DB query
+    axios.get(`${API_BASE}/rooms/warmup_ping`).catch(() => { });
 
     // Icon rotation logic
     const icons = ['🍔', '🍕', '🍣', '🍜', '🥘', '🍖', '🍤', '🥓', '🍝', '🌮'];
