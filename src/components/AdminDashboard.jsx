@@ -73,6 +73,7 @@ const AdminDashboard = () => {
 
             // Update local state without full refresh
             setRooms(prev => prev.map(r => r.roomId === roomId ? { ...r, adminMemo: newMemo } : r));
+            alert("메모가 저장되었습니다. ✅");
         } catch (err) {
             console.error("Memo update failed", err);
             alert("메모 저장에 실패했습니다.");
@@ -187,16 +188,29 @@ const AdminDashboard = () => {
                                         </span>
                                     </td>
                                     <td style={tdStyle}>
-                                        <textarea
-                                            defaultValue={room.adminMemo || ""}
-                                            onBlur={(e) => handleUpdateMemo(room.roomId, e.target.value)}
-                                            placeholder="메모를 입력하세요..."
-                                            style={{
-                                                width: '100%', minWidth: '150px', padding: '8px', borderRadius: '8px',
-                                                border: '1px solid #eee', fontSize: '13px', resize: 'vertical',
-                                                fontFamily: 'inherit'
-                                            }}
-                                        />
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                            <textarea
+                                                id={`memo-${room.roomId}`}
+                                                defaultValue={room.adminMemo || ""}
+                                                onBlur={(e) => handleUpdateMemo(room.roomId, e.target.value)}
+                                                placeholder="메모를 입력하세요..."
+                                                style={{
+                                                    width: '100%', minWidth: '150px', padding: '8px', borderRadius: '8px',
+                                                    border: '1px solid #eee', fontSize: '13px', resize: 'vertical',
+                                                    fontFamily: 'inherit'
+                                                }}
+                                            />
+                                            <button
+                                                onClick={() => handleUpdateMemo(room.roomId, document.getElementById(`memo-${room.roomId}`).value)}
+                                                style={{
+                                                    padding: "4px 8px", borderRadius: "6px", border: "1px solid #007AFF",
+                                                    background: "white", color: "#007AFF", cursor: "pointer", fontSize: "11px", fontWeight: "600",
+                                                    alignSelf: 'flex-start'
+                                                }}
+                                            >
+                                                저장하기
+                                            </button>
+                                        </div>
                                     </td>
                                     <td style={tdStyle}>
                                         <button
