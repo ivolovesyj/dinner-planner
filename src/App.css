@@ -468,6 +468,26 @@
 .header-actions {
   display: flex;
   gap: 8px;
+  align-items: center;
+}
+
+.nickname-badge {
+  background: #f5f5f7;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #4e5968;
+  cursor: pointer;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.nickname-badge:hover {
+  background: #e5e5e7;
 }
 
 .icon-btn {

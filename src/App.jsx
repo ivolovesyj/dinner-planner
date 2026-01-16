@@ -24,12 +24,13 @@ function App() {
   const [roomError, setRoomError] = useState(null);
   const [userId, setUserId] = useState(null);
   const [nickname, setNickname] = useState(null); // Nickname State
+  const [showNicknameModal, setShowNicknameModal] = useState(false); // Modal control
   const pollIntervalRef = useRef(null);
 
   // API Base URL - FORCE Fly.io/api for now to bypass stale Vercel env var
   const API_BASE = 'https://gooddinner.fly.dev/api';
 
-  // Generate or retrieve userId AND Nickname
+  // Generate or retrieve userId
   useEffect(() => {
     // UserId
     let storedUserId = localStorage.getItem('dinnerPlannerUserId');
@@ -38,17 +39,17 @@ function App() {
       localStorage.setItem('dinnerPlannerUserId', storedUserId);
     }
     setUserId(storedUserId);
-
-    // Nickname
-    const storedNickname = localStorage.getItem('dinnerPlannerNickname');
-    if (storedNickname) {
-      setNickname(storedNickname);
-    }
   }, []);
 
   const handleSaveNickname = (name) => {
+    // Save to global (as default for future new rooms)
     localStorage.setItem('dinnerPlannerNickname', name);
+    // Save to room-specific key
+    if (userId && roomId) {
+      localStorage.setItem(`nickname_${roomId}`, name);
+    }
     setNickname(name);
+    setShowNicknameModal(false);
   };
 
   // 1. Check URL for Room ID on Mount
@@ -58,7 +59,17 @@ function App() {
 
     if (roomParam) {
       setRoomId(roomParam);
-      fetchRoomData(roomParam);
+
+      // Initialize nickname for this room
+      const roomNickname = localStorage.getItem(`nickname_${roomParam}`);
+      const globalNickname = localStorage.getItem('dinnerPlannerNickname');
+
+      const initialNickname = roomNickname || globalNickname;
+      if (initialNickname) {
+        setNickname(initialNickname);
+      }
+
+      fetchRoomData(roomParam, false, initialNickname);
       // Start Polling
       startPolling(roomParam);
     }
@@ -81,12 +92,15 @@ function App() {
   const stopPolling = () => {
     if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
   };
-  const fetchRoomData = async (id, silent = false) => {
+  const fetchRoomData = async (id, silent = false, forcedNickname = null) => {
     if (!silent) setIsLoading(true);
     try {
       const params = {};
       if (userId) params.userId = userId;
-      if (nickname) params.nickname = nickname;
+
+      // Use forcedNickname if provided (for first load), otherwise use state
+      const currentNickname = forcedNickname || nickname;
+      if (currentNickname) params.nickname = currentNickname;
 
       const res = await axios.get(`${API_BASE}/rooms/${id}`, { params });
       setRestaurants(res.data.restaurants || []);
@@ -357,6 +371,15 @@ function App() {
         <div className="header-top">
           <h1 onClick={() => window.location.href = '/'} style={{ cursor: 'pointer' }}>뭐먹을래?</h1>
           <div className="header-actions">
+            {nickname && (
+              <button
+                className="nickname-badge"
+                onClick={() => setShowNicknameModal(true)}
+                title="닉네임 변경"
+              >
+                👤 {nickname}
+              </button>
+            )}
             <button className="icon-btn" onClick={handleCopyLink} title="링크 공유">
               <Share size={20} />
             </button>
@@ -432,8 +455,14 @@ function App() {
         )}
       </main>
 
-      {/* Nickname Modal - Force input if no nickname */}
-      {!nickname && <NicknameModal onSave={handleSaveNickname} />}
+      {/* Nickname Modal - Force input if no nickname, or show for manual change */}
+      {(showNicknameModal || !nickname) && (
+        <NicknameModal
+          onSave={handleSaveNickname}
+          onClose={nickname ? () => setShowNicknameModal(false) : null}
+          initialValue={nickname || ""}
+        />
+      )}
       <Footer />
     </div>
   );
