@@ -501,12 +501,14 @@ app.post('/api/rooms', async (req, res) => {
 });
 
 // 2. Get Room Data
-app.get('/api/rooms/:roomId', async (req, res) => {
+app.get("/api/rooms/:roomId", async (req, res) => {
     const { roomId } = req.params;
     const data = await readRoom(roomId);
     if (!data) {
-        return res.status(404).json({ error: 'Room not found' });
+        return res.status(404).json({ error: "Room not found" });
     }
+    // Update last accessed time
+    await Room.updateOne({ roomId }, { $set: { lastAccessedAt: new Date() } }).exec();
     res.json(data);
 });
 
@@ -539,6 +541,17 @@ app.post('/api/rooms/:roomId/restaurants', async (req, res) => {
         }
 
         roomData.restaurants.push(newData);
+        // Update Participants
+        if (userId) {
+            if (!roomData.participants) roomData.participants = [];
+            const idx = roomData.participants.findIndex(p => p.userId === userId);
+            if (idx > -1) {
+                roomData.participants[idx].lastActive = new Date();
+                if (author) roomData.participants[idx].nickname = author;
+            } else {
+                roomData.participants.push({ userId, nickname: author || "익명", lastActive: new Date() });
+            }
+        }
         await writeRoom(roomId, roomData);
         res.json(roomData);
 
@@ -648,6 +661,17 @@ app.post('/api/rooms/:roomId/vote', async (req, res) => {
             }
         }
 
+        // Update Participants
+        if (userId) {
+            if (!roomData.participants) roomData.participants = [];
+            const idx = roomData.participants.findIndex(p => p.userId === userId);
+            if (idx > -1) {
+                roomData.participants[idx].lastActive = new Date();
+                if (nickname) roomData.participants[idx].nickname = nickname;
+            } else {
+                roomData.participants.push({ userId, nickname: nickname || "익명", lastActive: new Date() });
+            }
+        }
         await writeRoom(roomId, roomData);
         res.json(roomData);
     } catch (error) {
@@ -759,6 +783,20 @@ app.get('/api/admin/feedbacks', authMiddleware, async (req, res) => {
         res.json(feedbacks);
     } catch (error) {
         res.status(500).json({ error: 'Fetch failed' });
+    }
+});
+
+// 10. Get All Rooms (Admin Only)
+app.get("/api/admin/rooms", authMiddleware, async (req, res) => {
+    try {
+        if (req.user.role !== "admin") {
+            return res.status(403).json({ error: "Admin only" });
+        }
+        const rooms = await Room.find().sort({ lastAccessedAt: -1 }).lean();
+        res.json(rooms);
+    } catch (error) {
+        console.error("Fetch rooms failed:", error);
+        res.status(500).json({ error: "Fetch failed" });
     }
 });
 

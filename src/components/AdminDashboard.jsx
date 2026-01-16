@@ -4,11 +4,12 @@ import axios from 'axios';
 const API_BASE = 'https://gooddinner.fly.dev/api';
 
 const AdminDashboard = () => {
-    const [activeTab, setActiveTab] = useState('campaigns'); // 'campaigns' | 'feedback'
+    const [activeTab, setActiveTab] = useState('rooms'); // Default to rooms now as requested
 
     // Data States
     const [campaigns, setCampaigns] = useState([]);
     const [feedbacks, setFeedbacks] = useState([]);
+    const [rooms, setRooms] = useState([]);
 
     const [loading, setLoading] = useState(true);
     const [adminName, setAdminName] = useState('');
@@ -34,16 +35,16 @@ const AdminDashboard = () => {
                 // Parallel fetch
                 const requests = [axios.get(`${API_BASE}/admin/campaigns`, config)];
 
-                // Only admin fetches feedback
+                // Only admin fetches feedback and rooms
                 if (userRole === 'admin') {
                     requests.push(axios.get(`${API_BASE}/admin/feedbacks`, config));
+                    requests.push(axios.get(`${API_BASE}/admin/rooms`, config));
                 }
 
                 const responses = await Promise.all(requests);
                 setCampaigns(responses[0].data);
-                if (responses[1]) {
-                    setFeedbacks(responses[1].data);
-                }
+                if (responses[1]) setFeedbacks(responses[1].data);
+                if (responses[2]) setRooms(responses[2].data);
 
             } catch (err) {
                 if (err.response && err.response.status === 401) {
@@ -67,8 +68,14 @@ const AdminDashboard = () => {
 
     if (loading) return <div style={{ padding: '20px' }}>Loading Stats...</div>;
 
+    const formatTime = (isoString) => {
+        if (!isoString) return '-';
+        const date = new Date(isoString);
+        return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    };
+
     return (
-        <div style={{ padding: '40px', maxWidth: '1000px', margin: '0 auto' }}>
+        <div style={{ padding: '40px', maxWidth: '1200px', margin: '0 auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                 <div>
                     <h1 style={{ marginBottom: '5px' }}>📊 Advertising Dashboard</h1>
@@ -86,6 +93,12 @@ const AdminDashboard = () => {
             {role === 'admin' && (
                 <div style={{ display: 'flex', borderBottom: '1px solid #eee', marginBottom: '30px', gap: '20px' }}>
                     <div
+                        onClick={() => setActiveTab('rooms')}
+                        style={{ ...tabStyle, borderBottom: activeTab === 'rooms' ? '2px solid #007AFF' : 'none', color: activeTab === 'rooms' ? '#007AFF' : '#666' }}
+                    >
+                        🏠 방 관리 ({rooms.length})
+                    </div>
+                    <div
                         onClick={() => setActiveTab('campaigns')}
                         style={{ ...tabStyle, borderBottom: activeTab === 'campaigns' ? '2px solid #007AFF' : 'none', color: activeTab === 'campaigns' ? '#007AFF' : '#666' }}
                     >
@@ -97,6 +110,46 @@ const AdminDashboard = () => {
                     >
                         📥 건의함 ({feedbacks.length})
                     </div>
+                </div>
+            )}
+
+            {/* VIEW: ROOMS */}
+            {activeTab === 'rooms' && (
+                <div style={{ background: 'white', borderRadius: '16px', boxShadow: '0 2px 12px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                        <thead style={{ background: '#f5f5f7', borderBottom: '1px solid #eee' }}>
+                            <tr>
+                                <th style={thStyle}>방 아이디 (링크)</th>
+                                <th style={thStyle}>생성일</th>
+                                <th style={thStyle}>최근 접속</th>
+                                <th style={thStyle}>멤버 수</th>
+                                <th style={thStyle}>식당 수</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {rooms.map(room => (
+                                <tr key={room._id} style={{ borderBottom: '1px solid #f9f9f9' }}>
+                                    <td style={tdStyle}>
+                                        <a href={`/${room.roomId}`} target="_blank" rel="noreferrer" style={{ color: '#007AFF', textDecoration: 'none', fontWeight: 'bold' }}>
+                                            {room.roomId.substring(0, 8)}...
+                                        </a>
+                                    </td>
+                                    <td style={tdStyle}>{formatTime(room.createdAt)}</td>
+                                    <td style={tdStyle}>{formatTime(room.lastAccessedAt)}</td>
+                                    <td style={tdStyle}>
+                                        <span style={tagStyle}>
+                                            👥 {room.participants?.length || 0}명
+                                        </span>
+                                    </td>
+                                    <td style={tdStyle}>
+                                        <span style={tagStyle}>
+                                            🍴 {room.restaurants?.length || 0}개
+                                        </span>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
                 </div>
             )}
 

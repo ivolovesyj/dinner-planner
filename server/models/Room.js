@@ -27,11 +27,17 @@ const restaurantSchema = new mongoose.Schema({
     },
     author: String,
     ownerId: String
-}, { _id: false }); // Disable _id for subdocuments if we want to match exact JSON structure, or keep it. Let's keep it false to match old structure perfectly if possible, though Mongoose adds it by default to subdocs in arrays. For safety, let's keep it to avoid clutter.
+}, { _id: false });
 
 const roomSchema = new mongoose.Schema({
     roomId: { type: String, required: true, unique: true },
     createdAt: { type: Date, default: Date.now },
+    lastAccessedAt: { type: Date, default: Date.now },
+    participants: [{
+        userId: String,
+        nickname: String,
+        lastActive: Date
+    }],
     restaurants: [restaurantSchema]
 });
 
