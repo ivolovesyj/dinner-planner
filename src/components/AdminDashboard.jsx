@@ -161,21 +161,18 @@ const AdminDashboard = () => {
                                     <td style={tdStyle}>
                                         <span style={tagStyle}>
                                             🍴 {room.restaurants?.length || 0}개
-                                        <span style={tagStyle}>
-                                            🍴 {room.restaurants?.length || 0}개
                                         </span>
                                     </td>
                                     <td style={tdStyle}>
-                                        <button 
-                                            onClick={() => handleDeleteRoom(room.roomId)} 
-                                            style={{ 
-                                                padding: "6px 12px", borderRadius: "8px", border: "none", 
+                                        <button
+                                            onClick={() => handleDeleteRoom(room.roomId)}
+                                            style={{
+                                                padding: "6px 12px", borderRadius: "8px", border: "none",
                                                 background: "#FF3B30", color: "white", cursor: "pointer", fontSize: "12px", fontWeight: "600"
                                             }}
                                         >
                                             삭제
                                         </button>
-                                    </td>
                                     </td>
                                 </tr>
                             ))}
