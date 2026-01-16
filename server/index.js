@@ -823,7 +823,50 @@ app.get("/api/admin/rooms", authMiddleware, async (req, res) => {
             return res.status(403).json({ error: "Admin only" });
         }
         const rooms = await Room.find().sort({ lastAccessedAt: -1 }).lean();
-        res.json(rooms);
+
+        // Process rooms to add accurate member counts
+        const processedRooms = rooms.map(room => {
+            const nicknames = new Set();
+
+            // 1. From participants array
+            if (room.participants) {
+                room.participants.forEach(p => {
+                    if (p.nickname && p.nickname !== "익명" && p.nickname !== "null") {
+                        nicknames.add(p.nickname);
+                    }
+                });
+            }
+
+            // 2. From restaurants authors
+            if (room.restaurants) {
+                room.restaurants.forEach(r => {
+                    if (r.author && r.author !== "익명" && r.author !== "null") {
+                        nicknames.add(r.author);
+                    }
+                });
+            }
+
+            // 3. From dislike reasons
+            if (room.restaurants) {
+                room.restaurants.forEach(r => {
+                    if (r.dislikeReasons) {
+                        r.dislikeReasons.forEach(dr => {
+                            if (dr.nickname && dr.nickname !== "익명" && dr.nickname !== "null") {
+                                nicknames.add(dr.nickname);
+                            }
+                        });
+                    }
+                });
+            }
+
+            return {
+                ...room,
+                identifiedMemberCount: nicknames.size,
+                nicknameList: Array.from(nicknames) // Optional: for debugging or UI tooltips
+            };
+        });
+
+        res.json(processedRooms);
     } catch (error) {
         console.error("Fetch rooms failed:", error);
         res.status(500).json({ error: "Fetch failed" });

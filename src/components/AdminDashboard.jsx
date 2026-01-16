@@ -155,11 +155,14 @@ const AdminDashboard = () => {
                                     <td style={tdStyle}>{formatTime(room.lastAccessedAt)}</td>
                                     <td style={tdStyle}>
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                            <span style={tagStyle}>
+                                            <span style={tagStyle} title="접속한 적이 있는 모든 고유 사용자 수입니다.">
                                                 👥 총 {room.participants?.length || 0}명
                                             </span>
-                                            <span style={{ ...tagStyle, background: '#e1f5fe', color: '#0288d1' }}>
-                                                👤 닉네임 {room.participants?.filter(p => p.nickname && p.nickname !== "익명").length || 0}명
+                                            <span
+                                                style={{ ...tagStyle, background: '#e1f5fe', color: '#0288d1' }}
+                                                title={room.nicknameList?.join(', ')}
+                                            >
+                                                👤 식별 {room.identifiedMemberCount || 0}명
                                             </span>
                                         </div>
                                     </td>
