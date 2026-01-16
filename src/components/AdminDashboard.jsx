@@ -65,6 +65,20 @@ const AdminDashboard = () => {
         localStorage.removeItem('adminRole');
         window.location.href = '/admin/login';
     };
+    const handleUpdateMemo = async (roomId, newMemo) => {
+        try {
+            const token = localStorage.getItem("adminToken");
+            const config = { headers: { Authorization: `Bearer ${token}` } };
+            await axios.put(`${API_BASE}/admin/rooms/${roomId}/memo`, { memo: newMemo }, config);
+
+            // Update local state without full refresh
+            setRooms(prev => prev.map(r => r.roomId === roomId ? { ...r, adminMemo: newMemo } : r));
+        } catch (err) {
+            console.error("Memo update failed", err);
+            alert("메모 저장에 실패했습니다.");
+        }
+    };
+
     const handleDeleteRoom = async (roomId) => {
         if (!window.confirm("정말 이 투표방을 삭제하시겠습니까? 관련 데이터가 모두 삭제됩니다.")) return;
 
@@ -140,6 +154,7 @@ const AdminDashboard = () => {
                                 <th style={thStyle}>최근 접속</th>
                                 <th style={thStyle}>멤버 수</th>
                                 <th style={thStyle}>식당 수</th>
+                                <th style={thStyle}>메모 (관리자 전용)</th>
                                 <th style={thStyle}>관리</th>
                             </tr>
                         </thead>
@@ -170,6 +185,18 @@ const AdminDashboard = () => {
                                         <span style={tagStyle}>
                                             🍴 {room.restaurants?.length || 0}개
                                         </span>
+                                    </td>
+                                    <td style={tdStyle}>
+                                        <textarea
+                                            defaultValue={room.adminMemo || ""}
+                                            onBlur={(e) => handleUpdateMemo(room.roomId, e.target.value)}
+                                            placeholder="메모를 입력하세요..."
+                                            style={{
+                                                width: '100%', minWidth: '150px', padding: '8px', borderRadius: '8px',
+                                                border: '1px solid #eee', fontSize: '13px', resize: 'vertical',
+                                                fontFamily: 'inherit'
+                                            }}
+                                        />
                                     </td>
                                     <td style={tdStyle}>
                                         <button

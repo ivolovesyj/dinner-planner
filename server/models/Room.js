@@ -38,6 +38,7 @@ const roomSchema = new mongoose.Schema({
         nickname: String,
         lastActive: Date
     }],
+    adminMemo: { type: String, default: "" },
     restaurants: [restaurantSchema]
 });
 

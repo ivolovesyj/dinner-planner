@@ -873,6 +873,22 @@ app.get("/api/admin/rooms", authMiddleware, async (req, res) => {
     }
 });
 
+app.put("/api/admin/rooms/:roomId/memo", authMiddleware, async (req, res) => {
+    try {
+        if (req.user.role !== "admin") {
+            return res.status(403).json({ error: "Admin only" });
+        }
+        const { roomId } = req.params;
+        const { memo } = req.body;
+
+        await Room.updateOne({ roomId }, { $set: { adminMemo: memo } }).exec();
+        res.json({ success: true });
+    } catch (error) {
+        console.error("Update memo failed:", error);
+        res.status(500).json({ error: "Update failed" });
+    }
+});
+
 // 11. Delete Room (Admin Only)
 app.delete("/api/admin/rooms/:roomId", authMiddleware, async (req, res) => {
     try {
