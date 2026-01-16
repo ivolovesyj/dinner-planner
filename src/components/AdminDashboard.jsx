@@ -65,6 +65,22 @@ const AdminDashboard = () => {
         localStorage.removeItem('adminRole');
         window.location.href = '/admin/login';
     };
+    const handleDeleteRoom = async (roomId) => {
+        if (!window.confirm("정말 이 투표방을 삭제하시겠습니까? 관련 데이터가 모두 삭제됩니다.")) return;
+
+        try {
+            const token = localStorage.getItem("adminToken");
+            const config = { headers: { Authorization: `Bearer ${token}` } };
+            await axios.delete(`${API_BASE}/admin/rooms/${roomId}`, config);
+
+            // Refresh room list locally
+            setRooms(rooms.filter(r => r.roomId !== roomId));
+            alert("방이 성공적으로 삭제되었습니다.");
+        } catch (err) {
+            console.error("Delete failed", err);
+            alert("삭제에 실패했습니다.");
+        }
+    };
 
     if (loading) return <div style={{ padding: '20px' }}>Loading Stats...</div>;
 
@@ -124,6 +140,7 @@ const AdminDashboard = () => {
                                 <th style={thStyle}>최근 접속</th>
                                 <th style={thStyle}>멤버 수</th>
                                 <th style={thStyle}>식당 수</th>
+                                <th style={thStyle}>관리</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -144,7 +161,21 @@ const AdminDashboard = () => {
                                     <td style={tdStyle}>
                                         <span style={tagStyle}>
                                             🍴 {room.restaurants?.length || 0}개
+                                        <span style={tagStyle}>
+                                            🍴 {room.restaurants?.length || 0}개
                                         </span>
+                                    </td>
+                                    <td style={tdStyle}>
+                                        <button 
+                                            onClick={() => handleDeleteRoom(room.roomId)} 
+                                            style={{ 
+                                                padding: "6px 12px", borderRadius: "8px", border: "none", 
+                                                background: "#FF3B30", color: "white", cursor: "pointer", fontSize: "12px", fontWeight: "600"
+                                            }}
+                                        >
+                                            삭제
+                                        </button>
+                                    </td>
                                     </td>
                                 </tr>
                             ))}

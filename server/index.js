@@ -800,6 +800,24 @@ app.get("/api/admin/rooms", authMiddleware, async (req, res) => {
     }
 });
 
+// 11. Delete Room (Admin Only)
+app.delete("/api/admin/rooms/:roomId", authMiddleware, async (req, res) => {
+    try {
+        if (req.user.role !== "admin") {
+            return res.status(403).json({ error: "Admin only" });
+        }
+        const { roomId } = req.params;
+        const result = await Room.deleteOne({ roomId });
+        if (result.deletedCount === 0) {
+            return res.status(404).json({ error: "Room not found" });
+        }
+        res.json({ status: "ok", message: "Room deleted successfully" });
+    } catch (error) {
+        console.error("Delete room failed:", error);
+        res.status(500).json({ error: "Delete failed" });
+    }
+});
+
 // Start server
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Proxy server running on http://localhost:${PORT}`);
