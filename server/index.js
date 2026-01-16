@@ -503,12 +503,34 @@ app.post('/api/rooms', async (req, res) => {
 // 2. Get Room Data
 app.get("/api/rooms/:roomId", async (req, res) => {
     const { roomId } = req.params;
+    const { userId, nickname } = req.query;
     const data = await readRoom(roomId);
     if (!data) {
         return res.status(404).json({ error: "Room not found" });
     }
-    // Update last accessed time
-    await Room.updateOne({ roomId }, { $set: { lastAccessedAt: new Date() } }).exec();
+
+    try {
+        if (userId) {
+            const roomDoc = await Room.findOne({ roomId });
+            if (roomDoc) {
+                if (!roomDoc.participants) roomDoc.participants = [];
+                const idx = roomDoc.participants.findIndex(p => p.userId === userId);
+                if (idx > -1) {
+                    roomDoc.participants[idx].lastActive = new Date();
+                    if (nickname) roomDoc.participants[idx].nickname = nickname;
+                } else {
+                    roomDoc.participants.push({ userId, nickname: nickname || "익명", lastActive: new Date() });
+                }
+                roomDoc.lastAccessedAt = new Date();
+                await roomDoc.save();
+            }
+        } else {
+            await Room.updateOne({ roomId }, { $set: { lastAccessedAt: new Date() } }).exec();
+        }
+    } catch (err) {
+        console.error("Participant track failed:", err);
+    }
+
     res.json(data);
 });
 

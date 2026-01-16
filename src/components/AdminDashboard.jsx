@@ -147,7 +147,7 @@ const AdminDashboard = () => {
                             {rooms.map(room => (
                                 <tr key={room._id} style={{ borderBottom: '1px solid #f9f9f9' }}>
                                     <td style={tdStyle}>
-                                        <a href={`/${room.roomId}`} target="_blank" rel="noreferrer" style={{ color: '#007AFF', textDecoration: 'none', fontWeight: 'bold' }}>
+                                        <a href={`/?room=${room.roomId}`} target="_blank" rel="noreferrer" style={{ color: '#007AFF', textDecoration: 'none', fontWeight: 'bold' }}>
                                             {room.roomId.substring(0, 8)}...
                                         </a>
                                     </td>
@@ -155,7 +155,7 @@ const AdminDashboard = () => {
                                     <td style={tdStyle}>{formatTime(room.lastAccessedAt)}</td>
                                     <td style={tdStyle}>
                                         <span style={tagStyle}>
-                                            👥 {room.participants?.length || 0}명
+                                            👥 {room.participants?.filter(p => p.nickname && p.nickname !== "익명").length || 0}명
                                         </span>
                                     </td>
                                     <td style={tdStyle}>

@@ -81,11 +81,14 @@ function App() {
   const stopPolling = () => {
     if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
   };
-
   const fetchRoomData = async (id, silent = false) => {
     if (!silent) setIsLoading(true);
     try {
-      const res = await axios.get(`${API_BASE}/rooms/${id}`);
+      const params = {};
+      if (userId) params.userId = userId;
+      if (nickname) params.nickname = nickname;
+
+      const res = await axios.get(`${API_BASE}/rooms/${id}`, { params });
       setRestaurants(res.data.restaurants || []);
       setRoomError(null);
     } catch (err) {
