@@ -504,22 +504,26 @@ app.post('/api/rooms', async (req, res) => {
 app.get("/api/rooms/:roomId", async (req, res) => {
     const { roomId } = req.params;
     const { userId, nickname } = req.query;
-    const data = await readRoom(roomId);
-    if (!data) {
-        return res.status(404).json({ error: "Room not found" });
-    }
 
     try {
         if (userId) {
             const roomDoc = await Room.findOne({ roomId });
             if (roomDoc) {
                 if (!roomDoc.participants) roomDoc.participants = [];
-                const idx = roomDoc.participants.findIndex(p => p.userId === userId);
-                if (idx > -1) {
-                    roomDoc.participants[idx].lastActive = new Date();
-                    if (nickname) roomDoc.participants[idx].nickname = nickname;
+                // Find existing participant
+                const participant = roomDoc.participants.find(p => p.userId === userId);
+
+                if (participant) {
+                    participant.lastActive = new Date();
+                    if (nickname && nickname !== "null" && nickname !== "undefined" && nickname !== "") {
+                        participant.nickname = nickname;
+                    }
                 } else {
-                    roomDoc.participants.push({ userId, nickname: nickname || "익명", lastActive: new Date() });
+                    roomDoc.participants.push({
+                        userId,
+                        nickname: (nickname && nickname !== "null" && nickname !== "undefined" && nickname !== "") ? nickname : "익명",
+                        lastActive: new Date()
+                    });
                 }
                 roomDoc.lastAccessedAt = new Date();
                 await roomDoc.save();
@@ -531,6 +535,10 @@ app.get("/api/rooms/:roomId", async (req, res) => {
         console.error("Participant track failed:", err);
     }
 
+    const data = await readRoom(roomId);
+    if (!data) {
+        return res.status(404).json({ error: "Room not found" });
+    }
     res.json(data);
 });
 

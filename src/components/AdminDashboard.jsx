@@ -154,9 +154,14 @@ const AdminDashboard = () => {
                                     <td style={tdStyle}>{formatTime(room.createdAt)}</td>
                                     <td style={tdStyle}>{formatTime(room.lastAccessedAt)}</td>
                                     <td style={tdStyle}>
-                                        <span style={tagStyle}>
-                                            👥 {room.participants?.filter(p => p.nickname && p.nickname !== "익명").length || 0}명
-                                        </span>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                            <span style={tagStyle}>
+                                                👥 총 {room.participants?.length || 0}명
+                                            </span>
+                                            <span style={{ ...tagStyle, background: '#e1f5fe', color: '#0288d1' }}>
+                                                👤 닉네임 {room.participants?.filter(p => p.nickname && p.nickname !== "익명").length || 0}명
+                                            </span>
+                                        </div>
                                     </td>
                                     <td style={tdStyle}>
                                         <span style={tagStyle}>
