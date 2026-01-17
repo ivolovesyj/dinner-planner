@@ -51,10 +51,24 @@ function LadderGame({ roomData, onTrigger, onReset, onClose, nickname }) {
         );
         if (candidates.length < 2) {
             context.clearRect(0, 0, canvas.width, canvas.height);
-            context.fillStyle = '#adb5bd';
-            context.font = '14px sans-serif';
-            context.textAlign = 'center';
-            context.fillText('식당 정보를 확인하고 있습니다...', canvas.width / 2, canvas.height / 2);
+            context.fillStyle = '#ff4757';
+            context.font = '12px monospace';
+            context.textAlign = 'left';
+            
+            // Debug Info
+            const debugInfo = [
+                "⚠️ Debug Info:",
+                `Rests: ${(roomData.restaurants || []).length}`,
+                `Cands: ${data.candidateIds?.length || 0}`,
+                `Matches: ${candidates.length}`,
+                `R[0]: ${(roomData.restaurants?.[0]?.id || '').substring(0,8)}`,
+                `C[0]: ${(data.candidateIds?.[0] || '').substring(0,8)}`,
+                "잠시만 기다려주세요..."
+            ];
+            
+            debugInfo.forEach((text, i) => {
+                context.fillText(text, 20, 100 + (i * 20));
+            });
             return;
         }
 
