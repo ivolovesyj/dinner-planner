@@ -316,30 +316,48 @@ function LadderGame({ roomData, onTrigger, onReset, onClose, onComplete, apiBase
         const shareUrl = window.location.href;
         const imageUrl = `${window.location.origin}/og-image-v3.png`;
 
+        // 디버깅: SDK 상태 확인
+        console.log('🔍 Kakao SDK 상태:', {
+            exists: !!window.Kakao,
+            initialized: window.Kakao?.isInitialized?.()
+        });
+
         // 카카오 SDK가 초기화되어 있으면 카카오톡 공유
         if (window.Kakao && window.Kakao.isInitialized()) {
-            window.Kakao.Share.sendDefault({
-                objectType: 'feed',
-                content: {
-                    title: '🏆 오늘의 맛집이 결정되었습니다!',
-                    description: `"${winnerName}"가 사다리 타기에서 당첨되었어요! 🍲`,
-                    imageUrl: imageUrl,
-                    link: {
-                        webUrl: shareUrl,
-                        mobileWebUrl: shareUrl,
+            console.log('📤 Kakao Share 시도...');
+            try {
+                window.Kakao.Share.sendDefault({
+                    objectType: 'feed',
+                    content: {
+                        title: '🏆 오늘의 맛집이 결정되었습니다!',
+                        description: `"${winnerName}"가 사다리 타기에서 당첨되었어요! 🍲`,
+                        imageUrl: imageUrl,
+                        link: {
+                            webUrl: shareUrl,
+                            mobileWebUrl: shareUrl,
+                        },
                     },
-                },
-                buttons: [{
-                    title: '투표 페이지 보기',
-                    link: {
-                        webUrl: shareUrl,
-                        mobileWebUrl: shareUrl,
-                    },
-                }],
-            });
+                    buttons: [{
+                        title: '투표 페이지 보기',
+                        link: {
+                            webUrl: shareUrl,
+                            mobileWebUrl: shareUrl,
+                        },
+                    }],
+                });
+                console.log('✅ Kakao Share 호출 완료');
+            } catch (err) {
+                console.error('❌ Kakao Share 에러:', err);
+                fallbackShare(winnerName, shareUrl);
+            }
+        } else {
+            console.log('⚠️ Kakao SDK 미초기화, fallback 사용');
+            fallbackShare(winnerName, shareUrl);
         }
-        // 카카오 SDK 없으면 Web Share API 시도
-        else if (navigator.share) {
+    };
+
+    const fallbackShare = (winnerName, shareUrl) => {
+        if (navigator.share) {
             navigator.share({
                 title: '뭐먹을래? 사다리 타기 결과',
                 text: `🎉 오늘의 맛집은 "${winnerName}"입니다! 🍲`,
@@ -347,9 +365,7 @@ function LadderGame({ roomData, onTrigger, onReset, onClose, onComplete, apiBase
             }).catch(err => {
                 console.log('공유 취소됨:', err);
             });
-        }
-        // 둘 다 안되면 클립보드 복사
-        else {
+        } else {
             const shareText = `🎉 [뭐먹을래? 사다리 타기 결과]\n오늘의 맛집은 "${winnerName}"입니다! 🍲\n\n👉 ${shareUrl}`;
             navigator.clipboard.writeText(shareText).then(() => {
                 alert('공유 링크가 클립보드에 복사되었습니다!');
