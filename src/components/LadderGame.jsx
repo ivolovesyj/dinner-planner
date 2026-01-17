@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './LadderGame.css';
 import { Share, RefreshCw, X, Globe, Trophy, Play } from 'lucide-react';
 
-const LadderIcon = ({ size = 20, style = {} }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={style}>
+const LadderIcon = ({ size = 20, style = {}, color = "currentColor" }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={style}>
         <path d="M8 3v18" />
         <path d="M16 3v18" />
         <path d="M8 7h8" />
@@ -47,7 +47,7 @@ function LadderGame({ roomData, onTrigger, onReset, onClose, nickname }) {
 
         // Match candidates by looking at both .id and ._id for robustness
         const candidates = (roomData.restaurants || []).filter(r =>
-            data.candidateIds?.some(cid => cid === r.id || cid === r._id)
+            data.candidateIds?.some(cid => String(cid) === String(r.id) || String(cid) === String(r._id))
         );
         if (candidates.length < 2) {
             context.clearRect(0, 0, canvas.width, canvas.height);
@@ -122,7 +122,7 @@ function LadderGame({ roomData, onTrigger, onReset, onClose, nickname }) {
             context.fillStyle = '#ff4757';
             context.beginPath(); context.arc(last.x, last.y, 6, 0, Math.PI * 2); context.fill();
         }
-    }, [roomData?.restaurants]);
+    }, [roomData]); // Depend on full roomData to ensure updates trigger re-draw
 
     const startLadder = useCallback(async () => {
         if (!ladderData || isAnimating) return;
@@ -208,7 +208,7 @@ function LadderGame({ roomData, onTrigger, onReset, onClose, nickname }) {
                 </button>
 
                 <div className="ladder-header">
-                    <h2><LadderIcon size={22} style={{ verticalAlign: 'middle', marginRight: '8px', color: 'var(--ios-blue)' }} />운명의 사다리 타기</h2>
+                    <h2><LadderIcon size={22} color="#3392ff" style={{ verticalAlign: 'middle', marginRight: '8px' }} />운명의 사다리 타기</h2>
                 </div>
 
                 {showSelector ? (

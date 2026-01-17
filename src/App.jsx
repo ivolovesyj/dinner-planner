@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import './App.css';
-import { Search, Loader2, Share, Users, RefreshCw, Hash } from 'lucide-react';
+import { Search, Loader2, Share, Users, RefreshCw } from 'lucide-react';
 import RestaurantCard from './components/RestaurantCard';
 import LadderGame from './components/LadderGame';
 import NicknameModal from './components/NicknameModal'; // Import Modal
@@ -11,8 +11,8 @@ import Footer from './components/Footer'; // Import Footer
 import { logEvent, logPageView } from './utils/ga4'; // GA4 Imports
 import { Milestone, Trophy } from 'lucide-react'; // More icons
 
-const LadderIcon = ({ size = 20, style = {} }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={style}>
+const LadderIcon = ({ size = 20, style = {}, color = "currentColor" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={style}>
     <path d="M8 3v18" />
     <path d="M16 3v18" />
     <path d="M8 7h8" />
@@ -388,7 +388,7 @@ function App() {
           <div className="restaurant-list">
             <div className="feature-bar">
               <button className={`feature-btn ${showLadder ? 'active' : ''}`} onClick={() => setShowLadder(!showLadder)}>
-                <LadderIcon size={16} style={{ marginRight: '6px' }} /> 사다리 타기
+                <LadderIcon size={16} color={showLadder ? "#fff" : "#4e5968"} style={{ marginRight: '6px' }} /> 사다리 타기
               </button>
               <button className="feature-btn disabled">🗺️ 지도 보기</button>
             </div>
