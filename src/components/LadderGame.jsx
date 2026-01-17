@@ -17,6 +17,7 @@ function LadderGame({ roomData, onTrigger, onReset, onClose, nickname }) {
     const [isFinished, setIsFinished] = useState(false);
     const [isAnimating, setIsAnimating] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
+    const [isResetting, setIsResetting] = useState(false);
     const isValidGame = roomData?.ladderGame && roomData.ladderGame.candidateIds && roomData.ladderGame.candidateIds.length >= 2;
     const [showSelector, setShowSelector] = useState(!isValidGame);
     const [selectedIds, setSelectedIds] = useState([]);
@@ -31,15 +32,27 @@ function LadderGame({ roomData, onTrigger, onReset, onClose, nickname }) {
         (roomData.restaurants || []).find(r => String(r.id) === String(id) || String(r._id) === String(id))
     ).filter(Boolean) : [];
 
+    // reset wrapper to show loading state
+    const handleReset = useCallback(async () => {
+        setIsResetting(true);
+        // Add a small delay for better UX if the server is too fast (prevents flickering)
+        await new Promise(r => setTimeout(r, 600));
+        await onReset();
+        // State will be reset when component re-renders or unmounts, or we can clear it here if needed
+        // But since onReset usually causes roomData update, we rely on useEffect below to stop loading if needed.
+        // Actually, onReset just triggers parent update. UseEffect will clear selection.
+        setIsResetting(false);
+    }, [onReset]);
+
     // Smart Close Logic
     const handleClose = useCallback(() => {
         // If game is playing (has data but not finished), reset it.
         // If game is completed or not started, just close.
         if (ladderData && ladderData.status !== 'completed' && !isFinished) {
-            onReset();
+            handleReset();
         }
         onClose();
-    }, [ladderData, isFinished, onReset, onClose]);
+    }, [ladderData, isFinished, handleReset, onClose]);
 
     // Check for completed status on mount/update
     useEffect(() => {
@@ -386,8 +399,8 @@ function LadderGame({ roomData, onTrigger, onReset, onClose, nickname }) {
                                     <button className="btn btn-kakao-share" onClick={handleShareResult}>
                                         카카오톡 공유하기
                                     </button>
-                                    <button className="btn btn-ladder-reset" onClick={onReset}>
-                                        다시 시작하기
+                                    <button className="btn btn-ladder-reset" onClick={handleReset} disabled={isResetting}>
+                                        {isResetting ? '다시 시작하는 중...' : '다시 시작하기'}
                                     </button>
                                 </div>
                             </div>

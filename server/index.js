@@ -558,15 +558,31 @@ app.post("/api/rooms/:roomId/ladder/trigger", async (req, res) => {
         // Generate Ladder Logic on Server for consistency
         const cols = candidateIds.length;
         const bridges = [];
-        let bridgeY = 70;
-        const canvasHeight = 450; // Reference height like in preview
+        const canvasHeight = 450;
+        const minBridgeY = 70;
+        const maxBridgeY = canvasHeight - 80;
 
-        while (bridgeY < canvasHeight - 100) {
-            bridgeY += 35 + Math.random() * 40;
-            if (bridgeY >= canvasHeight - 80) break;
-            const col = Math.floor(Math.random() * (cols - 1));
-            bridges.push({ colFrom: col, colTo: col + 1, y: bridgeY });
+        // 1. Guaranteed Connectivity: Force at least 2 bridges for every adjacent column pair
+        for (let i = 0; i < cols - 1; i++) {
+            // Add 2 guaranteed bridges per gap
+            for (let k = 0; k < 2; k++) {
+                const y = minBridgeY + Math.random() * (maxBridgeY - minBridgeY);
+                bridges.push({ colFrom: i, colTo: i + 1, y });
+            }
         }
+
+        // 2. Random Scatter: Add extra random bridges for complexity
+        const extraBridgesCount = Math.floor(cols * 1.5);
+        for (let i = 0; i < extraBridgesCount; i++) {
+            const col = Math.floor(Math.random() * (cols - 1));
+            const y = minBridgeY + Math.random() * (maxBridgeY - minBridgeY);
+            // Simple overlap check: don't add if very close to existing bridge on same col
+            if (!bridges.some(b => b.colFrom === col && Math.abs(b.y - y) < 10)) {
+                bridges.push({ colFrom: col, colTo: col + 1, y });
+            }
+        }
+
+        // 3. Sort by Y (Critical for traversal logic)
         bridges.sort((a, b) => a.y - b.y);
 
         const startCol = Math.floor(Math.random() * cols);
