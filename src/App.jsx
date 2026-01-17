@@ -9,6 +9,17 @@ import AdminLogin from './components/AdminLogin';
 import AdminDashboard from './components/AdminDashboard';
 import Footer from './components/Footer'; // Import Footer
 import { logEvent, logPageView } from './utils/ga4'; // GA4 Imports
+import { Milestone, Trophy } from 'lucide-react'; // More icons
+
+const LadderIcon = ({ size = 20, style = {} }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={style}>
+    <path d="M8 3v18" />
+    <path d="M16 3v18" />
+    <path d="M8 7h8" />
+    <path d="M8 12h8" />
+    <path d="M8 17h8" />
+  </svg>
+);
 
 function App() {
   // --- Simple Router ---
@@ -377,7 +388,7 @@ function App() {
           <div className="restaurant-list">
             <div className="feature-bar">
               <button className={`feature-btn ${showLadder ? 'active' : ''}`} onClick={() => setShowLadder(!showLadder)}>
-                <Hash size={16} style={{ marginRight: '6px' }} /> 사다리 타기
+                <LadderIcon size={16} style={{ marginRight: '6px' }} /> 사다리 타기
               </button>
               <button className="feature-btn disabled">🗺️ 지도 보기</button>
             </div>

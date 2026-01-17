@@ -2,6 +2,16 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './LadderGame.css';
 import { Share, RefreshCw, X, Globe, Trophy, Play } from 'lucide-react';
 
+const LadderIcon = ({ size = 20, style = {} }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={style}>
+        <path d="M8 3v18" />
+        <path d="M16 3v18" />
+        <path d="M8 7h8" />
+        <path d="M8 12h8" />
+        <path d="M8 17h8" />
+    </svg>
+);
+
 function LadderGame({ roomData, onTrigger, onReset, onClose, nickname }) {
     const canvasRef = useRef(null);
     const [isFinished, setIsFinished] = useState(false);
@@ -35,13 +45,16 @@ function LadderGame({ roomData, onTrigger, onReset, onClose, nickname }) {
         const canvas = canvasRef.current;
         if (!canvas || !data) return;
 
-        const candidates = (roomData.restaurants || []).filter(r => data.candidateIds?.includes(r.id));
-        console.log("Drawing ladder with candidates:", candidates.length);
+        // Match candidates by looking at both .id and ._id for robustness
+        const candidates = (roomData.restaurants || []).filter(r =>
+            data.candidateIds?.some(cid => cid === r.id || cid === r._id)
+        );
         if (candidates.length < 2) {
             context.clearRect(0, 0, canvas.width, canvas.height);
-            context.fillStyle = '#666';
+            context.fillStyle = '#adb5bd';
+            context.font = '14px sans-serif';
             context.textAlign = 'center';
-            context.fillText('참여 식당 정보를 불러오는 중...', canvas.width / 2, canvas.height / 2);
+            context.fillText('식당 정보를 확인하고 있습니다...', canvas.width / 2, canvas.height / 2);
             return;
         }
 
@@ -195,7 +208,7 @@ function LadderGame({ roomData, onTrigger, onReset, onClose, nickname }) {
                 </button>
 
                 <div className="ladder-header">
-                    <h2>운명의 사다리 타기</h2>
+                    <h2><LadderIcon size={22} style={{ verticalAlign: 'middle', marginRight: '8px', color: 'var(--ios-blue)' }} />운명의 사다리 타기</h2>
                 </div>
 
                 {showSelector ? (
@@ -223,12 +236,7 @@ function LadderGame({ roomData, onTrigger, onReset, onClose, nickname }) {
                     </div>
                 ) : (
                     <div id="game-view" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                        {ladderData && (
-                            <div className="ladder-sync-notice">
-                                <Globe size={14} style={{ marginRight: '6px' }} />
-                                <span>{ladderData.triggeredBy || '익명'}님이 사다리를 준비했습니다!</span>
-                            </div>
-                        )}
+                        {/* ladder-sync-notice removed per user request */}
 
                         <div className="ladder-canvas-wrapper">
                             <canvas ref={canvasRef} id="ladderCanvas" width="340" height="420" className="ladder-canvas"></canvas>
