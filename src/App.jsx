@@ -3,7 +3,6 @@ import axios from 'axios';
 import './App.css';
 import { Search, Loader2, Share, Users, RefreshCw } from 'lucide-react';
 import RestaurantCard from './components/RestaurantCard';
-import LadderGame from './components/LadderGame';
 import NicknameModal from './components/NicknameModal'; // Import Modal
 import AdminLogin from './components/AdminLogin';
 import AdminDashboard from './components/AdminDashboard';
@@ -20,7 +19,6 @@ function App() {
   const [roomData, setRoomData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [inputVal, setInputVal] = useState("");
-  const [showLadder, setShowLadder] = useState(false);
 
   const [roomId, setRoomId] = useState(null);
   const [roomError, setRoomError] = useState(null);
@@ -111,14 +109,6 @@ function App() {
       if (res.data) {
         setRoomData(res.data);
         setRestaurants(res.data.restaurants || []);
-
-        // Auto-show ladder if a game is already in progress/exists in DB
-        // ONLY if it wasn't already shown (to avoid popping up repeatedly if closed)
-        if (res.data.ladderGame && !showLadder) {
-          // We might want to auto-show only if the game is fresh or specifically triggered?
-          // For now, let's keep it but ensure roomData is there first.
-          setShowLadder(true);
-        }
       }
 
       setRoomError(null);
@@ -248,27 +238,6 @@ function App() {
     }
   };
 
-  const handleLadderTrigger = async (candidateIds) => {
-    try {
-      await axios.post(`${API_BASE}/rooms/${roomId}/ladder/trigger`, {
-        candidateIds,
-        nickname
-      });
-      fetchRoomData(roomId, true);
-    } catch (err) {
-      alert("사다리 생성 실패");
-    }
-  };
-
-  const handleLadderReset = async () => {
-    try {
-      await axios.delete(`${API_BASE}/rooms/${roomId}/ladder`);
-      fetchRoomData(roomId, true);
-    } catch (err) {
-      alert("리셋 실패");
-    }
-  };
-
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href);
     alert("링크가 복사되었습니다! 친구들에게 공유하세요 😆");
@@ -382,25 +351,12 @@ function App() {
           </div>
         ) : (
           <div className="restaurant-list">
-            <div className="feature-bar">
-              <button className={`feature-btn ${showLadder ? 'active' : ''}`} onClick={() => setShowLadder(!showLadder)}>🪜 사다리 타기</button>
-              <button className="feature-btn disabled">🗺️ 지도 보기</button>
-            </div>
             {[...restaurants].sort((a, b) => ((b.likes || 0) - (b.dislikes || 0)) - ((a.likes || 0) - (a.dislikes || 0))).map((rest, index, array) => {
               const score = (rest.likes || 0) - (rest.dislikes || 0);
               const rank = array.findIndex(r => ((r.likes || 0) - (r.dislikes || 0)) === score) + 1;
               return <RestaurantCard key={rest.id} data={rest} rank={rank} userId={userId} onVote={handleVote} onDelete={handleDeleteRestaurant} />;
             })}
           </div>
-        )}
-        {showLadder && (
-          <LadderGame
-            roomData={roomData || { restaurants }}
-            onTrigger={handleLadderTrigger}
-            onReset={handleLadderReset}
-            onClose={() => setShowLadder(false)}
-            nickname={nickname}
-          />
         )}
       </main>
       {(showNicknameModal || !nickname) && (
