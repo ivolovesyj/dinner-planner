@@ -279,6 +279,17 @@ function App() {
     }
   };
 
+  // Optimistic update for ladder completion
+  const handleLadderComplete = () => {
+    setRoomData(prev => {
+      if (!prev || !prev.ladderGame) return prev;
+      return {
+        ...prev,
+        ladderGame: { ...prev.ladderGame, status: 'completed' }
+      };
+    });
+  };
+
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href);
     alert("링크가 복사되었습니다! 친구들에게 공유하세요 😆");
@@ -411,6 +422,8 @@ function App() {
             onTrigger={handleLadderTrigger}
             onReset={handleLadderReset}
             onClose={() => setShowLadder(false)}
+            onComplete={handleLadderComplete}
+            apiBase={API_BASE}
             nickname={nickname}
           />
         )}

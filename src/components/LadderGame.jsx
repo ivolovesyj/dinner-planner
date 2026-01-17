@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import axios from 'axios';
 import './LadderGame.css';
 import { X } from 'lucide-react';
 
@@ -12,7 +13,7 @@ const LadderIcon = ({ size = 20, style = {}, color = "currentColor" }) => (
     </svg>
 );
 
-function LadderGame({ roomData, onTrigger, onReset, onClose, nickname }) {
+function LadderGame({ roomData, onTrigger, onReset, onClose, onComplete, apiBase, nickname }) {
     const canvasRef = useRef(null);
     const [isFinished, setIsFinished] = useState(false);
     const [isAnimating, setIsAnimating] = useState(false);
@@ -220,12 +221,18 @@ function LadderGame({ roomData, onTrigger, onReset, onClose, nickname }) {
         setIsAnimating(false);
         setIsFinished(true);
 
-        // Mark as completed on server
-        if (roomData.roomId) {
-            // We use fetch here to avoid needing to pass axios or define it
-            fetch(`/api/rooms/${roomData.roomId}/ladder/complete`, { method: 'PATCH' }).catch(console.error);
+        // Mark as completed on server using proper API URL
+        if (roomData.roomId && apiBase) {
+            try {
+                await axios.patch(`${apiBase}/rooms/${roomData.roomId}/ladder/complete`);
+                // Optimistically update parent state
+                if (onComplete) onComplete();
+            } catch (err) {
+                console.error('Failed to mark ladder complete:', err);
+                // Still show result locally even if server call fails
+            }
         }
-    }, [ladderData, isAnimating, drawStaticLadder, roomData.roomId]);
+    }, [ladderData, isAnimating, drawStaticLadder, roomData.roomId, apiBase, onComplete]);
 
     // View Switching Logic
     useEffect(() => {
