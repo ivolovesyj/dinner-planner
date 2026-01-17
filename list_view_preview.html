@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>뭐먹을래? 리스트 접기/펴기 시안</title>
+    <style>
+        :root {
+            --primary: #3f429f;
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --text-main: #1a1f36;
+            --text-sub: #4e5968;
+            --accent: #ff4757;
+            --gold: #ff9f43;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Pretendard', -apple-system, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+        }
+
+        header {
+            background: #fff;
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        header h1 {
+            font-size: 1.2rem;
+            margin: 0;
+            color: var(--primary);
+            font-weight: 800;
+        }
+
+        .container {
+            padding: 16px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        /* List Item (Accordion Style) */
+        .list-item {
+            background: #fff;
+            border-radius: 18px;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid transparent;
+        }
+
+        .list-item.expanded {
+            border-color: var(--primary);
+            box-shadow: 0 8px 24px rgba(63, 66, 159, 0.15);
+        }
+
+        /* Folded Header Area */
+        .item-header {
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .thumbnail {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            background: #eee;
+            background-size: cover;
+            background-position: center;
+            flex-shrink: 0;
+        }
+
+        .item-basic-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .item-basic-info h3 {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 700;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .item-basic-info p {
+            margin: 2px 0 0 0;
+            font-size: 0.8rem;
+            color: var(--text-sub);
+        }
+
+        .vote-summary {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .vote-summary .badge {
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+
+        .vote-summary .like {
+            background: #eef2ff;
+            color: var(--primary);
+        }
+
+        .vote-summary .dislike {
+            background: #fff1f0;
+            color: var(--accent);
+        }
+
+        .chevron {
+            color: #ccc;
+            transition: transform 0.3s;
+        }
+
+        .expanded .chevron {
+            transform: rotate(180deg);
+            color: var(--primary);
+        }
+
+        /* Expanded Content Area */
+        .item-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease-out, padding 0.3s;
+            background: #fafafa;
+            border-top: 1px solid #f1f3f5;
+        }
+
+        .expanded .item-content {
+            max-height: 1000px;
+            padding-bottom: 20px;
+        }
+
+        .content-inner {
+            padding: 16px;
+        }
+
+        .full-img {
+            width: 100%;
+            aspect-ratio: 16/9;
+            border-radius: 12px;
+            background: #eee;
+            background-size: cover;
+            margin-bottom: 16px;
+        }
+
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 16px;
+        }
+
+        .tag {
+            font-size: 0.75rem;
+            color: var(--primary);
+            background: #fff;
+            border: 1px solid #eef2ff;
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+
+        .menu-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            background: #fff;
+            border-radius: 12px;
+            padding: 12px;
+            border: 1px solid #eee;
+        }
+
+        .menu-item {
+            font-size: 0.85rem;
+            padding: 6px 0;
+            border-bottom: 1px solid #f8f9fa;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .menu-item:last-child {
+            border-bottom: none;
+        }
+
+        .dot {
+            color: var(--primary);
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 14px;
+            border-radius: 12px;
+            border: none;
+            font-weight: 700;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+
+        .btn-like {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-dislike {
+            background: #e9ecef;
+            color: var(--text-sub);
+        }
+
+        /* Rank Badge Overlay */
+        .rank-medal {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            color: #fff;
+            z-index: 5;
+        }
+
+        .rank-1 {
+            background: var(--gold);
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>금요일 점심 뭐먹지?</h1>
+    </header>
+
+    <div class="container">
+        <!-- List Item 1 -->
+        <div class="list-item expanded" id="item-1">
+            <div class="item-header" onclick="toggleItem('item-1')">
+                <div class="thumbnail"
+                    style="background-image: url('https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyMzExMDlfOTYg%2FMjAyMzExMDlfOTYg.U9Z_q_ZQ9U9Z_q_ZQ9U9Z_q_ZQ9U9Z_q_ZQ9U9Z_q_ZQg.JPEG%2FIMG_3412.jpg')">
+                    <div class="rank-medal rank-1">1</div>
+                </div>
+                <div class="item-basic-info">
+                    <h3>일지다이닝</h3>
+                    <p>을지로3가 • 일식</p>
+                </div>
+                <div class="vote-summary">
+                    <span class="badge like">👍 12</span>
+                </div>
+                <div class="chevron">▼</div>
+            </div>
+            <div class="item-content">
+                <div class="content-inner">
+                    <div class="full-img"
+                        style="background-image: url('https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyMzExMDlfOTYg%2FMjAyMzExMDlfOTYg.U9Z_q_ZQ9U9Z_q_ZQ9U9Z_q_ZQ9U9Z_q_ZQ9U9Z_q_ZQg.JPEG%2FIMG_3412.jpg')">
+                    </div>
+                    <div class="tags">
+                        <span class="tag">#카이센동</span>
+                        <span class="tag">#일식맛집</span>
+                        <span class="tag">#분위기좋은</span>
+                    </div>
+                    <div class="menu-list">
+                        <div class="menu-item"><span class="dot">•</span> 고등어소바 (18,000원)</div>
+                        <div class="menu-item"><span class="dot">•</span> 일지카이센동 (25,000원)</div>
+                        <div class="menu-item"><span class="dot">•</span> 후토마키 (22,000원)</div>
+                    </div>
+                    <div class="actions">
+                        <button class="action-btn btn-like">여기 좋다! 가자!</button>
+                        <button class="action-btn btn-dislike">여긴 별로.. 패스!</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- List Item 2 -->
+        <div class="list-item" id="item-2">
+            <div class="item-header" onclick="toggleItem('item-2')">
+                <div class="thumbnail"
+                    style="background-image: url('https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyMzAzMDhfMjQz%2FMjAyMzAzMDhfMjQz.U9Z_q_ZQ9U9Z_q_ZQ9U9Z_q_ZQ9U9Z_q_ZQ9U9Z_q_ZQg.JPEG%2FIMG_1234.jpg')">
+                </div>
+                <div class="item-basic-info">
+                    <h3>우육미</h3>
+                    <p>동대문역 • 한식</p>
+                </div>
+                <div class="vote-summary">
+                    <span class="badge like">👍 8</span>
+                    <span class="badge dislike">👎 1</span>
+                </div>
+                <div class="chevron">▼</div>
+            </div>
+            <div class="item-content">
+                <div class="content-inner">
+                    <p style="font-size: 0.9rem; color:#666; line-height: 1.5;">여기에 상세 설명이나 더 많은 이미지가 들어갑니다.</p>
+                    <div class="actions">
+                        <button class="action-btn btn-like">좋아요</button>
+                        <button class="action-btn btn-dislike">별로예요</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- List Item 3 -->
+        <div class="list-item" id="item-3">
+            <div class="item-header" onclick="toggleItem('item-3')">
+                <div class="thumbnail"></div>
+                <div class="item-basic-info">
+                    <h3>진옥화할매닭한마리</h3>
+                    <p>종로5가 • 한식</p>
+                </div>
+                <div class="vote-summary">
+                    <span class="badge like">👍 5</span>
+                </div>
+                <div class="chevron">▼</div>
+            </div>
+            <div class="item-content">
+                <div class="content-inner">
+                    <p>상세 내용...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleItem(id) {
+            const item = document.getElementById(id);
+            const isExpanded = item.classList.contains('expanded');
+
+            // Optional: Close others (Accordion mode)
+            // document.querySelectorAll('.list-item').forEach(el => el.classList.remove('expanded'));
+
+            if (isExpanded) {
+                item.classList.remove('expanded');
+            } else {
+                item.classList.add('expanded');
+            }
+        }
+    </script>
+</body>
+
+</html>

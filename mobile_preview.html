@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>뭐먹을래? 모바일 기능 미리보기</title>
+    <style>
+        :root {
+            --primary: #3f429f;
+            --secondary: #ff4757;
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-main: #1a1f36;
+            --text-sub: #4e5968;
+            --safe-bottom: env(safe-area-inset-bottom, 20px);
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Pretendard', -apple-system, system-ui, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* Header */
+        header {
+            background: #fff;
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        header h1 {
+            font-size: 1.2rem;
+            margin: 0;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .history-trigger {
+            font-size: 1.5rem;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+
+        /* View Mode Tab */
+        .tabs {
+            display: flex;
+            background: #fff;
+            padding: 10px 20px;
+            gap: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 10px;
+            border-radius: 12px;
+            border: none;
+            background: #f1f3f5;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #adb5bd;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            background: var(--primary);
+            color: #fff;
+            box-shadow: 0 4px 10px rgba(63, 66, 159, 0.2);
+        }
+
+        /* Main Scroll Area */
+        main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            padding-bottom: 100px;
+        }
+
+        /* Restaurant Cards Layouts */
+        .card-container {
+            display: grid;
+            gap: 16px;
+        }
+
+        /* Grid (Frame) Mode */
+        .card-container.grid {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .card-container.list {
+            grid-template-columns: 1fr;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            transition: transform 0.2s;
+        }
+
+        .card:active {
+            transform: scale(0.98);
+        }
+
+        .card-img {
+            width: 100%;
+            aspect-ratio: 1/1;
+            background: #eee;
+            position: relative;
+        }
+
+        .list .card {
+            flex-direction: row;
+            height: 100px;
+        }
+
+        .list .card-img {
+            width: 100px;
+            aspect-ratio: 1/1;
+        }
+
+        .card-info {
+            padding: 12px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .card-info h3 {
+            margin: 0 0 4px 0;
+            font-size: 0.95rem;
+            font-weight: 700;
+        }
+
+        .card-info p {
+            margin: 0;
+            font-size: 0.8rem;
+            color: var(--text-sub);
+        }
+
+        .rank-tag {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 4px 8px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: #ff9f43;
+            z-index: 10;
+        }
+
+        /* Floating Action Button (Ladder) */
+        .fab {
+            position: fixed;
+            bottom: calc(var(--safe-bottom) + 20px);
+            right: 20px;
+            background: var(--secondary);
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 30px;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 16px rgba(255, 71, 87, 0.4);
+            z-index: 500;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .tie-alert {
+            position: fixed;
+            bottom: calc(var(--safe-bottom) + 90px);
+            right: 20px;
+            background: #fff;
+            padding: 8px 16px;
+            border-radius: 12px;
+            border: 1px solid #ff4757;
+            color: #ff4757;
+            font-size: 0.8rem;
+            font-weight: bold;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-5px);
+            }
+        }
+
+        /* History Drawer */
+        .drawer-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            display: none;
+        }
+
+        .drawer {
+            position: fixed;
+            top: 0;
+            left: -85%;
+            width: 85%;
+            height: 100%;
+            background: #fff;
+            z-index: 1001;
+            transition: left 0.3s cubic-bezier(0, 0, 0.2, 1);
+            padding: 30px 20px;
+            overflow-y: auto;
+        }
+
+        .drawer.open {
+            left: 0;
+        }
+
+        .drawer-header {
+            margin-bottom: 24px;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 12px;
+        }
+
+        .history-item {
+            padding: 16px;
+            border-radius: 16px;
+            background: #f8f9fa;
+            margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .history-item .title {
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .history-item .meta {
+            font-size: 0.75rem;
+            color: #adb5bd;
+        }
+
+        /* Ladder Game Screen */
+        .screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #fff;
+            z-index: 2000;
+            display: none;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        .screen-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .ladder-canvas-container {
+            flex: 1;
+            background: #f1f3f5;
+            border-radius: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Map Section (Mobile UI) */
+        .map-section {
+            background: #fff;
+            border-radius: 20px;
+            overflow: hidden;
+            margin-top: 10px;
+            box-shadow: var(--shadow);
+            height: 200px;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .map-section img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .map-label {
+            position: absolute;
+            bottom: 15px;
+            left: 15px;
+            background: #fff;
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Naver Map Mock View */
+        .map-full {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #e9ecef;
+            z-index: 1500;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Header -->
+    <header>
+        <button class="history-trigger" id="history-btn">☰</button>
+        <h1>뭐먹을래?</h1>
+        <div id="user-initials"
+            style="background: var(--primary); color: #fff; width: 32px; height: 32px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.8rem;">
+            민준</div>
+    </header>
+
+    <!-- View Toggle Tabs -->
+    <div class="tabs">
+        <button class="tab active" id="tab-grid">🖼️ 액자형</button>
+        <button class="tab" id="tab-list">📖 바형</button>
+    </div>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Map Preview -->
+        <div class="map-section" id="map-preview">
+            <img
+                src="https://images.unsplash.com/photo-1548345666-a51270560205?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80">
+            <div class="map-label">📍 내 주변 지도에서 보기</div>
+        </div>
+
+        <div
+            style="margin: 20px 0 10px 0; font-size: 0.9rem; font-weight: bold; display: flex; align-items: center; gap: 6px;">
+            <span>후보지 (4)</span>
+            <span
+                style="background: #fff1f0; color: #ff4d4f; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px;">공동
+                1위 발생!</span>
+        </div>
+
+        <!-- Cards -->
+        <div class="card-container grid" id="card-container">
+            <div class="card">
+                <div class="rank-tag">🥇 1위 (Tie)</div>
+                <div class="card-img"
+                    style="background-image: url('https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyMzExMDlfOTYg%2FMjAyMzExMDlfOTYg.U9Z_q_ZQ9U9Z_q_ZQ9U9Z_q_ZQ9U9Z_q_ZQ9U9Z_q_ZQg.U9Z_q_ZQ9U9Z_q_ZQ9U9Z_q_ZQ9U9Z_q_ZQ9U9Z_q_ZQg.JPEG%2FIMG_3412.jpg'); background-size: cover;">
+                </div>
+                <div class="card-info">
+                    <h3>일지다이닝</h3>
+                    <p>을지로3가 • 일식</p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="rank-tag">🥇 1위 (Tie)</div>
+                <div class="card-img"
+                    style="background-image: url('https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyMzAzMDhfMjQz%2FMjAyMzAzMDhfMjQz.U9Z_q_ZQ9U9Z_q_ZQ9U9Z_q_ZQ9U9Z_q_ZQ9U9Z_q_ZQg.U9Z_q_ZQ9U9Z_q_ZQ9U9Z_q_ZQ9U9Z_q_ZQ9U9Z_q_ZQg.JPEG%2FIMG_1234.jpg'); background-size: cover;">
+                </div>
+                <div class="card-info">
+                    <h3>우육미</h3>
+                    <p>동대문역 • 한식</p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-img"></div>
+                <div class="card-info">
+                    <h3>진옥화할매</h3>
+                    <p>종로5가 • 한식</p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-img"></div>
+                <div class="card-info">
+                    <h3>에이셉피자</h3>
+                    <p>을지로 • 양식</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- UI Overlays -->
+    <div class="tie-alert">운명의 결정을 도와줄까요?</div>
+    <button class="fab" id="ladder-btn">🪜</button>
+
+    <!-- History Drawer -->
+    <div class="drawer-overlay" id="history-overlay"></div>
+    <div class="drawer" id="history-drawer">
+        <div class="drawer-header">
+            <h2 style="margin:0; font-size:1.4rem;">내 약속 목록</h2>
+            <p style="margin:5px 0 0 0; font-size:0.8rem; color:#999;">최근 방문한 모임방들입니다.</p>
+        </div>
+        <div id="history-content">
+            <!-- Dynamically populated -->
+        </div>
+        <button onclick="clearHistory()"
+            style="margin-top:20px; width:100%; padding:15px; border-radius:12px; border:1px solid #eee; background:#fff; font-size:0.8rem; color:#ff4757;">목록
+            삭제하기</button>
+    </div>
+
+    <!-- Ladder Game Screen -->
+    <div class="screen" id="ladder-screen">
+        <div class="screen-header">
+            <h2 style="margin:0;">운명의 사다리</h2>
+            <button id="close-ladder" style="background:none; border:none; font-size:1.5rem;">✕</button>
+        </div>
+        <p style="text-align:center; color:#666; font-size:0.9rem; margin-bottom:20px;">공동 1위 후보들 중 하늘의 뜻을 묻습니다!</p>
+
+        <div class="ladder-canvas-container" id="ladder-box">
+            <!-- Interactive Ladder Placeholder -->
+            <div id="ladder-ani"
+                style="height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px;">
+                <div style="font-size:3rem;">🎰</div>
+                <div id="ladder-result-text"
+                    style="font-weight:bold; font-size:1.2rem; color:var(--primary); text-align:center;">START 버튼을 눌러주세요
+                </div>
+            </div>
+        </div>
+
+        <button id="run-ladder-btn"
+            style="margin-top:30px; width:100%; padding:20px; background:var(--secondary); color:#fff; border:none; border-radius:16px; font-weight:bold; font-size:1.1rem; box-shadow: 0 8px 16px rgba(255, 71, 87, 0.3);">운명에
+            맡기기!</button>
+    </div>
+
+    <!-- Map Full View -->
+    <div class="map-full" id="map-full">
+        <div style="padding:20px; background:#fff; display:flex; justify-content:space-between; align-items:center;">
+            <h2 style="margin:0; font-size:1.1rem;">주변 맛집 지도</h2>
+            <button onclick="document.getElementById('map-full').style.display='none'"
+                style="background:none; border:none; font-size:1.5rem;">✕</button>
+        </div>
+        <div
+            style="flex:1; display:flex; align-items:center; justify-content:center; flex-direction:column; color:#999;">
+            <div style="font-size:3rem; margin-bottom:10px;">🗺️</div>
+            <p>네이버 지도가 여기에 표시됩니다.</p>
+            <p style="font-size:0.8rem;">(후보지 4곳 마커 표시 완료)</p>
+        </div>
+    </div>
+
+    <script>
+        // 1. History Logic (using localStorage)
+        const mockHistory = [
+            { title: '금요일 을지로 회식', date: '5분 전', id: 'room_1' },
+            { title: '강남역 맛집 원정대', date: '어제', id: 'room_2' },
+            { title: '팀 점심 투표', date: '3일 전', id: 'room_3' }
+        ];
+
+        function initHistory() {
+            const history = JSON.parse(localStorage.getItem('user_history') || JSON.stringify(mockHistory));
+            const content = document.getElementById('history-content');
+            content.innerHTML = history.map(item => `
+                <div class="history-item">
+                    <span class="title">${item.title}</span>
+                    <span class="meta">${item.date} • 방 ID: ${item.id}</span>
+                </div>
+            `).join('');
+            localStorage.setItem('user_history', JSON.stringify(history));
+        }
+
+        function clearHistory() {
+            localStorage.setItem('user_history', '[]');
+            initHistory();
+        }
+
+        document.getElementById('history-btn').onclick = () => {
+            document.getElementById('history-overlay').style.display = 'block';
+            setTimeout(() => document.getElementById('history-drawer').classList.add('open'), 10);
+        };
+
+        document.getElementById('history-overlay').onclick = () => {
+            document.getElementById('history-drawer').classList.remove('open');
+            setTimeout(() => document.getElementById('history-overlay').style.display = 'none', 300);
+        };
+
+        // 2. View Toggle
+        const cardContainer = document.getElementById('card-container');
+        document.getElementById('tab-grid').onclick = (e) => {
+            cardContainer.className = 'card-container grid';
+            document.getElementById('tab-grid').classList.add('active');
+            document.getElementById('tab-list').classList.remove('active');
+        };
+        document.getElementById('tab-list').onclick = (e) => {
+            cardContainer.className = 'card-container list';
+            document.getElementById('tab-list').classList.add('active');
+            document.getElementById('tab-grid').classList.remove('active');
+        };
+
+        // 3. Ladder Game Simulation
+        document.getElementById('ladder-btn').onclick = () => {
+            document.getElementById('ladder-screen').style.display = 'flex';
+        };
+        document.getElementById('close-ladder').onclick = () => {
+            document.getElementById('ladder-screen').style.display = 'none';
+        };
+
+        document.getElementById('run-ladder-btn').onclick = (e) => {
+            const btn = e.target;
+            btn.disabled = true;
+            btn.innerText = "사다리를 타는 중...";
+            document.getElementById('ladder-result-text').innerText = "결과를 기다리는 중...";
+
+            setTimeout(() => {
+                const winners = ["일지다이닝", "우육미"];
+                const final = winners[Math.floor(Math.random() * winners.length)];
+                document.getElementById('ladder-result-text').innerHTML = `축하합니다!<br><span style="font-size:1.5rem; color:#ff4757;">✨ ${final} ✨</span><br>당첨되었습니다!`;
+                btn.disabled = false;
+                btn.innerText = "다시 하기";
+            }, 1500);
+        };
+
+        // 4. Map Toggle
+        document.getElementById('map-preview').onclick = () => {
+            document.getElementById('map-full').style.display = 'flex';
+        };
+
+        // Init
+        initHistory();
+    </script>
+</body>
+
+</html>

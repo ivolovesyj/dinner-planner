@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>뭐먹을래? 신규 기능 미리보기</title>
+    <style>
+        :root {
+            --primary: #3f429f;
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --text-main: #1a1f36;
+            --text-sub: #4e5968;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        body {
+            font-family: 'Pretendard', sans-serif;
+            margin: 0;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* 1. My Appointments (History) Sidebar */
+        .sidebar {
+            width: 280px;
+            background: #fff;
+            border-right: 1px solid #e5e8eb;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            z-index: 10;
+        }
+
+        .sidebar h2 {
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .history-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .history-item {
+            padding: 12px;
+            border-bottom: 1px solid #f1f3f5;
+            cursor: pointer;
+            transition: background 0.2s;
+            border-radius: 8px;
+            margin-bottom: 4px;
+        }
+
+        .history-item:hover {
+            background: #f8f9fa;
+        }
+
+        .history-item .room-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+        }
+
+        .history-item .room-date {
+            font-size: 0.75rem;
+            color: #adb5bd;
+        }
+
+        /* Main Content wrapper */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Top Header with Toggles */
+        .header {
+            background: #fff;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e5e8eb;
+        }
+
+        .view-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .control-btn {
+            background: #f1f3f5;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .control-btn.active {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        /* 2. Restaurant List / Grid View */
+        .content-scroll {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .restaurant-container {
+            display: grid;
+            gap: 20px;
+            transition: all 0.3s;
+        }
+
+        /* Grid Mode (Frame) */
+        .restaurant-container.grid {
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        }
+
+        /* List Mode (Bar) */
+        .restaurant-container.list {
+            grid-template-columns: 1fr;
+        }
+
+        .mock-card {
+            background: #fff;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            display: flex;
+            transition: all 0.2s;
+        }
+
+        .grid .mock-card {
+            flex-direction: column;
+        }
+
+        .list .mock-card {
+            flex-direction: row;
+            height: 120px;
+        }
+
+        .image-box {
+            background: #dee2e6;
+            position: relative;
+        }
+
+        .grid .image-box {
+            width: 100%;
+            aspect-ratio: 16/9;
+        }
+
+        .list .image-box {
+            width: 120px;
+            height: 100%;
+            flex-shrink: 0;
+        }
+
+        .info-box {
+            padding: 15px;
+            flex: 1;
+        }
+
+        .info-box h3 {
+            margin: 0 0 5px 0;
+            font-size: 1rem;
+        }
+
+        .info-box p {
+            margin: 0;
+            font-size: 0.85rem;
+            color: var(--text-sub);
+        }
+
+        /* 3. Ladder Game Modal Mockup */
+        .ladder-trigger {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #ff4757;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 50px;
+            font-weight: bold;
+            box-shadow: 0 10px 20px rgba(255, 71, 87, 0.3);
+            cursor: pointer;
+            z-index: 100;
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .ladder-trigger:hover {
+            transform: translateY(-3px);
+        }
+
+        /* 4. Map View Toggle Overlay */
+        .map-overlay {
+            position: absolute;
+            top: 80px;
+            right: 30px;
+            width: 300px;
+            height: 200px;
+            background: #e9ecef;
+            border-radius: 16px;
+            border: 4px solid #fff;
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            color: #adb5bd;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .map-overlay:hover::after {
+            content: '클릭하여 지도로 보기';
+            position: absolute;
+            background: rgba(0, 0, 0, 0.6);
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+
+        .map-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: brightness(0.8);
+        }
+
+        /* Ladder Game Simulator */
+        .ladder-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .ladder-content {
+            background: #fff;
+            border-radius: 20px;
+            padding: 40px;
+            width: 90%;
+            max-width: 600px;
+            text-align: center;
+        }
+
+        #ladder-canvas {
+            border: 1px solid #eee;
+            margin: 20px 0;
+            background: #fafafa;
+        }
+
+        .badge-tie {
+            background: #fff1f0;
+            color: #ff4d4f;
+            border: 1px solid #ffccc7;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            margin-left: 8px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Sidebar: My Appointments -->
+    <aside class="sidebar">
+        <h2>📂 내 약속 목록</h2>
+        <div class="history-list">
+            <div class="history-item">
+                <div class="room-title">금요일 점심 회식</div>
+                <div class="room-date">2026.01.17 12:30</div>
+            </div>
+            <div class="history-item">
+                <div class="room-title">강남역 맛집 탐방</div>
+                <div class="room-date">2026.01.15 19:00</div>
+            </div>
+            <div class="history-item">
+                <div class="room-title">회사 앞 카페 거리</div>
+                <div class="room-date">2026.01.10 14:00</div>
+            </div>
+            <div class="history-item">
+                <div class="room-title">주말 등산 후 막걸리</div>
+                <div class="room-date">2026.01.05 16:00</div>
+            </div>
+        </div>
+        <p style="font-size: 11px; color: #adb5bd; margin-top: 20px;">* 최근 방문한 방이 자동으로 기록됩니다.</p>
+    </aside>
+
+    <main class="main-content">
+        <!-- Header -->
+        <header class="header">
+            <div style="font-weight: bold; font-size: 1.2rem;">뭐먹을래? <span class="badge-tie">공동 1위 발생!</span></div>
+            <div class="view-controls">
+                <button class="control-btn active" id="btn-grid">액자형 (Grid)</button>
+                <button class="control-btn" id="btn-list">바형 (List)</button>
+            </div>
+        </header>
+
+        <!-- Main Workspace -->
+        <section class="content-scroll">
+
+            <!-- Map Preview Toggle -->
+            <div class="map-overlay">
+                <img src="https://images.unsplash.com/photo-1548345666-a51270560205?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=60"
+                    class="map-img">
+                <div
+                    style="position: absolute; font-weight: bold; color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">
+                    📍 장소 검색 및 지도 보기</div>
+            </div>
+
+            <div class="restaurant-container grid" id="container">
+                <!-- Mock Cards -->
+                <div class="mock-card">
+                    <div class="image-box"></div>
+                    <div class="info-box">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <h3>일지다이닝</h3>
+                            <span style="color: #ff9f43; font-weight: bold;">🥇 1위 (Tie)</span>
+                        </div>
+                        <p>서울 강남구 을지로 • 일식</p>
+                    </div>
+                </div>
+                <div class="mock-card">
+                    <div class="image-box"></div>
+                    <div class="info-box">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <h3>우육미</h3>
+                            <span style="color: #ff9f43; font-weight: bold;">🥇 1위 (Tie)</span>
+                        </div>
+                        <p>서울 중구 동대문 • 한식</p>
+                    </div>
+                </div>
+                <div class="mock-card">
+                    <div class="image-box"></div>
+                    <div class="info-box">
+                        <h3>동대문 닭한마리</h3>
+                        <p>서울 종로구 • 한식</p>
+                    </div>
+                </div>
+                <div class="mock-card">
+                    <div class="image-box"></div>
+                    <div class="info-box">
+                        <h3>라화쿵부</h3>
+                        <p>서울 마포구 • 중식</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Ladder Game Trigger -->
+    <button class="ladder-trigger" id="open-ladder">
+        🪜 운명의 사다리 타기
+    </button>
+
+    <!-- Ladder Modal -->
+    <div class="ladder-modal" id="ladder-modal">
+        <div class="ladder-content">
+            <h2>운명의 사다리 타기</h2>
+            <p>공동 1위 식당들 중 하나를 랜덤으로 결정합니다!</p>
+            <canvas id="ladder-canvas" width="400" height="300"></canvas>
+            <div id="ladder-result"
+                style="font-size: 1.2rem; font-weight: bold; color: var(--primary); margin-bottom: 20px;"></div>
+            <div class="modal-actions" style="display: flex; gap: 10px;">
+                <button class="control-btn active" id="run-ladder" style="flex:1; padding: 15px;">START!</button>
+                <button class="control-btn" id="close-ladder" style="flex:1;">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // View Toggle Logic
+        const container = document.getElementById('container');
+        document.getElementById('btn-grid').onclick = () => {
+            container.className = 'restaurant-container grid';
+            document.getElementById('btn-grid').classList.add('active');
+            document.getElementById('btn-list').classList.remove('active');
+        };
+        document.getElementById('btn-list').onclick = () => {
+            container.className = 'restaurant-container list';
+            document.getElementById('btn-list').classList.add('active');
+            document.getElementById('btn-grid').classList.remove('active');
+        };
+
+        // Ladder Game Mockup Logic
+        const modal = document.getElementById('ladder-modal');
+        const canvas = document.getElementById('ladder-canvas');
+        const ctx = canvas.getContext('2d');
+        const resultDiv = document.getElementById('ladder-result');
+
+        document.getElementById('open-ladder').onclick = () => {
+            modal.style.display = 'flex';
+            drawLadder();
+        };
+        document.getElementById('close-ladder').onclick = () => modal.style.display = 'none';
+
+        function drawLadder() {
+            ctx.clearRect(0, 0, 400, 300);
+            ctx.strokeStyle = '#3f429f';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            // Vertical lines
+            ctx.moveTo(100, 50); ctx.lineTo(100, 250);
+            ctx.moveTo(300, 50); ctx.lineTo(300, 250);
+            // Horizontal bars
+            ctx.moveTo(100, 100); ctx.lineTo(300, 100);
+            ctx.moveTo(100, 150); ctx.lineTo(300, 150);
+            ctx.moveTo(100, 200); ctx.lineTo(300, 200);
+            ctx.stroke();
+
+            // Labels
+            ctx.fillStyle = '#1a1f36';
+            ctx.font = '14px sans-serif';
+            ctx.fillText('일지다이닝', 70, 40);
+            ctx.fillText('우육미', 280, 40);
+        }
+
+        document.getElementById('run-ladder').onclick = () => {
+            resultDiv.innerText = "사다리를 타고 있습니다...";
+            setTimeout(() => {
+                const winner = Math.random() > 0.5 ? '일지다이닝' : '우육미';
+                resultDiv.innerText = `🎉 당첨! 오늘은 "${winner}" 어떠세요?`;
+            }, 1000);
+        };
+    </script>
+</body>
+
+</html>
