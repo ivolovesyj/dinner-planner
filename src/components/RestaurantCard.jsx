@@ -404,7 +404,8 @@ const RestaurantCard = ({ data, rank, userId, onVote, onDelete }) => {
                     cancelText="아니요(투표만 하기)"
                 />
             </div>
-            );
+        </div>
+    );
 };
 
-            export default RestaurantCard;
+export default RestaurantCard;
