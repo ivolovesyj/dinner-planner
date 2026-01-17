@@ -62,9 +62,12 @@ function App() {
 
       // Initialize nickname for this room
       const roomNickname = localStorage.getItem(`nickname_${roomParam}`);
+      const globalNickname = localStorage.getItem('dinnerPlannerNickname');
 
-      if (roomNickname) {
-        setNickname(roomNickname);
+      const initialNickname = roomNickname || globalNickname;
+
+      if (initialNickname) {
+        setNickname(initialNickname);
       }
 
       fetchRoomData(roomParam, false, roomNickname);
