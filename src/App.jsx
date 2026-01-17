@@ -254,13 +254,19 @@ function App() {
 
   const handleLadderTrigger = async (candidateIds) => {
     try {
-      await axios.post(`${API_BASE}/rooms/${roomId}/ladder/trigger`, {
+      const res = await axios.post(`${API_BASE}/rooms/${roomId}/ladder/trigger`, {
         candidateIds,
         nickname
       });
+      // Direct update for immediate UI feedback
+      setRoomData(prev => ({
+        ...prev,
+        ladderGame: res.data
+      }));
       fetchRoomData(roomId, true);
     } catch (err) {
       alert("사다리 생성 실패");
+      throw err; // Re-throw to let LadderGame handle the error UI
     }
   };
 
