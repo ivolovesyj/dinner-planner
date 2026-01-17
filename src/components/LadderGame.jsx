@@ -25,6 +25,11 @@ function LadderGame({ roomData, onTrigger, onReset, onClose, nickname }) {
     if (!roomData) return null;
 
     const ladderData = roomData.ladderGame;
+    
+    // Fix: Define candidates in component scope to prevent ReferenceError in JSX
+    const candidates = ladderData ? (roomData.restaurants || []).filter(r =>
+        ladderData.candidateIds?.some(cid => String(cid) === String(r.id) || String(cid) === String(r._id))
+    ) : [];
 
     // Initialize selected IDs if tied winners exist
     useEffect(() => {
