@@ -375,7 +375,7 @@ const RestaurantCard = ({ data, rank, userId, onVote, onDelete }) => {
                 onConfirm={handleConfirmDislike}
                 onCancel={handleCancelDislike}
                 confirmText="네"
-                cancelText="아니요"
+                cancelText="아니요(투표만 하기)"
             />
         </div >
     );
