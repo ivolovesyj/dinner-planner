@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './LadderGame.css';
-import { Share, RefreshCw, X, Globe, Trophy, Play } from 'lucide-react';
+import { X } from 'lucide-react';
 
 const LadderIcon = ({ size = 20, style = {}, color = "currentColor" }) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={style}>
@@ -241,7 +241,7 @@ function LadderGame({ roomData, onTrigger, onReset, onClose, nickname }) {
                                 >
                                     <div className="candidate-check"></div>
                                     {res.image ? (
-                                        <img src={res.image} alt="" className="candidate-image" />
+                                        <img src={res.image} alt="res" className="candidate-image" onError={(e) => e.target.style.display = 'none'} />
                                     ) : (
                                         <div className="candidate-image-placeholder">🍽️</div>
                                     )}
