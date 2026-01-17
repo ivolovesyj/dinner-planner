@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import axios from 'axios';
 import './RestaurantCard.css';
 import { ThumbsUp, ThumbsDown, ChevronDown, ChevronUp, MapPin, Trash2 } from 'lucide-react';
+import CustomModal from './CustomModal';
 
 const RestaurantCard = ({ data, rank, userId, onVote, onDelete }) => {
     const [showReasons, setShowReasons] = useState(false);
@@ -11,6 +12,7 @@ const RestaurantCard = ({ data, rank, userId, onVote, onDelete }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [touchStart, setTouchStart] = useState(0);
     const [touchEnd, setTouchEnd] = useState(0);
+    const [showDislikeConfirm, setShowDislikeConfirm] = useState(false);
 
     const isOwner = userId && data.ownerId && userId === data.ownerId;
 
@@ -43,11 +45,25 @@ const RestaurantCard = ({ data, rank, userId, onVote, onDelete }) => {
     };
 
     const handleDislike = () => {
+        // If already voted down, toggle off directly
+        if (userVote === 'down') {
+            onVote(data.id, 'down');
+            return;
+        }
+        setShowDislikeConfirm(true);
+    };
+
+    const handleConfirmDislike = () => {
+        setShowDislikeConfirm(false);
         const reason = prompt("무엇이 별로인지 알려주세요!");
-        // If user clicks cancel, reason will be null
         if (reason !== null) {
             onVote(data.id, 'down', reason || '이유 없음');
         }
+    };
+
+    const handleCancelDislike = () => {
+        setShowDislikeConfirm(false);
+        onVote(data.id, 'down');
     };
 
     const handleLike = () => {
@@ -343,8 +359,7 @@ const RestaurantCard = ({ data, rank, userId, onVote, onDelete }) => {
                             <ul className="reasons-list">
                                 {data.dislikeReasons.map((item, idx) => (
                                     <li key={idx}>
-                                        <span className="reason-author">{item.nickname || '익명'}</span>
-                                        <span className="reason-text">{item.reason}</span>
+                                        <span className="reason-text">• {item.reason}</span>
                                     </li>
                                 ))}
                             </ul>
@@ -352,6 +367,16 @@ const RestaurantCard = ({ data, rank, userId, onVote, onDelete }) => {
                     </div>
                 )}
             </div>
+
+            <CustomModal
+                isOpen={showDislikeConfirm}
+                title="별로인 이유를 남기시겠어요?"
+                message={`작성해주신 피드백은 익명으로 전달되어\n추천한 친구가 알 수 없습니다.`}
+                onConfirm={handleConfirmDislike}
+                onCancel={handleCancelDislike}
+                confirmText="네"
+                cancelText="아니요"
+            />
         </div >
     );
 };
