@@ -221,16 +221,23 @@ function LadderGame({ roomData, onTrigger, onReset, onClose, nickname }) {
         }
     }, [ladderData, isAnimating, drawStaticLadder, roomData.roomId]);
 
+    // View Switching Logic
     useEffect(() => {
-        if (ladderData && canvasRef.current) {
-            const ctx = canvasRef.current.getContext('2d');
-            drawStaticLadder(ctx, ladderData);
+        if (ladderData) {
             setShowSelector(false);
         } else {
             setShowSelector(true);
             setIsFinished(false);
         }
-    }, [ladderData, drawStaticLadder]);
+    }, [ladderData]);
+
+    // Drawing Logic
+    useEffect(() => {
+        if (!showSelector && ladderData && canvasRef.current) {
+            const ctx = canvasRef.current.getContext('2d');
+            drawStaticLadder(ctx, ladderData);
+        }
+    }, [showSelector, ladderData, drawStaticLadder]);
 
     const toggleCandidate = (id) => {
         setSelectedIds(prev => {
