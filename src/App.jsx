@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import './App.css';
-import { Search, Loader2, Share, Users, RefreshCw } from 'lucide-react';
+import { Search, Loader2, Share, Users, RefreshCw, Hash } from 'lucide-react';
 import RestaurantCard from './components/RestaurantCard';
 import LadderGame from './components/LadderGame';
 import NicknameModal from './components/NicknameModal'; // Import Modal
@@ -376,7 +376,9 @@ function App() {
         ) : (
           <div className="restaurant-list">
             <div className="feature-bar">
-              <button className={`feature-btn ${showLadder ? 'active' : ''}`} onClick={() => setShowLadder(!showLadder)}>🪜 사다리 타기</button>
+              <button className={`feature-btn ${showLadder ? 'active' : ''}`} onClick={() => setShowLadder(!showLadder)}>
+                <Hash size={16} style={{ marginRight: '6px' }} /> 사다리 타기
+              </button>
               <button className="feature-btn disabled">🗺️ 지도 보기</button>
             </div>
             {[...restaurants].sort((a, b) => ((b.likes || 0) - (b.dislikes || 0)) - ((a.likes || 0) - (a.dislikes || 0))).map((rest, index, array) => {

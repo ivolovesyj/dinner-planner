@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './LadderGame.css';
-import { Share, RefreshCw, X } from 'lucide-react';
+import { Share, RefreshCw, X, Globe, Trophy, Play } from 'lucide-react';
 
 function LadderGame({ roomData, onTrigger, onReset, onClose, nickname }) {
     const canvasRef = useRef(null);
@@ -36,7 +36,14 @@ function LadderGame({ roomData, onTrigger, onReset, onClose, nickname }) {
         if (!canvas || !data) return;
 
         const candidates = (roomData.restaurants || []).filter(r => data.candidateIds?.includes(r.id));
-        if (candidates.length < 2) return;
+        console.log("Drawing ladder with candidates:", candidates.length);
+        if (candidates.length < 2) {
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            context.fillStyle = '#666';
+            context.textAlign = 'center';
+            context.fillText('참여 식당 정보를 불러오는 중...', canvas.width / 2, canvas.height / 2);
+            return;
+        }
 
         const cols = candidates.length;
         const spacing = canvas.width / (cols + 1);
@@ -188,7 +195,7 @@ function LadderGame({ roomData, onTrigger, onReset, onClose, nickname }) {
                 </button>
 
                 <div className="ladder-header">
-                    <h2>🪜 운명의 사다리 타기</h2>
+                    <h2>운명의 사다리 타기</h2>
                 </div>
 
                 {showSelector ? (
@@ -218,7 +225,8 @@ function LadderGame({ roomData, onTrigger, onReset, onClose, nickname }) {
                     <div id="game-view" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                         {ladderData && (
                             <div className="ladder-sync-notice">
-                                🌐 {ladderData.triggeredBy || '익명'}님이 사다리를 준비했습니다!
+                                <Globe size={14} style={{ marginRight: '6px' }} />
+                                <span>{ladderData.triggeredBy || '익명'}님이 사다리를 준비했습니다!</span>
                             </div>
                         )}
 
