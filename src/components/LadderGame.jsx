@@ -223,13 +223,13 @@ function LadderGame({ roomData, onTrigger, onReset, onClose, nickname }) {
 
     // View Switching Logic
     useEffect(() => {
-        if (ladderData) {
+        if (isValidGame) {
             setShowSelector(false);
         } else {
             setShowSelector(true);
             setIsFinished(false);
         }
-    }, [ladderData]);
+    }, [isValidGame]);
 
     // Drawing Logic
     useEffect(() => {
