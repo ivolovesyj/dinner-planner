@@ -15,9 +15,7 @@ const RestaurantCard = ({ data, rank, userId, onVote, onDelete }) => {
     const [touchEnd, setTouchEnd] = useState(0);
     const [showDislikeConfirm, setShowDislikeConfirm] = useState(false);
 
-    const isOwner = userId && data.ownerId && userId === data.ownerId;
-
-    const images = data.images && data.images.length > 0 ? data.images : [data.image];
+    const images = (data.images && data.images.length > 0) ? data.images : [data.image || ''];
 
     const nextImage = (e) => {
         if (e) {
@@ -168,8 +166,8 @@ const RestaurantCard = ({ data, rank, userId, onVote, onDelete }) => {
                     )}
                 </div>
                 <div className="item-basic-info">
-                    <h3 className="card-title">{data.name}</h3>
-                    <p>{data.category} • {data.station || data.location?.split(' ')[1] || '위치 정보 없음'}</p>
+                    <h3 className="card-title">{data.name || '이름 없음'}</h3>
+                    <p>{data.category || '카테고리'} • {data.station || (data.location ? data.location.split(' ')[1] : '위치 정보 없음')}</p>
                 </div>
                 <div className="vote-summary">
                     {data.likes > 0 && <span className="badge like">👍 {data.likes}</span>}
@@ -319,7 +317,7 @@ const RestaurantCard = ({ data, rank, userId, onVote, onDelete }) => {
 
                 <div className="card-content">
                     <div className="card-tags">
-                        {data.tags.map((tag, idx) => (
+                        {(data.tags || []).map((tag, idx) => (
                             <span key={idx} className="tag">#{tag}</span>
                         ))}
                     </div>
@@ -327,14 +325,14 @@ const RestaurantCard = ({ data, rank, userId, onVote, onDelete }) => {
                     {data.menu && (
                         <div className="card-menu-section">
                             <ul className="menu-list">
-                                {data.menu.split(', ').slice(0, showMenu ? undefined : 3).map((item, idx) => (
+                                {String(data.menu || '').split(', ').slice(0, showMenu ? undefined : 3).map((item, idx) => (
                                     <li key={idx} className="menu-item">
                                         <span className="menu-dot">•</span>
                                         {item}
                                     </li>
                                 ))}
                             </ul>
-                            {data.menu.split(', ').length > 3 && (
+                            {String(data.menu || '').split(', ').length > 3 && (
                                 <button
                                     className="menu-more-btn"
                                     onClick={(e) => {
@@ -342,7 +340,7 @@ const RestaurantCard = ({ data, rank, userId, onVote, onDelete }) => {
                                         setShowMenu(!showMenu);
                                     }}
                                 >
-                                    {showMenu ? '접기' : `+ ${data.menu.split(', ').length - 3}개 더보기`}
+                                    {showMenu ? '접기' : `+ ${String(data.menu || '').split(', ').length - 3}개 더보기`}
                                 </button>
                             )}
                         </div>
