@@ -223,6 +223,49 @@ function LadderGame({ roomData, onTrigger, onReset, onClose, nickname }) {
         }
     }, [isValidGame]);
 
+    // Helper: Calculate the full path for a given ladder data
+    // This ensures both the visual drawing and the winner calculation use EXACTLY the same logic.
+    const calculateLadderPath = (data) => {
+        if (!data || !data.candidateIds) return null;
+
+        const cols = data.candidateIds.length;
+        const canvasWidth = 340; // Fixed width for logic consistency (matches canvas width)
+        const canvasHeight = 420;
+        const spacing = canvasWidth / (cols + 1);
+        const verticalLines = Array.from({ length: cols }, (_, i) => spacing * (i + 1));
+
+        let currentCol = data.startCol;
+        let currentY = 40;
+        const path = [{ x: verticalLines[currentCol], y: currentY, col: currentCol }];
+
+        // CRITICAL: Bridges MUST be sorted by Y to ensure we traverse them in physical order.
+        // If unsorted, a 'find' might skip a closer bridge, causing logic mismatch.
+        const sortedBridges = [...(data.bridges || [])].sort((a, b) => a.y - b.y);
+
+        while (true) {
+            // Find the *first* (nearest) bridge below currentY that connects to the current column
+            const nextBridge = sortedBridges.find(b => b.y > currentY && (b.colFrom === currentCol || b.colTo === currentCol));
+
+            if (nextBridge) {
+                // Move vertical to the bridge's Y
+                path.push({ x: verticalLines[currentCol], y: nextBridge.y, col: currentCol });
+
+                // Cross the bridge
+                const targetCol = nextBridge.colFrom === currentCol ? nextBridge.colTo : nextBridge.colFrom;
+                path.push({ x: verticalLines[targetCol], y: nextBridge.y, col: targetCol });
+
+                // Update state
+                currentCol = targetCol;
+                currentY = nextBridge.y;
+            } else {
+                // Reached bottom
+                path.push({ x: verticalLines[currentCol], y: canvasHeight - 60, col: currentCol });
+                break;
+            }
+        }
+        return { path, finalCol: currentCol };
+    };
+
     // Drawing Logic
     useEffect(() => {
         if (!showSelector && ladderData && canvasRef.current) {
@@ -231,27 +274,8 @@ function LadderGame({ roomData, onTrigger, onReset, onClose, nickname }) {
             let highlightPath = [];
             // If game is finished or completed, calculate and draw the full path
             if (isFinished || ladderData.status === 'completed') {
-                const cols = (ladderData.candidateIds || []).length;
-                const spacing = canvasRef.current.width / (cols + 1);
-                const verticalLines = Array.from({ length: cols }, (_, i) => spacing * (i + 1));
-
-                let currentCol = ladderData.startCol;
-                let currentY = 40;
-                highlightPath.push({ x: verticalLines[currentCol], y: currentY });
-
-                while (true) {
-                    const nextBridge = (ladderData.bridges || []).find(b => b.y > currentY && (b.colFrom === currentCol || b.colTo === currentCol));
-                    if (nextBridge) {
-                        highlightPath.push({ x: verticalLines[currentCol], y: nextBridge.y });
-                        const targetCol = nextBridge.colFrom === currentCol ? nextBridge.colTo : nextBridge.colFrom;
-                        highlightPath.push({ x: verticalLines[targetCol], y: nextBridge.y });
-                        currentCol = targetCol;
-                        currentY = nextBridge.y;
-                    } else {
-                        highlightPath.push({ x: verticalLines[currentCol], y: canvasRef.current.height - 60 });
-                        break;
-                    }
-                }
+                const result = calculateLadderPath(ladderData);
+                if (result) highlightPath = result.path;
             }
 
             drawStaticLadder(ctx, ladderData, highlightPath);
@@ -346,18 +370,17 @@ function LadderGame({ roomData, onTrigger, onReset, onClose, nickname }) {
                             <div className="ladder-result-overlay">
                                 <div className="ladder-winner-tag">🎉 오늘의 맛집 당첨!</div>
                                 <div className="ladder-winner-name" id="ladder-winner-name">
-                                    {ladderData && roomData.restaurants?.find(r => {
-                                        let currentCol = ladderData.startCol;
-                                        let y = 40;
-                                        while (true) {
-                                            const bridge = (ladderData.bridges || []).find(b => b.y > y && (b.colFrom === currentCol || b.colTo === currentCol));
-                                            if (bridge) {
-                                                currentCol = bridge.colFrom === currentCol ? bridge.colTo : bridge.colFrom;
-                                                y = bridge.y;
-                                            } else break;
-                                        }
-                                        return String(r.id) === String(ladderData.candidateIds?.[currentCol]) || String(r._id) === String(ladderData.candidateIds?.[currentCol]);
-                                    })?.name || '결과를 불러올 수 없습니다'}
+                                    {ladderData && (() => {
+                                        // Use the EXACT same logic as visual drawing to determine winner
+                                        const result = calculateLadderPath(ladderData);
+                                        const finalCol = result ? result.finalCol : -1;
+                                        const winnerId = ladderData.candidateIds?.[finalCol];
+
+                                        const winner = (roomData.restaurants || []).find(r =>
+                                            String(r.id) === String(winnerId) || String(r._id) === String(winnerId)
+                                        );
+                                        return winner?.name || '결과를 불러올 수 없습니다';
+                                    })()}
                                 </div>
                                 <div className="ladder-result-actions">
                                     <button className="btn btn-kakao-share" onClick={handleShareResult}>
