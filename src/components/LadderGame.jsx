@@ -26,10 +26,10 @@ function LadderGame({ roomData, onTrigger, onReset, onClose, nickname }) {
 
     const ladderData = roomData.ladderGame;
 
-    // Fix: Define candidates in component scope to prevent ReferenceError in JSX
-    const candidates = ladderData ? (roomData.restaurants || []).filter(r =>
-        ladderData.candidateIds?.some(cid => String(cid) === String(r.id) || String(cid) === String(r._id))
-    ) : [];
+    // Fix: Define candidates in strictly mapped order of candidateIds to ensure visual/logical match
+    const candidates = ladderData ? ladderData.candidateIds.map(id =>
+        (roomData.restaurants || []).find(r => String(r.id) === String(id) || String(r._id) === String(id))
+    ).filter(Boolean) : [];
 
     // Smart Close Logic
     const handleClose = useCallback(() => {
@@ -49,21 +49,7 @@ function LadderGame({ roomData, onTrigger, onReset, onClose, nickname }) {
         }
     }, [ladderData]);
 
-    // Initialize selected IDs if tied winners exist
-    useEffect(() => {
-        if (!ladderData) {
-            const respRestaurants = roomData.restaurants || [];
-            const topScore = respRestaurants.length > 0
-                ? Math.max(...respRestaurants.map(r => (r.likes || 0) - (r.dislikes || 0)))
-                : -999;
-
-            const tiedWinnerIds = respRestaurants
-                .filter(r => (r.likes || 0) - (r.dislikes || 0) === topScore && topScore > 0)
-                .map(r => r.id);
-
-            setSelectedIds(tiedWinnerIds.slice(0, 6));
-        }
-    }, [roomData, ladderData]);
+    // Auto-selection removed per user request for cleaner reset
 
     // Canvas drawing logic
     const drawStaticLadder = useCallback((context, data, highlightSegments = []) => {
