@@ -346,7 +346,7 @@ function App() {
       <main className="app-content">
         {restaurants.length === 0 ? (
           <div className="empty-state">
-            <p>상단에 링크를 붙여넣어 투표를 시작하세요!</p>
+            <p>상단에 링크를 붙여넣어 투표을 시작하세요!</p>
             <div className="share-hint" onClick={handleShare}>친구 초대하기 🔗</div>
           </div>
         ) : (

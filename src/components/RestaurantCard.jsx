@@ -15,6 +15,7 @@ const RestaurantCard = ({ data, rank, userId, onVote, onDelete }) => {
     const [touchEnd, setTouchEnd] = useState(0);
     const [showDislikeConfirm, setShowDislikeConfirm] = useState(false);
 
+    const isOwner = userId && data.ownerId && userId === data.ownerId;
     const images = (data.images && data.images.length > 0) ? data.images : [data.image || ''];
 
     const nextImage = (e) => {
