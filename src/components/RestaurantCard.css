@@ -93,18 +93,32 @@
 
 .rank-medal {
     position: absolute;
-    top: -6px;
-    left: -6px;
-    width: 22px;
-    height: 22px;
+    top: -4px;
+    left: -4px;
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 14px;
+    font-size: 13px;
+    font-weight: 800;
     z-index: 5;
-    background: white;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    color: white;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    border: 1.5px solid white;
+}
+
+.rank-medal.rank-1 {
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+}
+
+.rank-medal.rank-2 {
+    background: linear-gradient(135deg, #E0E0E0, #9E9E9E);
+}
+
+.rank-medal.rank-3 {
+    background: linear-gradient(135deg, #CD7F32, #8B4513);
 }
 
 /* Content visibility */

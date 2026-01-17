@@ -163,7 +163,7 @@ const RestaurantCard = ({ data, rank, userId, onVote, onDelete }) => {
                 >
                     {rank <= 3 && (data.likes || 0) > 0 && (
                         <div className={`rank-medal rank-${rank}`}>
-                            {rank === 1 ? '🥇' : rank === 2 ? '🥈' : '🥉'}
+                            {rank}
                         </div>
                     )}
                 </div>
