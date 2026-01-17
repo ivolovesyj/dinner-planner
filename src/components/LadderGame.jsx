@@ -25,11 +25,29 @@ function LadderGame({ roomData, onTrigger, onReset, onClose, nickname }) {
     if (!roomData) return null;
 
     const ladderData = roomData.ladderGame;
-    
+
     // Fix: Define candidates in component scope to prevent ReferenceError in JSX
     const candidates = ladderData ? (roomData.restaurants || []).filter(r =>
         ladderData.candidateIds?.some(cid => String(cid) === String(r.id) || String(cid) === String(r._id))
     ) : [];
+
+    // Smart Close Logic
+    const handleClose = useCallback(() => {
+        // If game is playing (has data but not finished), reset it.
+        // If game is completed or not started, just close.
+        if (ladderData && ladderData.status !== 'completed' && !isFinished) {
+            onReset();
+        }
+        onClose();
+    }, [ladderData, isFinished, onReset, onClose]);
+
+    // Check for completed status on mount/update
+    useEffect(() => {
+        if (ladderData?.status === 'completed') {
+            setIsFinished(true); // Show result immediately
+            setShowSelector(false); // Ensure selector is hidden
+        }
+    }, [ladderData]);
 
     // Initialize selected IDs if tied winners exist
     useEffect(() => {
@@ -195,7 +213,13 @@ function LadderGame({ roomData, onTrigger, onReset, onClose, nickname }) {
 
         setIsAnimating(false);
         setIsFinished(true);
-    }, [ladderData, isAnimating, drawStaticLadder]);
+
+        // Mark as completed on server
+        if (roomData.roomId) {
+            // We use fetch here to avoid needing to pass axios or define it
+            fetch(`/api/rooms/${roomData.roomId}/ladder/complete`, { method: 'PATCH' }).catch(console.error);
+        }
+    }, [ladderData, isAnimating, drawStaticLadder, roomData.roomId]);
 
     useEffect(() => {
         if (ladderData && canvasRef.current) {
@@ -224,7 +248,7 @@ function LadderGame({ roomData, onTrigger, onReset, onClose, nickname }) {
     return (
         <div className="ladder-overlay">
             <div className="ladder-container">
-                <button className="btn-close-ladder" onClick={onClose} title="닫기">
+                <button className="btn-close-ladder" onClick={handleClose} title="닫기">
                     <X size={20} />
                 </button>
 
@@ -296,8 +320,7 @@ function LadderGame({ roomData, onTrigger, onReset, onClose, nickname }) {
                             <div className="ladder-result-overlay">
                                 <div className="ladder-winner-tag">🎉 오늘의 맛집 당첨!</div>
                                 <div className="ladder-winner-name" id="ladder-winner-name">
-                                    {roomData.restaurants?.find(r => {
-                                        if (!ladderData) return false;
+                                    {ladderData && roomData.restaurants?.find(r => {
                                         let currentCol = ladderData.startCol;
                                         let y = 40;
                                         while (true) {
@@ -307,11 +330,17 @@ function LadderGame({ roomData, onTrigger, onReset, onClose, nickname }) {
                                                 y = bridge.y;
                                             } else break;
                                         }
-                                        return r.id === (ladderData.candidateIds?.[currentCol]);
+                                        return String(r.id) === String(ladderData.candidateIds?.[currentCol]) || String(r._id) === String(ladderData.candidateIds?.[currentCol]);
                                     })?.name || '결과를 불러올 수 없습니다'}
                                 </div>
-                                <button className="btn btn-kakao-share" onClick={handleShareResult}>카카오톡 결과 공유</button>
-                                <button className="btn btn-ladder-reset" onClick={onReset}>새 게임 준비하기</button>
+                                <div className="ladder-result-actions">
+                                    <button className="btn btn-kakao-share" onClick={handleShareResult}>
+                                        카카오톡 공유하기
+                                    </button>
+                                    <button className="btn btn-ladder-reset" onClick={onReset}>
+                                        다시 시작하기
+                                    </button>
+                                </div>
                             </div>
                         )}
                     </div>

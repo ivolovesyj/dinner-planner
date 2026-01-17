@@ -583,7 +583,23 @@ app.post("/api/rooms/:roomId/ladder/trigger", async (req, res) => {
         res.json(room.ladderGame);
     } catch (err) {
         console.error("Ladder trigger failed:", err);
-        res.status(500).json({ error: "Failed to trigger ladder" });
+        res.status(500).json({ error: "Failed to trigger ladder game" });
+    }
+});
+
+// 2.6 Complete Ladder Game
+app.patch("/api/rooms/:roomId/ladder/complete", async (req, res) => {
+    try {
+        const { roomId } = req.params;
+        const room = await Room.findOne({ roomId });
+        if (!room || !room.ladderGame) return res.status(404).json({ error: "Game not found" });
+
+        room.ladderGame.status = 'completed';
+        await room.save();
+        res.json({ success: true });
+    } catch (err) {
+        console.error("Ladder complete failed:", err);
+        res.status(500).json({ error: "Failed to complete game" });
     }
 });
 
