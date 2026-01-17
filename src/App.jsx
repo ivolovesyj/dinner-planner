@@ -70,7 +70,7 @@ function App() {
         setNickname(initialNickname);
       }
 
-      fetchRoomData(roomParam, false, roomNickname);
+      fetchRoomData(roomParam, false, initialNickname);
       // Start Polling
       startPolling(roomParam);
     }
