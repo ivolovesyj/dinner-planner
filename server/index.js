@@ -542,6 +542,62 @@ app.get("/api/rooms/:roomId", async (req, res) => {
     res.json(data);
 });
 
+// 2.5 Trigger Ladder Game
+app.post("/api/rooms/:roomId/ladder/trigger", async (req, res) => {
+    const { roomId } = req.params;
+    const { candidateIds, nickname } = req.body;
+
+    if (!candidateIds || candidateIds.length < 2) {
+        return res.status(400).json({ error: "At least 2 candidates required" });
+    }
+
+    try {
+        const room = await Room.findOne({ roomId });
+        if (!room) return res.status(404).json({ error: "Room not found" });
+
+        // Generate Ladder Logic on Server for consistency
+        const cols = candidateIds.length;
+        const bridges = [];
+        let bridgeY = 70;
+        const canvasHeight = 450; // Reference height like in preview
+
+        while (bridgeY < canvasHeight - 100) {
+            bridgeY += 35 + Math.random() * 40;
+            if (bridgeY >= canvasHeight - 80) break;
+            const col = Math.floor(Math.random() * (cols - 1));
+            bridges.push({ colFrom: col, colTo: col + 1, y: bridgeY });
+        }
+        bridges.sort((a, b) => a.y - b.y);
+
+        const startCol = Math.floor(Math.random() * cols);
+
+        room.ladderGame = {
+            candidateIds,
+            startCol,
+            bridges,
+            triggeredBy: nickname || "익명",
+            createdAt: new Date()
+        };
+
+        await room.save();
+        res.json(room.ladderGame);
+    } catch (err) {
+        console.error("Ladder trigger failed:", err);
+        res.status(500).json({ error: "Failed to trigger ladder" });
+    }
+});
+
+// 2.6 Reset Ladder Game
+app.delete("/api/rooms/:roomId/ladder", async (req, res) => {
+    const { roomId } = req.params;
+    try {
+        await Room.updateOne({ roomId }, { $unset: { ladderGame: "" } });
+        res.json({ status: "ok" });
+    } catch (err) {
+        res.status(500).json({ error: "Reset failed" });
+    }
+});
+
 // 3. Add Restaurant to Room
 app.post('/api/rooms/:roomId/restaurants', async (req, res) => {
     const { roomId } = req.params;

@@ -3,6 +3,7 @@ import axios from 'axios';
 import './App.css';
 import { Search, Loader2, Share, Users, RefreshCw } from 'lucide-react';
 import RestaurantCard from './components/RestaurantCard';
+import LadderGame from './components/LadderGame';
 import NicknameModal from './components/NicknameModal'; // Import Modal
 import AdminLogin from './components/AdminLogin';
 import AdminDashboard from './components/AdminDashboard';
@@ -17,6 +18,7 @@ function App() {
   if (path === '/admin/dashboard') return <AdminDashboard />;
 
   const [restaurants, setRestaurants] = useState([]);
+  const [roomData, setRoomData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [inputVal, setInputVal] = useState("");
 
@@ -104,6 +106,7 @@ function App() {
       if (currentNickname) params.nickname = currentNickname;
 
       const res = await axios.get(`${API_BASE}/rooms/${id}`, { params });
+      setRoomData(res.data);
       setRestaurants(res.data.restaurants || []);
       setRoomError(null);
     } catch (err) {
@@ -243,6 +246,27 @@ function App() {
       fetchRoomData(roomId, true);
     } catch (err) {
       alert("삭제 실패: 본인이 등록한 식당만 삭제할 수 있습니다.");
+    }
+  };
+
+  const handleLadderTrigger = async (candidateIds) => {
+    try {
+      await axios.post(`${API_BASE}/rooms/${roomId}/ladder/trigger`, {
+        candidateIds,
+        nickname
+      });
+      fetchRoomData(roomId, true);
+    } catch (err) {
+      alert("사다리 생성 실패");
+    }
+  };
+
+  const handleLadderReset = async () => {
+    try {
+      await axios.delete(`${API_BASE}/rooms/${roomId}/ladder`);
+      fetchRoomData(roomId, true);
+    } catch (err) {
+      alert("리셋 실패");
     }
   };
 
@@ -418,6 +442,15 @@ function App() {
       </header>
 
       <main className="app-content">
+        {restaurants.length > 0 && (
+          <LadderGame
+            roomData={roomData || { restaurants }}
+            onTrigger={handleLadderTrigger}
+            onReset={handleLadderReset}
+            nickname={nickname}
+          />
+        )}
+
         {restaurants.length === 0 ? (
           <div className="empty-state">
             <p>상단에 링크를 붙여넣어 투표를 시작하세요!</p>

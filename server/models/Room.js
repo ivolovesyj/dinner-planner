@@ -39,7 +39,18 @@ const roomSchema = new mongoose.Schema({
         lastActive: Date
     }],
     adminMemo: { type: String, default: "" },
-    restaurants: [restaurantSchema]
+    restaurants: [restaurantSchema],
+    ladderGame: {
+        candidateIds: [String],
+        startCol: Number,
+        bridges: [{
+            colFrom: Number,
+            colTo: Number,
+            y: Number
+        }],
+        triggeredBy: String,
+        createdAt: Date
+    }
 });
 
 // Add index for faster lookups

@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>뭐먹을래? 사다리 타기 (최종 디자인 시안)</title>
+    <style>
+        :root {
+            --primary: #3f429f;
+            --secondary: #ff4757;
+            --inactive: #adb5bd;
+            --bg-color: #f8f9fa;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Pretendard', sans-serif;
+            margin: 0;
+            background: var(--bg-color);
+            color: #1a1f36;
+        }
+
+        /* 스크롤이 가능하도록 height 제거 및 overflow 설정 */
+        .screen {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            max-width: 500px;
+            margin: 0 auto;
+            overflow-y: auto;
+            padding-bottom: 40px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .header h2 {
+            margin: 0;
+            color: var(--primary);
+            font-size: 1.3rem;
+        }
+
+        .selection-area {
+            background: #fff;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .res-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid #f1f3f5;
+            cursor: pointer;
+        }
+
+        .res-item.selected {
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .checkbox {
+            width: 22px;
+            height: 22px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            margin-right: 12px;
+        }
+
+        .selected .checkbox {
+            background: var(--primary);
+            border-color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .selected .checkbox:after {
+            content: '✓';
+            color: white;
+            font-size: 14px;
+        }
+
+        #game-board {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            position: relative;
+        }
+
+        canvas {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            width: 100%;
+            height: auto;
+            border: 1px solid #eee;
+        }
+
+        .sync-notice {
+            background: #eef2ff;
+            color: var(--primary);
+            padding: 10px 15px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin-bottom: 15px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            justify-content: center;
+        }
+
+        #result-overlay {
+            display: none;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.98);
+            padding: 24px;
+            border-radius: 24px;
+            box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.15);
+            position: sticky;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            margin-top: 20px;
+            animation: slideUp 0.4s cubic-bezier(0, 0, 0.2, 1);
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .winner-tag {
+            background: var(--secondary);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+
+        .winner-name {
+            font-size: 1.8rem;
+            font-weight: 950;
+            color: #1a1f36;
+            margin: 10px 0;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 18px;
+            border-radius: 16px;
+            border: none;
+            font-weight: bold;
+            font-size: 1rem;
+            margin-top: 15px;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(63, 66, 159, 0.2);
+        }
+
+        .btn-kakao {
+            background: #FEE500;
+            color: #3A1E1E;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="screen">
+        <div class="header">
+            <h2>🪜 운명의 사다리 타기</h2>
+        </div>
+
+        <div id="selection-view">
+            <div class="selection-area">
+                <p style="font-size: 0.85rem; color: #888; margin-bottom: 12px;">선택된 후보들끼리 사다리 탈까요? (2~6개)</p>
+                <div class="res-item selected" onclick="toggleSelection(this)">
+                    <div class="checkbox"></div> <span>일지다이닝 (🥇1위)</span>
+                </div>
+                <div class="res-item selected" onclick="toggleSelection(this)">
+                    <div class="checkbox"></div> <span>우육미 (🥇1위)</span>
+                </div>
+                <div class="res-item" onclick="toggleSelection(this)">
+                    <div class="checkbox"></div> <span>진옥화할매닭한마리</span>
+                </div>
+                <div class="res-item" onclick="toggleSelection(this)">
+                    <div class="checkbox"></div> <span>에이셉피자</span>
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="initAndShowLadder()">사다리 준비 완료</button>
+        </div>
+
+        <div id="game-board">
+            <div class="sync-notice">📍 모든 참여자에게 동일한 경로가 보입니다</div>
+
+            <canvas id="ladderCanvas" width="360" height="450"></canvas>
+
+            <button class="btn btn-primary" id="start-btn" onclick="startAnimation()">사다리 시작!</button>
+
+            <div id="result-overlay">
+                <div class="winner-tag">🎉 오늘의 맛집 당첨!</div>
+                <div class="winner-name" id="winner-name">일지다이닝</div>
+                <button class="btn btn-kakao">결과 카카오톡 공유하기</button>
+                <button class="btn" style="background:#f1f3f5; color: #666;" onclick="location.reload()">처음으로</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('ladderCanvas');
+        const ctx = canvas.getContext('2d');
+        let candidates = [];
+        let verticalLines = [];
+        let bridges = [];
+        let winnerPath = [];
+        let startCol = 0;
+
+        function toggleSelection(el) {
+            el.classList.toggle('selected');
+            const count = document.querySelectorAll('.res-item.selected').length;
+            if (count > 6) {
+                alert('최대 6개까지만 선택 가능합니다.');
+                el.classList.remove('selected');
+            }
+        }
+
+        function initAndShowLadder() {
+            candidates = Array.from(document.querySelectorAll('.res-item.selected span')).map(el => el.innerText);
+            if (candidates.length < 2) {
+                alert('최소 2명 이상 선택해야 합니다!');
+                return;
+            }
+            document.getElementById('selection-view').style.display = 'none';
+            document.getElementById('game-board').style.display = 'flex';
+
+            setupLadder();
+
+            startCol = Math.floor(Math.random() * candidates.length);
+            calculateWinnerPath(startCol);
+
+            drawLadder();
+
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        }
+
+        function setupLadder() {
+            verticalLines = [];
+            bridges = [];
+            const cols = candidates.length;
+            const spacing = canvas.width / (cols + 1);
+
+            for (let i = 0; i < cols; i++) {
+                verticalLines.push(spacing * (i + 1));
+            }
+
+            let bridgeY = 70;
+            while (bridgeY < canvas.height - 100) {
+                bridgeY += 35 + Math.random() * 40;
+                if (bridgeY >= canvas.height - 80) break;
+                const col = Math.floor(Math.random() * (cols - 1));
+                bridges.push({ xFrom: verticalLines[col], xTo: verticalLines[col + 1], y: bridgeY, colFrom: col, colTo: col + 1 });
+            }
+            bridges.sort((a, b) => a.y - b.y);
+        }
+
+        function calculateWinnerPath(colIdx) {
+            let currentCol = colIdx;
+            let currentY = 40;
+            winnerPath = [{ x: verticalLines[currentCol], y: currentY, col: currentCol }];
+
+            let y = currentY;
+            while (true) {
+                const nextBridge = bridges.find(b => b.y > y && (b.colFrom === currentCol || b.colTo === currentCol));
+                if (nextBridge) {
+                    winnerPath.push({ x: verticalLines[currentCol], y: nextBridge.y, col: currentCol });
+                    const targetCol = nextBridge.colFrom === currentCol ? nextBridge.colTo : nextBridge.colFrom;
+                    winnerPath.push({ x: verticalLines[targetCol], y: nextBridge.y, col: targetCol });
+                    currentCol = targetCol;
+                    y = nextBridge.y;
+                } else {
+                    winnerPath.push({ x: verticalLines[currentCol], y: canvas.height - 60, col: currentCol });
+                    break;
+                }
+            }
+        }
+
+        function drawLadder(animateProgress = null) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 1. 세로줄 그리기 (스타일 오염 방지를 위해 먼저 모두 그림)
+            ctx.strokeStyle = '#dee2e6';
+            ctx.lineWidth = 4;
+            ctx.lineCap = 'round';
+            verticalLines.forEach((x) => {
+                ctx.beginPath();
+                ctx.moveTo(x, 40);
+                ctx.lineTo(x, canvas.height - 60);
+                ctx.stroke();
+            });
+
+            // 2. 가로 다리 그리기
+            ctx.strokeStyle = '#dee2e6';
+            ctx.lineWidth = 4;
+            bridges.forEach(b => {
+                ctx.beginPath();
+                ctx.moveTo(b.xFrom, b.y);
+                ctx.lineTo(b.xTo, b.y);
+                ctx.stroke();
+            });
+
+            // 3. 출발점과 라벨 그리기
+            verticalLines.forEach((x, i) => {
+                if (i === startCol) {
+                    ctx.fillStyle = '#ff4757';
+                    ctx.beginPath();
+                    ctx.arc(x, 40, 7, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                } else {
+                    ctx.fillStyle = '#adb5bd';
+                    ctx.beginPath();
+                    ctx.arc(x, 40, 6, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                ctx.fillStyle = '#1a1f36';
+                ctx.font = 'bold 12px sans-serif';
+                ctx.textAlign = 'center';
+                let label = candidates[i].length > 5 ? candidates[i].substring(0, 4) + '..' : candidates[i];
+                ctx.fillText(label, x, canvas.height - 35);
+            });
+
+            // 4. 당첨 경로 하이라이트
+            if (animateProgress) {
+                ctx.strokeStyle = '#ff4757';
+                ctx.lineWidth = 6;
+                ctx.lineJoin = 'round';
+
+                ctx.beginPath();
+                ctx.moveTo(winnerPath[0].x, winnerPath[0].y);
+
+                for (let i = 1; i <= animateProgress.index; i++) {
+                    ctx.lineTo(winnerPath[i].x, winnerPath[i].y);
+                }
+                if (animateProgress.partialX !== undefined) {
+                    ctx.lineTo(animateProgress.partialX, animateProgress.partialY);
+                }
+                ctx.stroke();
+
+                const lastX = animateProgress.partialX ?? winnerPath[animateProgress.index].x;
+                const lastY = animateProgress.partialY ?? winnerPath[animateProgress.index].y;
+                ctx.fillStyle = '#ff4757';
+                ctx.beginPath();
+                ctx.arc(lastX, lastY, 6, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        async function startAnimation() {
+            document.getElementById('start-btn').style.display = 'none';
+
+            for (let i = 0; i < winnerPath.length - 1; i++) {
+                const p1 = winnerPath[i];
+                const p2 = winnerPath[i + 1];
+                const duration = Math.abs(p1.x - p2.x) > 0 ? 400 : 700;
+                await smoothMove(p1, p2, i, duration);
+            }
+
+            const winnerIdx = winnerPath[winnerPath.length - 1].col;
+            document.getElementById('winner-name').innerText = candidates[winnerIdx];
+            document.getElementById('result-overlay').style.display = 'block';
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        }
+
+        function smoothMove(p1, p2, segmentIndex, duration) {
+            return new Promise((resolve) => {
+                const startTime = performance.now();
+                const animate = (currentTime) => {
+                    const elapsed = currentTime - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+                    const curX = p1.x + (p2.x - p1.x) * progress;
+                    const curY = p1.y + (p2.y - p1.y) * progress;
+                    drawLadder({ index: segmentIndex, partialX: curX, partialY: curY });
+                    if (progress < 1) requestAnimationFrame(animate);
+                    else resolve();
+                };
+                requestAnimationFrame(animate);
+            });
+        }
+    </script>
+</body>
+
+</html>

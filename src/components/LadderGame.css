@@ -1,0 +1,141 @@
+.ladder-container {
+    padding: 20px;
+    background: #fff;
+    border-radius: 20px;
+    margin-top: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.ladder-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.ladder-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: var(--ios-blue);
+}
+
+.ladder-sync-notice {
+    background: #eef2ff;
+    color: var(--ios-blue);
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    margin-bottom: 12px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.ladder-canvas-wrapper {
+    width: 100%;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.ladder-canvas {
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #eee;
+    max-width: 100%;
+    height: auto;
+}
+
+.ladder-result-overlay {
+    background: rgba(255, 255, 255, 0.98);
+    padding: 20px;
+    border-radius: 16px;
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    margin-top: -60px;
+    position: relative;
+    z-index: 10;
+}
+
+.ladder-winner-tag {
+    background: #ff4757;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    display: inline-block;
+    margin-bottom: 8px;
+}
+
+.ladder-winner-name {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #1a1f36;
+    margin: 8px 0;
+}
+
+.btn-ladder-reset {
+    background: #f1f3f5;
+    color: #4e5968;
+    margin-top: 10px;
+}
+
+.btn-kakao-share {
+    background: #fee500;
+    color: #3a1e1e;
+    margin-top: 10px;
+}
+
+.btn-add-candidate {
+    background: white;
+    border: 1.5px dashed #ccc;
+    color: #888;
+    padding: 10px;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    margin-bottom: 15px;
+}
+
+.candidate-selector {
+    background: #f8f9fa;
+    padding: 16px;
+    border-radius: 16px;
+    margin-bottom: 20px;
+}
+
+.candidate-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid #efefef;
+    cursor: pointer;
+}
+
+.candidate-item:last-child {
+    border-bottom: none;
+}
+
+.candidate-check {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #ddd;
+    border-radius: 4px;
+    margin-right: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.candidate-item.selected {
+    color: var(--ios-blue);
+    font-weight: bold;
+}
+
+.candidate-item.selected .candidate-check {
+    background: var(--ios-blue);
+    border-color: var(--ios-blue);
+}
+
+.candidate-item.selected .candidate-check::after {
+    content: '✓';
+    color: white;
+    font-size: 14px;
+}
