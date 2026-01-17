@@ -16,6 +16,7 @@ function LadderGame({ roomData, onTrigger, onReset, onClose, nickname }) {
     const canvasRef = useRef(null);
     const [isFinished, setIsFinished] = useState(false);
     const [isAnimating, setIsAnimating] = useState(false);
+    const [isCreating, setIsCreating] = useState(false);
     const isValidGame = roomData?.ladderGame && roomData.ladderGame.candidateIds && roomData.ladderGame.candidateIds.length >= 2;
     const [showSelector, setShowSelector] = useState(!isValidGame);
     const [selectedIds, setSelectedIds] = useState([]);
@@ -231,22 +232,38 @@ function LadderGame({ roomData, onTrigger, onReset, onClose, nickname }) {
                         <p style={{ fontSize: '0.85rem', color: '#666', marginBottom: '12px' }}>
                             사다리 탈 후보를 골라주세요 (2~6개)
                         </p>
-                        {(roomData.restaurants || []).map(res => (
-                            <div
-                                key={res.id}
-                                className={`candidate-item ${selectedIds.includes(res.id) ? 'selected' : ''}`}
-                                onClick={() => toggleCandidate(res.id)}
-                            >
-                                <div className="candidate-check"></div>
-                                <span>{res.name}</span>
-                            </div>
-                        ))}
+                        <div className="candidate-list">
+                            {(roomData.restaurants || []).map(res => (
+                                <div
+                                    key={res.id}
+                                    className={`candidate-item ${selectedIds.includes(res.id) ? 'selected' : ''}`}
+                                    onClick={() => toggleCandidate(res.id)}
+                                >
+                                    <div className="candidate-check"></div>
+                                    {res.image ? (
+                                        <img src={res.image} alt="" className="candidate-image" />
+                                    ) : (
+                                        <div className="candidate-image-placeholder">🍽️</div>
+                                    )}
+                                    <span className="candidate-name">{res.name}</span>
+                                </div>
+                            ))}
+                        </div>
                         <button
                             className="btn btn-primary"
-                            disabled={selectedIds.length < 2}
-                            onClick={() => onTrigger(selectedIds)}
+                            disabled={selectedIds.length < 2 || isCreating}
+                            onClick={async () => {
+                                setIsCreating(true);
+                                try {
+                                    await onTrigger(selectedIds);
+                                } catch (e) {
+                                    alert("사다리 생성 실패: " + e.message);
+                                } finally {
+                                    setIsCreating(false);
+                                }
+                            }}
                         >
-                            사다리 준비 완료
+                            {isCreating ? '사다리 준비 중...' : '사다리 준비 완료'}
                         </button>
                     </div>
                 ) : (

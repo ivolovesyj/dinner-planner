@@ -161,6 +161,15 @@
     padding: 16px;
     border-radius: 16px;
     margin-bottom: 20px;
+    max-height: 400px;
+    display: flex;
+    flex-direction: column;
+}
+
+.candidate-list {
+    overflow-y: auto;
+    max-height: 300px;
+    margin-bottom: 12px;
 }
 
 .candidate-item {
@@ -173,6 +182,36 @@
 
 .candidate-item:last-child {
     border-bottom: none;
+}
+
+.candidate-image {
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
+    object-fit: cover;
+    margin-right: 12px;
+    background: #eee;
+}
+
+.candidate-image-placeholder {
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
+    background: #e9ecef;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+    font-size: 20px;
+}
+
+.candidate-name {
+    flex: 1;
+    font-size: 0.95rem;
+    color: #333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .candidate-check {
@@ -189,6 +228,9 @@
 .candidate-item.selected {
     color: var(--ios-blue);
     font-weight: bold;
+    background: #e7f5ff;
+    border-radius: 8px;
+    border: 1px solid #74c0fc;
 }
 
 .candidate-item.selected .candidate-check {
