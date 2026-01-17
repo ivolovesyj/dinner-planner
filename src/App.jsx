@@ -157,6 +157,12 @@ function App() {
     }
   };
 
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && inputVal) {
+      handleAddLink(inputVal);
+    }
+  };
+
   const handleAddLink = async (url) => {
     if (!url || !roomId) return;
 
