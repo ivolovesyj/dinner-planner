@@ -50,6 +50,12 @@ function LadderGame({ roomData, onTrigger, onReset, onClose, nickname }) {
     }, [ladderData]);
 
     // Auto-selection removed per user request for cleaner reset
+    // Fix: Valid candidates persists until cleared. We must force clear selectedIds when game resets.
+    useEffect(() => {
+        if (!ladderData) {
+            setSelectedIds([]);
+        }
+    }, [ladderData]);
 
     // Canvas drawing logic
     const drawStaticLadder = useCallback((context, data, highlightSegments = []) => {
