@@ -235,9 +235,36 @@ function LadderGame({ roomData, onTrigger, onReset, onClose, nickname }) {
     useEffect(() => {
         if (!showSelector && ladderData && canvasRef.current) {
             const ctx = canvasRef.current.getContext('2d');
-            drawStaticLadder(ctx, ladderData);
+
+            let highlightPath = [];
+            // If game is finished or completed, calculate and draw the full path
+            if (isFinished || ladderData.status === 'completed') {
+                const cols = (ladderData.candidateIds || []).length;
+                const spacing = canvasRef.current.width / (cols + 1);
+                const verticalLines = Array.from({ length: cols }, (_, i) => spacing * (i + 1));
+
+                let currentCol = ladderData.startCol;
+                let currentY = 40;
+                highlightPath.push({ x: verticalLines[currentCol], y: currentY });
+
+                while (true) {
+                    const nextBridge = (ladderData.bridges || []).find(b => b.y > currentY && (b.colFrom === currentCol || b.colTo === currentCol));
+                    if (nextBridge) {
+                        highlightPath.push({ x: verticalLines[currentCol], y: nextBridge.y });
+                        const targetCol = nextBridge.colFrom === currentCol ? nextBridge.colTo : nextBridge.colFrom;
+                        highlightPath.push({ x: verticalLines[targetCol], y: nextBridge.y });
+                        currentCol = targetCol;
+                        currentY = nextBridge.y;
+                    } else {
+                        highlightPath.push({ x: verticalLines[currentCol], y: canvasRef.current.height - 60 });
+                        break;
+                    }
+                }
+            }
+
+            drawStaticLadder(ctx, ladderData, highlightPath);
         }
-    }, [showSelector, ladderData, drawStaticLadder]);
+    }, [showSelector, ladderData, drawStaticLadder, isFinished]);
 
     const toggleCandidate = (id) => {
         setSelectedIds(prev => {
