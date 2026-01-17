@@ -6,20 +6,23 @@ function LadderGame({ roomData, onTrigger, onReset, onClose, nickname }) {
     const canvasRef = useRef(null);
     const [isFinished, setIsFinished] = useState(false);
     const [isAnimating, setIsAnimating] = useState(false);
-    const [showSelector, setShowSelector] = useState(!roomData.ladderGame);
+    const [showSelector, setShowSelector] = useState(!roomData?.ladderGame);
     const [selectedIds, setSelectedIds] = useState([]);
+
+    // Guard: if roomData isn't ready
+    if (!roomData) return null;
 
     const ladderData = roomData.ladderGame;
 
     // Initialize selected IDs if tied winners exist
     useEffect(() => {
         if (!ladderData) {
-            const restaurants = roomData.restaurants || [];
-            const topScore = restaurants.length > 0
-                ? Math.max(...restaurants.map(r => (r.likes || 0) - (r.dislikes || 0)))
+            const respRestaurants = roomData.restaurants || [];
+            const topScore = respRestaurants.length > 0
+                ? Math.max(...respRestaurants.map(r => (r.likes || 0) - (r.dislikes || 0)))
                 : -999;
 
-            const tiedWinnerIds = restaurants
+            const tiedWinnerIds = respRestaurants
                 .filter(r => (r.likes || 0) - (r.dislikes || 0) === topScore && topScore > 0)
                 .map(r => r.id);
 
@@ -30,9 +33,11 @@ function LadderGame({ roomData, onTrigger, onReset, onClose, nickname }) {
     // Canvas drawing logic
     const drawStaticLadder = useCallback((context, data, highlightSegments = []) => {
         const canvas = canvasRef.current;
-        if (!canvas) return;
+        if (!canvas || !data) return;
 
-        const candidates = roomData.restaurants.filter(r => data.candidateIds.includes(r.id));
+        const candidates = (roomData.restaurants || []).filter(r => data.candidateIds?.includes(r.id));
+        if (candidates.length < 2) return;
+
         const cols = candidates.length;
         const spacing = canvas.width / (cols + 1);
         const verticalLines = Array.from({ length: cols }, (_, i) => spacing * (i + 1));
@@ -51,13 +56,15 @@ function LadderGame({ roomData, onTrigger, onReset, onClose, nickname }) {
         });
 
         // 2. Bridges
-        data.bridges.forEach(b => {
+        (data.bridges || []).forEach(b => {
             const x1 = verticalLines[b.colFrom];
             const x2 = verticalLines[b.colTo];
-            context.beginPath();
-            context.moveTo(x1, b.y);
-            context.lineTo(x2, b.y);
-            context.stroke();
+            if (x1 !== undefined && x2 !== undefined) {
+                context.beginPath();
+                context.moveTo(x1, b.y);
+                context.lineTo(x2, b.y);
+                context.stroke();
+            }
         });
 
         // 3. Dots & Labels
@@ -95,7 +102,7 @@ function LadderGame({ roomData, onTrigger, onReset, onClose, nickname }) {
             context.fillStyle = '#ff4757';
             context.beginPath(); context.arc(last.x, last.y, 6, 0, Math.PI * 2); context.fill();
         }
-    }, [roomData.restaurants]);
+    }, [roomData?.restaurants]);
 
     const startLadder = useCallback(async () => {
         if (!ladderData || isAnimating) return;
@@ -104,7 +111,7 @@ function LadderGame({ roomData, onTrigger, onReset, onClose, nickname }) {
 
         const canvas = canvasRef.current;
         const context = canvas.getContext('2d');
-        const cols = ladderData.candidateIds.length;
+        const cols = (ladderData.candidateIds || []).length;
         const spacing = canvas.width / (cols + 1);
         const verticalLines = Array.from({ length: cols }, (_, i) => spacing * (i + 1));
 
@@ -113,7 +120,7 @@ function LadderGame({ roomData, onTrigger, onReset, onClose, nickname }) {
         const path = [{ x: verticalLines[currentCol], y: currentY, col: currentCol }];
 
         while (true) {
-            const nextBridge = ladderData.bridges.find(b => b.y > currentY && (b.colFrom === currentCol || b.colTo === currentCol));
+            const nextBridge = (ladderData.bridges || []).find(b => b.y > currentY && (b.colFrom === currentCol || b.colTo === currentCol));
             if (nextBridge) {
                 path.push({ x: verticalLines[currentCol], y: nextBridge.y, col: currentCol });
                 const targetCol = nextBridge.colFrom === currentCol ? nextBridge.colTo : nextBridge.colFrom;
@@ -189,7 +196,7 @@ function LadderGame({ roomData, onTrigger, onReset, onClose, nickname }) {
                         <p style={{ fontSize: '0.85rem', color: '#666', marginBottom: '12px' }}>
                             사다리 탈 후보를 골라주세요 (2~6개)
                         </p>
-                        {roomData.restaurants.map(res => (
+                        {(roomData.restaurants || []).map(res => (
                             <div
                                 key={res.id}
                                 className={`candidate-item ${selectedIds.includes(res.id) ? 'selected' : ''}`}
@@ -209,9 +216,11 @@ function LadderGame({ roomData, onTrigger, onReset, onClose, nickname }) {
                     </div>
                 ) : (
                     <div id="game-view" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                        <div className="ladder-sync-notice">
-                            🌐 {ladderData.triggeredBy}님이 사다리를 준비했습니다!
-                        </div>
+                        {ladderData && (
+                            <div className="ladder-sync-notice">
+                                🌐 {ladderData.triggeredBy || '익명'}님이 사다리를 준비했습니다!
+                            </div>
+                        )}
 
                         <div className="ladder-canvas-wrapper">
                             <canvas ref={canvasRef} id="ladderCanvas" width="340" height="420" className="ladder-canvas"></canvas>
@@ -225,18 +234,19 @@ function LadderGame({ roomData, onTrigger, onReset, onClose, nickname }) {
                             <div className="ladder-result-overlay">
                                 <div className="ladder-winner-tag">🎉 오늘의 맛집 당첨!</div>
                                 <div className="ladder-winner-name" id="ladder-winner-name">
-                                    {roomData.restaurants.find(r => {
+                                    {roomData.restaurants?.find(r => {
+                                        if (!ladderData) return false;
                                         let currentCol = ladderData.startCol;
                                         let y = 40;
                                         while (true) {
-                                            const bridge = ladderData.bridges.find(b => b.y > y && (b.colFrom === currentCol || b.colTo === currentCol));
+                                            const bridge = (ladderData.bridges || []).find(b => b.y > y && (b.colFrom === currentCol || b.colTo === currentCol));
                                             if (bridge) {
                                                 currentCol = bridge.colFrom === currentCol ? bridge.colTo : bridge.colFrom;
                                                 y = bridge.y;
                                             } else break;
                                         }
-                                        return r.id === (ladderData.candidateIds[currentCol]);
-                                    })?.name}
+                                        return r.id === (ladderData.candidateIds?.[currentCol]);
+                                    })?.name || '결과를 불러올 수 없습니다'}
                                 </div>
                                 <button className="btn btn-kakao-share" onClick={handleShareResult}>카카오톡 결과 공유</button>
                                 <button className="btn btn-ladder-reset" onClick={onReset}>새 게임 준비하기</button>
