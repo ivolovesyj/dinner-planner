@@ -75,10 +75,11 @@ function LadderGame({ roomData, onTrigger, onReset, onClose, nickname }) {
         const canvas = canvasRef.current;
         if (!canvas || !data) return;
 
-        // Match candidates by looking at both .id and ._id for robustness
-        const candidates = (roomData.restaurants || []).filter(r =>
-            data.candidateIds?.some(cid => String(cid) === String(r.id) || String(cid) === String(r._id))
-        );
+        // CRITICAL FIX: Use map() to enforce candidateIds order, not filter() which preserves restaurants order
+        // This ensures the visual labels match the logical column indices used in path calculation
+        const candidates = (data.candidateIds || []).map(id =>
+            (roomData.restaurants || []).find(r => String(r.id) === String(id) || String(r._id) === String(id))
+        ).filter(Boolean);
         if (candidates.length < 2) {
             context.clearRect(0, 0, canvas.width, canvas.height);
             context.fillStyle = '#ff4757';
