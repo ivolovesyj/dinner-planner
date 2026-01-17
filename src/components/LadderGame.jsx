@@ -16,7 +16,8 @@ function LadderGame({ roomData, onTrigger, onReset, onClose, nickname }) {
     const canvasRef = useRef(null);
     const [isFinished, setIsFinished] = useState(false);
     const [isAnimating, setIsAnimating] = useState(false);
-    const [showSelector, setShowSelector] = useState(!roomData?.ladderGame);
+    const isValidGame = roomData?.ladderGame && roomData.ladderGame.candidateIds && roomData.ladderGame.candidateIds.length >= 2;
+    const [showSelector, setShowSelector] = useState(!isValidGame);
     const [selectedIds, setSelectedIds] = useState([]);
 
     // Guard: if roomData isn't ready
@@ -54,18 +55,18 @@ function LadderGame({ roomData, onTrigger, onReset, onClose, nickname }) {
             context.fillStyle = '#ff4757';
             context.font = '12px monospace';
             context.textAlign = 'left';
-            
+
             // Debug Info
             const debugInfo = [
                 "⚠️ Debug Info:",
                 `Rests: ${(roomData.restaurants || []).length}`,
                 `Cands: ${data.candidateIds?.length || 0}`,
                 `Matches: ${candidates.length}`,
-                `R[0]: ${(roomData.restaurants?.[0]?.id || '').substring(0,8)}`,
-                `C[0]: ${(data.candidateIds?.[0] || '').substring(0,8)}`,
+                `R[0]: ${(roomData.restaurants?.[0]?.id || '').substring(0, 8)}`,
+                `C[0]: ${(data.candidateIds?.[0] || '').substring(0, 8)}`,
                 "잠시만 기다려주세요..."
             ];
-            
+
             debugInfo.forEach((text, i) => {
                 context.fillText(text, 20, 100 + (i * 20));
             });
@@ -256,7 +257,16 @@ function LadderGame({ roomData, onTrigger, onReset, onClose, nickname }) {
                             <canvas ref={canvasRef} id="ladderCanvas" width="340" height="420" className="ladder-canvas"></canvas>
                         </div>
 
-                        {!isFinished && !isAnimating && (
+                        {/* Fallback Reset Button for Debug/Stuck State */}
+                        {!isFinished && !isAnimating && candidates.length < 2 && (
+                            <div style={{ marginTop: '10px' }}>
+                                <button className="btn btn-ladder-reset" onClick={onReset} style={{ background: '#ff4757', color: 'white' }}>
+                                    오류 발생: 게임 리셋하기
+                                </button>
+                            </div>
+                        )}
+
+                        {!isFinished && !isAnimating && candidates.length >= 2 && (
                             <button className="btn btn-primary" onClick={startLadder}>사다리 시작!</button>
                         )}
 
