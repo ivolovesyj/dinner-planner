@@ -215,12 +215,6 @@ function App() {
     }
   };
 
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter') {
-      handleAddLink(inputVal);
-    }
-  };
-
   const handleVote = async (id, type, reason) => {
     if (!userId) return; // Wait for userId to be initialized
 
@@ -463,24 +457,12 @@ function App() {
                 className={`feature-btn ${showLadder ? 'active' : ''}`}
                 onClick={() => setShowLadder(!showLadder)}
               >
-                🪜 {showLadder ? '사다리 닫기' : '사다리 타기'}
+                🪜 사다리 타기
               </button>
               <button className="feature-btn disabled" title="업데이트 예정">
                 🗺️ 지도 보기
               </button>
             </div>
-
-            {/* Ladder Game (Collapsible) */}
-            {showLadder && (
-              <div className="ladder-wrap">
-                <LadderGame
-                  roomData={roomData || { restaurants }}
-                  onTrigger={handleLadderTrigger}
-                  onReset={handleLadderReset}
-                  nickname={nickname}
-                />
-              </div>
-            )}
 
             {[...restaurants]
               .sort((a, b) => {
@@ -508,6 +490,17 @@ function App() {
                 );
               })}
           </div>
+        )}
+
+        {/* Modal-style Ladder Game */}
+        {showLadder && (
+          <LadderGame
+            roomData={roomData || { restaurants }}
+            onTrigger={handleLadderTrigger}
+            onReset={handleLadderReset}
+            onClose={() => setShowLadder(false)}
+            nickname={nickname}
+          />
         )}
       </main>
 
