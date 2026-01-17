@@ -523,3 +523,55 @@
   background: rgba(0, 122, 255, 0.1);
   border-radius: 20px;
 }
+/* Feature Bar (Toolbox) */
+.feature-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding: 8px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  border: 1px solid rgba(0,0,0,0.02);
+  position: sticky;
+  top: 110px; /* Below the sticky header */
+  z-index: 90;
+}
+
+.feature-btn {
+  flex: 1;
+  border: none;
+  background: #f2f2f7;
+  padding: 10px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #4e5968;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.feature-btn.active {
+  background: var(--ios-blue);
+  color: white;
+}
+
+.feature-btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  font-weight: 500;
+}
+
+.ladder-wrap {
+  margin-bottom: 24px;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from { transform: translateY(-10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}

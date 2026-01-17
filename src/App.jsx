@@ -21,6 +21,7 @@ function App() {
   const [roomData, setRoomData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [inputVal, setInputVal] = useState("");
+  const [showLadder, setShowLadder] = useState(false);
 
   const [roomId, setRoomId] = useState(null);
   const [roomError, setRoomError] = useState(null);
@@ -109,6 +110,11 @@ function App() {
       setRoomData(res.data);
       setRestaurants(res.data.restaurants || []);
       setRoomError(null);
+
+      // Auto-show ladder if a game is already in progress/exists in DB
+      if (res.data.ladderGame) {
+        setShowLadder(true);
+      }
     } catch (err) {
       console.error("Failed to fetch room:", err);
       if (err.response && err.response.status === 404) {
@@ -442,15 +448,6 @@ function App() {
       </header>
 
       <main className="app-content">
-        {restaurants.length > 0 && (
-          <LadderGame
-            roomData={roomData || { restaurants }}
-            onTrigger={handleLadderTrigger}
-            onReset={handleLadderReset}
-            nickname={nickname}
-          />
-        )}
-
         {restaurants.length === 0 ? (
           <div className="empty-state">
             <p>상단에 링크를 붙여넣어 투표를 시작하세요!</p>
@@ -460,6 +457,31 @@ function App() {
           </div>
         ) : (
           <div className="restaurant-list">
+            {/* Feature Bar (Toolbox) */}
+            <div className="feature-bar">
+              <button
+                className={`feature-btn ${showLadder ? 'active' : ''}`}
+                onClick={() => setShowLadder(!showLadder)}
+              >
+                🪜 {showLadder ? '사다리 닫기' : '사다리 타기'}
+              </button>
+              <button className="feature-btn disabled" title="업데이트 예정">
+                🗺️ 지도 보기
+              </button>
+            </div>
+
+            {/* Ladder Game (Collapsible) */}
+            {showLadder && (
+              <div className="ladder-wrap">
+                <LadderGame
+                  roomData={roomData || { restaurants }}
+                  onTrigger={handleLadderTrigger}
+                  onReset={handleLadderReset}
+                  nickname={nickname}
+                />
+              </div>
+            )}
+
             {[...restaurants]
               .sort((a, b) => {
                 const scoreA = (a.likes || 0) - (a.dislikes || 0);
