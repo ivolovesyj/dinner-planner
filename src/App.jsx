@@ -112,11 +112,6 @@ function App() {
         setRoomData(res.data);
         setRestaurants(res.data.restaurants || []);
 
-        // Auto-show ladder if a game is already in progress/exists in DB
-        // ONLY if it wasn't already shown (to avoid popping up repeatedly if closed)
-        if (res.data.ladderGame && !showLadder) {
-          setShowLadder(true);
-        }
       }
 
       setRoomError(null);
