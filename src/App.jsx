@@ -338,20 +338,23 @@ function App() {
           </div>
         ) : (
           <div className="restaurant-list">
-            <div className="feature-bar">
-              <button className={`feature-btn ${showLadder ? 'active' : ''}`} onClick={() => setShowLadder(!showLadder)}>
-                <LadderIcon size={16} color={showLadder ? "#fff" : "#4e5968"} style={{ marginRight: '6px' }} /> 사다리 타기
-              </button>
-              <button className={`feature-btn ${isMapExpanded ? 'active' : ''}`} onClick={() => setIsMapExpanded(!isMapExpanded)}>
-                🗺️ 지도 {isMapExpanded ? '접기' : '보기'}
-              </button>
+            {/* Sticky container for feature-bar and map */}
+            <div className="sticky-feature-container">
+              <div className="feature-bar">
+                <button className={`feature-btn ${showLadder ? 'active' : ''}`} onClick={() => setShowLadder(!showLadder)}>
+                  <LadderIcon size={16} color={showLadder ? "#fff" : "#4e5968"} style={{ marginRight: '6px' }} /> 사다리 타기
+                </button>
+                <button className={`feature-btn ${isMapExpanded ? 'active' : ''}`} onClick={() => setIsMapExpanded(!isMapExpanded)}>
+                  🗺️ 지도 {isMapExpanded ? '접기' : '보기'}
+                </button>
+              </div>
+              {/* Map View - Below feature bar buttons */}
+              <MapView
+                restaurants={restaurants}
+                isExpanded={isMapExpanded}
+                onMarkerClick={handleMarkerClick}
+              />
             </div>
-            {/* Map View - Below feature bar buttons */}
-            <MapView
-              restaurants={restaurants}
-              isExpanded={isMapExpanded}
-              onMarkerClick={handleMarkerClick}
-            />
             {[...restaurants].sort((a, b) => ((b.likes || 0) - (b.dislikes || 0)) - ((a.likes || 0) - (a.dislikes || 0))).map((rest, index, array) => {
               const score = (rest.likes || 0) - (rest.dislikes || 0);
               const rank = array.findIndex(r => ((r.likes || 0) - (r.dislikes || 0)) === score) + 1;

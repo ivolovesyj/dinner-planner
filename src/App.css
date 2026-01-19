@@ -523,19 +523,28 @@
   background: rgba(0, 122, 255, 0.1);
   border-radius: 20px;
 }
+
 /* Feature Bar (Toolbox) */
+.sticky-feature-container {
+  position: sticky;
+  top: 115px;
+  /* Adjust based on header height */
+  z-index: 90;
+  background-color: var(--ios-bg);
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+}
+
 .feature-bar {
   display: flex;
   gap: 8px;
-  margin-bottom: 20px;
+  margin-bottom: 0;
   padding: 8px;
   background: white;
   border-radius: 16px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-  border: 1px solid rgba(0,0,0,0.02);
-  position: sticky;
-  top: 110px; /* Below the sticky header */
-  z-index: 90;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.02);
+  /* Sticky moved to container */
 }
 
 .feature-btn {
@@ -572,18 +581,36 @@
 }
 
 @keyframes slideDown {
-  from { transform: translateY(-10px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 @keyframes highlight {
-    0% { transform: scale(1); box-shadow: 0 0 0 rgba(49, 130, 246, 0); }
-    50% { transform: scale(1.02); box-shadow: 0 0 15px rgba(49, 130, 246, 0.5); border-color: #3182f6; }
-    100% { transform: scale(1); box-shadow: 0 0 0 rgba(49, 130, 246, 0); }
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 rgba(49, 130, 246, 0);
+  }
+
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 0 15px rgba(49, 130, 246, 0.5);
+    border-color: #3182f6;
+  }
+
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 rgba(49, 130, 246, 0);
+  }
 }
 
 .highlight-card {
-    animation: highlight 1.5s ease;
-    z-index: 10;
+  animation: highlight 1.5s ease;
+  z-index: 10;
 }
-
