@@ -1,7 +1,7 @@
 // App.jsx - Refactored with Layered Architecture
 import { useState, useEffect } from 'react';
 import './App.css';
-import { Loader2, Share } from 'lucide-react';
+import { Loader2, Share, RotateCw } from 'lucide-react';
 
 // Domain-organized components
 import { RestaurantCard } from './components/restaurant';
@@ -89,6 +89,65 @@ function App() {
       }
     }
   }, [initialRoomId]);
+
+  // --- Stable Sort Logic ---
+  const [stableRestaurants, setStableRestaurants] = useState([]);
+  const [hasPendingSort, setHasPendingSort] = useState(false);
+
+  // Sync Data but Keep Order
+  useEffect(() => {
+    if (!restaurants) return;
+
+    if (stableRestaurants.length === 0 && restaurants.length > 0) {
+      // Initial Load: Sort by Score
+      const sorted = [...restaurants].sort((a, b) =>
+        ((b.likes || 0) - (b.dislikes || 0)) - ((a.likes || 0) - (a.dislikes || 0))
+      );
+      setStableRestaurants(sorted);
+    } else if (restaurants.length > 0) {
+      // Update: Keep Order, Update Values, Append New
+      setStableRestaurants(prev => {
+        const next = [...prev];
+        const currentIds = new Set(next.map(r => r.id));
+
+        // 1. Update existing items in-place & 2. Add new items
+        restaurants.forEach(freshItem => {
+          const idx = next.findIndex(item => item.id === freshItem.id);
+          if (idx !== -1) {
+            next[idx] = freshItem; // Update data
+          } else {
+            next.push(freshItem); // Append new
+          }
+        });
+
+        // 3. Remove deleted items
+        const freshIds = new Set(restaurants.map(r => r.id));
+        return next.filter(item => freshIds.has(item.id));
+      });
+    } else {
+      setStableRestaurants([]);
+    }
+  }, [restaurants]);
+
+  // Check if re-sort is needed
+  useEffect(() => {
+    const currentOrderIds = stableRestaurants.map(r => r.id).join(',');
+    const scoreSorted = [...stableRestaurants].sort((a, b) =>
+      ((b.likes || 0) - (b.dislikes || 0)) - ((a.likes || 0) - (a.dislikes || 0))
+    );
+    const idealOrderIds = scoreSorted.map(r => r.id).join(',');
+
+    setHasPendingSort(currentOrderIds !== idealOrderIds);
+  }, [stableRestaurants]);
+
+  const handleRefreshOrder = () => {
+    const sorted = [...stableRestaurants].sort((a, b) =>
+      ((b.likes || 0) - (b.dislikes || 0)) - ((a.likes || 0) - (a.dislikes || 0))
+    );
+    setStableRestaurants(sorted);
+    setHasPendingSort(false);
+    // alert("순서가 업데이트되었습니다! 🔄");
+  };
 
   // GA4 Page View
   useEffect(() => {
@@ -347,6 +406,11 @@ function App() {
                 <button className={`feature-btn ${isMapExpanded ? 'active' : ''}`} onClick={() => setIsMapExpanded(!isMapExpanded)}>
                   🗺️ 지도 {isMapExpanded ? '접기' : '보기'}
                 </button>
+                {hasPendingSort && (
+                  <button className="feature-btn refresh-btn" onClick={handleRefreshOrder} style={{ color: '#3182f6', background: '#e8f3ff' }}>
+                    <RotateCw size={16} /> 순서 업데이트
+                  </button>
+                )}
               </div>
               {/* Map View - Below feature bar buttons */}
               <MapView
@@ -355,30 +419,40 @@ function App() {
                 onMarkerClick={handleMarkerClick}
               />
             </div>
-            {[...restaurants].sort((a, b) => ((b.likes || 0) - (b.dislikes || 0)) - ((a.likes || 0) - (a.dislikes || 0))).map((rest, index, array) => {
+            {stableRestaurants.map((rest, index) => {
+              // Calculate rank based on SCORE, not index in stable list
+              // We need the sorted array to determine true rank
+              const sortedForRank = [...stableRestaurants].sort((a, b) =>
+                ((b.likes || 0) - (b.dislikes || 0)) - ((a.likes || 0) - (a.dislikes || 0))
+              );
               const score = (rest.likes || 0) - (rest.dislikes || 0);
-              const rank = array.findIndex(r => ((r.likes || 0) - (r.dislikes || 0)) === score) + 1;
+              // Finding rank: index in sorted array where score matches
+              const rank = sortedForRank.findIndex(r => ((r.likes || 0) - (r.dislikes || 0)) === score) + 1;
+
               return <RestaurantCard key={rest.id} data={rest} rank={rank} userId={userId} onVote={onVote} onDelete={onDeleteRestaurant} />;
             })}
           </div>
-        )}
-        {showLadder && (
-          <LadderGame
-            roomData={roomData || { restaurants }}
-            onTrigger={onLadderTrigger}
-            onReset={onLadderReset}
-            onClose={() => setShowLadder(false)}
-            onComplete={handleLadderComplete}
-            apiBase={API_BASE_URL}
-            nickname={nickname}
-          />
-        )}
-      </main>
+        )
+        }
+        {
+          showLadder && (
+            <LadderGame
+              roomData={roomData || { restaurants }}
+              onTrigger={onLadderTrigger}
+              onReset={onLadderReset}
+              onClose={() => setShowLadder(false)}
+              onComplete={handleLadderComplete}
+              apiBase={API_BASE_URL}
+              nickname={nickname}
+            />
+          )
+        }
+      </main >
       {(showNicknameModal || !nickname) && (
         <NicknameModal onSave={handleSaveNickname} onClose={nickname ? () => setShowNicknameModal(false) : null} initialValue={nickname || ""} />
       )}
       <Footer />
-    </div>
+    </div >
   );
 }
 
