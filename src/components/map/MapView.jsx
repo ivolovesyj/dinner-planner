@@ -3,9 +3,7 @@ import { NAVER_MAP_CLIENT_ID, DEFAULT_CENTER } from '../../constants';
 import './MapView.css';
 
 const MapView = ({ restaurants, isExpanded, onToggle, onMarkerClick }) => {
-    // Hardcoded for debugging to rule out Environment Variable issues
-    const CLIENT_ID = 'r942ztr0hi';
-    console.log("[Debug] Map Init | ClientID:", CLIENT_ID, "| URL:", window.location.href);
+    console.log("[Debug] Naver Client ID:", NAVER_MAP_CLIENT_ID); // 디버깅용 로그
 
     const mapRef = useRef(null);
     const mapInstance = useRef(null);
@@ -28,7 +26,7 @@ const MapView = ({ restaurants, isExpanded, onToggle, onMarkerClick }) => {
 
         script = document.createElement('script');
         script.id = scriptId;
-        script.src = `https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=${CLIENT_ID}`;
+        script.src = `https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=${NAVER_MAP_CLIENT_ID}`;
         script.async = true;
         script.onload = handleScriptLoad;
         script.onerror = handleScriptError;
