@@ -181,8 +181,6 @@ const MapView = ({ restaurants, isExpanded, onToggle, onMarkerClick }) => {
         }
     }, [isExpanded, restaurants]);
 
-    if (!restaurants || restaurants.length === 0) return null;
-
     // Only render if expanded (toggled from parent)
     if (!isExpanded) return null;
 
