@@ -10,10 +10,45 @@ const RestaurantCard = ({ data, rank, userId, onVote, onDelete }) => {
     const [showMenu, setShowMenu] = useState(false); // Validated separate state
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isExpanded, setIsExpanded] = useState(rank === 1); // Expand top rank by default
+    const [isExpanded, setIsExpanded] = useState(false); // Default logic changed: All closed by default
     const [touchStart, setTouchStart] = useState(0);
     const [touchEnd, setTouchEnd] = useState(0);
     const [showDislikeConfirm, setShowDislikeConfirm] = useState(false);
+    const [isNew, setIsNew] = useState(false);
+
+    // Initial check for NEW status
+    React.useEffect(() => {
+        const viewedList = JSON.parse(localStorage.getItem('viewedRooms') || '{}');
+        // We might need a better key strategy. "viewed_restaurants" globally? 
+        // Or per room? The user said "others added", so global is fine or per list.
+        // Let's use a simpler 'viewed_restaurants' array of IDs.
+        const viewedIds = JSON.parse(localStorage.getItem('dinner_viewed_restaurants') || '[]');
+
+        // If I am the owner, it's not "new" to me.
+        if (userId && data.ownerId && userId === data.ownerId) {
+            setIsNew(false);
+            return;
+        }
+
+        if (!viewedIds.includes(data.id)) {
+            setIsNew(true);
+        }
+    }, [data.id, userId, data.ownerId]);
+
+    const handleToggleExpand = () => {
+        const nextState = !isExpanded;
+        setIsExpanded(nextState);
+
+        if (nextState && isNew) {
+            // Mark as read
+            setIsNew(false);
+            const viewedIds = JSON.parse(localStorage.getItem('dinner_viewed_restaurants') || '[]');
+            if (!viewedIds.includes(data.id)) {
+                viewedIds.push(data.id);
+                localStorage.setItem('dinner_viewed_restaurants', JSON.stringify(viewedIds));
+            }
+        }
+    };
 
     const isOwner = userId && data.ownerId && userId === data.ownerId;
     const images = (data.images && data.images.length > 0) ? data.images : [data.image || ''];
@@ -155,7 +190,7 @@ const RestaurantCard = ({ data, rank, userId, onVote, onDelete }) => {
 
     return (
         <div id={data.id} className={`card ${isExpanded ? 'expanded' : 'folded'}`}>
-            <div className="card-header-folded" onClick={() => setIsExpanded(!isExpanded)}>
+            <div className="card-header-folded" onClick={handleToggleExpand}>
                 <div
                     className="thumbnail"
                     style={{ backgroundImage: `url(${images[0]})` }}
@@ -171,6 +206,7 @@ const RestaurantCard = ({ data, rank, userId, onVote, onDelete }) => {
                     <p>{data.category || '카테고리'} • {data.station || (data.location ? data.location.split(' ')[1] : '위치 정보 없음')}</p>
                 </div>
                 <div className="vote-summary">
+                    {isNew && <span className="badge new">NEW</span>}
                     {data.likes > 0 && <span className="badge like">👍 {data.likes}</span>}
                     {data.dislikes > 0 && <span className="badge dislike">👎 {data.dislikes}</span>}
                 </div>

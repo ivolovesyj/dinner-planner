@@ -71,6 +71,28 @@
     font-weight: 600;
 }
 
+.vote-summary .new {
+    background: #FF3B30;
+    color: white;
+    font-weight: 700;
+    font-size: 11px;
+    animation: pulse-badge 2s infinite;
+}
+
+@keyframes pulse-badge {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
 .vote-summary .like {
     background: #e1f5fe;
     color: #0288d1;

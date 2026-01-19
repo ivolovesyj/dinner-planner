@@ -1,0 +1,26 @@
+/* Feature Bar (Toolbox) */
+.sticky-feature-container {
+  position: sticky;
+  top: 125px; /* Adjust based on header height */
+  z-index: 90;
+  background-color: var(--ios-bg);
+  padding: 0 0 10px 0; /* Add some spacing and background */
+  margin-bottom: 0;
+}
+
+.feature-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 0; /* Remove margin as container handles it or just keep tight */
+  padding: 8px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  border: 1px solid rgba(0,0,0,0.02);
+  /* Removed sticky styles from here */
+}
+
+/* Add margin to map view when inside sticky container */
+.sticky-feature-container .map-container {
+    margin-top: 8px; /* Gap between buttons and map */
+}
