@@ -12,47 +12,62 @@ const MapView = ({ restaurants, isExpanded, onToggle, onMarkerClick }) => {
     // Load Naver Map Script
     useEffect(() => {
         const scriptId = 'naver-map-script';
-        const existingScript = document.getElementById(scriptId);
 
-        if (existingScript) {
+        const handleScriptLoad = () => setIsLoaded(true);
+        const handleScriptError = () => console.error("Naver Map Script Load Failed");
+
+        let script = document.getElementById(scriptId);
+
+        if (script) {
             setIsLoaded(true);
             return;
         }
 
-        const script = document.createElement('script');
+        script = document.createElement('script');
         script.id = scriptId;
         script.src = `https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=${NAVER_MAP_CLIENT_ID}`;
         script.async = true;
-        script.onload = () => setIsLoaded(true);
+        script.onload = handleScriptLoad;
+        script.onerror = handleScriptError;
         document.head.appendChild(script);
+
+        return () => {
+            // Cleanup if needed
+        };
     }, []);
 
     // Initialize Map and Markers
     useEffect(() => {
-        if (!isLoaded || !mapRef.current || !window.naver) return;
+        // Safety Check: Ensure naver maps is fully loaded
+        if (!isLoaded || !mapRef.current || !window.naver || !window.naver.maps) return;
 
-        // Initialize Map if not exists
-        if (!mapInstance.current) {
-            mapInstance.current = new window.naver.maps.Map(mapRef.current, {
-                center: new window.naver.maps.LatLng(DEFAULT_CENTER.lat, DEFAULT_CENTER.lng),
-                zoom: 14,
-                scaleControl: false,
-                logoControl: false,
-                mapDataControl: false,
-                zoomControl: true,
-                zoomControlOptions: {
-                    position: window.naver.maps.Position.TOP_RIGHT
-                }
-            });
-
-            // Zoom changed listener for label visibility
-            window.naver.maps.Event.addListener(mapInstance.current, 'zoom_changed', () => {
-                const zoom = mapInstance.current.getZoom();
-                const labels = document.querySelectorAll('.marker-label');
-                labels.forEach(el => {
-                    el.style.display = zoom >= 13 ? 'block' : 'none';
+        try {
+            // Initialize Map if not exists
+            if (!mapInstance.current) {
+                mapInstance.current = new window.naver.maps.Map(mapRef.current, {
+                    center: new window.naver.maps.LatLng(DEFAULT_CENTER.lat, DEFAULT_CENTER.lng),
+                    zoom: 14,
+                    scaleControl: false,
+                    logoControl: false,
+                    mapDataControl: false,
+                    zoomControl: true,
+                    zoomControlOptions: {
+                        position: window.naver.maps.Position.TOP_RIGHT
+                    }
                 });
-            });
+
+                // Zoom changed listener for label visibility
+                window.naver.maps.Event.addListener(mapInstance.current, 'zoom_changed', () => {
+                    const zoom = mapInstance.current.getZoom();
+                    const labels = document.querySelectorAll('.marker-label');
+                    labels.forEach(el => {
+                        el.style.display = zoom >= 13 ? 'block' : 'none';
+                    });
+                });
+            }
+        } catch (initErr) {
+            console.error("Map Initialization Error:", initErr);
+            return;
         }
 
         const map = mapInstance.current; // Shortcut
