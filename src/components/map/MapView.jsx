@@ -3,6 +3,7 @@ import { NAVER_MAP_CLIENT_ID, DEFAULT_CENTER } from '../../constants';
 import './MapView.css';
 
 const MapView = ({ restaurants, isExpanded, onToggle, onMarkerClick }) => {
+    console.log("[Debug] Naver Client ID:", NAVER_MAP_CLIENT_ID); // 디버깅용 로그
     const mapRef = useRef(null);
     const mapInstance = useRef(null);
     const markers = useRef([]);
