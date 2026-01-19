@@ -1,6 +1,9 @@
 // Application Constants
 
 export const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key-1234';
+export const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin1234';
+export const NAVER_CLIENT_ID = process.env.NAVER_CLIENT_ID;
+export const NAVER_CLIENT_SECRET = process.env.NAVER_CLIENT_SECRET;
 
 // Station Map for line info (서울 지하철 역 정보)
 export const STATION_MAP = {

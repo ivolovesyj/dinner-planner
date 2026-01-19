@@ -9,6 +9,8 @@ const restaurantSchema = new mongoose.Schema({
     image: String,
     description: String,
     location: String,
+    latitude: Number,  // 위도
+    longitude: Number, // 경도
     station: String,
     menu: String,
     priceRange: String,

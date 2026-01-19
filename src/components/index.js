@@ -17,3 +17,5 @@ export * from './admin';
 
 // Layout components
 export * from './layout';
+
+export * from './map';

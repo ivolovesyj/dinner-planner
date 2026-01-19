@@ -1,0 +1,117 @@
+.map-container {
+    width: 100%;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e5e8eb;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: sticky;
+    top: 0;
+    z-index: 90;
+    /* Header is usually 100 */
+    display: flex;
+    flex-direction: column;
+}
+
+/* Collapsed state */
+.map-container.collapsed {
+    height: 40px;
+    /* Only toggle button visible */
+}
+
+/* Expanded state */
+.map-container.expanded {
+    height: 350px;
+}
+
+.naver-map {
+    width: 100%;
+    flex: 1;
+    background: #eee;
+}
+
+.map-toggle-btn {
+    height: 40px;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 600;
+    color: #4e5968;
+    cursor: pointer;
+    border-top: 1px solid #e5e8eb;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    z-index: 10;
+}
+
+.map-toggle-btn:hover {
+    background: #f9fafb;
+    color: #3182f6;
+}
+
+/* Custom Marker Styles */
+.custom-marker {
+    position: relative;
+    cursor: pointer;
+    text-align: center;
+}
+
+.marker-badge {
+    width: 28px;
+    height: 28px;
+    background: #4e5968;
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s;
+}
+
+.custom-marker:hover .marker-badge {
+    transform: scale(1.1);
+    background: #3182f6;
+}
+
+/* Rank Specific Colors */
+.custom-marker.rank-1 .marker-badge {
+    background: #FFD700;
+    color: #fff;
+    border-color: #fff;
+    z-index: 10;
+}
+
+.custom-marker.rank-2 .marker-badge {
+    background: #C0C0C0;
+    color: #fff;
+    border-color: #fff;
+    z-index: 9;
+}
+
+.custom-marker.rank-3 .marker-badge {
+    background: #CD7F32;
+    color: #fff;
+    border-color: #fff;
+    z-index: 8;
+}
+
+.marker-label {
+    position: absolute;
+    top: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 255, 255, 0.9);
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    font-size: 12px;
+    white-space: nowrap;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    color: #333;
+    font-weight: 600;
+    pointer-events: none;
+    z-index: 5;
+}

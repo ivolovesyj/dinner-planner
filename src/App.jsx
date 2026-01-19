@@ -9,6 +9,7 @@ import { LadderGame } from './components/ladder';
 import { NicknameModal } from './components/room';
 import { AdminLogin, AdminDashboard } from './components/admin';
 import { Footer } from './components/layout';
+import { MapView } from './components/map';
 
 // Hooks
 import { useRoom } from './hooks/useRoom';
@@ -63,6 +64,9 @@ function App() {
   const [showNicknameModal, setShowNicknameModal] = useState(false);
   const [userId, setUserId] = useState(null);
   const [roomError, setRoomError] = useState(null);
+
+  // Map State
+  const [isMapExpanded, setIsMapExpanded] = useState(false);
 
   const restaurants = roomData?.restaurants || [];
 
@@ -140,6 +144,10 @@ function App() {
       await handleAddRestaurant(url);
       logEvent('Participation', 'Add Restaurant', url);
       setInputVal("");
+      // Expand map when first restaurant added
+      if (restaurants.length === 0) {
+        setIsMapExpanded(true);
+      }
     } catch (error) {
       alert("식당 추가 실패. 링크를 확인해주세요.");
     }
@@ -209,6 +217,16 @@ function App() {
     }
   };
 
+  // Map Marker Click Handler
+  const handleMarkerClick = (id) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.classList.add('highlight-card');
+      setTimeout(() => el.classList.remove('highlight-card'), 2000);
+    }
+  };
+
   // --- Landing Page Animation ---
   const [currentIcon, setCurrentIcon] = useState('🍔');
   const [isIconPop, setIsIconPop] = useState(false);
@@ -233,6 +251,7 @@ function App() {
   if (!roomId) {
     return (
       <div className="landing-container">
+        {/* ... (Same landing page content) ... */}
         <section className="hero">
           <span style={{
             display: 'inline-block', background: '#e5e8eb', color: '#4e5968',
@@ -309,6 +328,17 @@ function App() {
           )}
         </div>
       </header>
+
+      {/* Map View */}
+      {restaurants.length > 0 && (
+        <MapView
+          restaurants={restaurants}
+          isExpanded={isMapExpanded}
+          onToggle={() => setIsMapExpanded(!isMapExpanded)}
+          onMarkerClick={handleMarkerClick}
+        />
+      )}
+
       <main className="app-content">
         {restaurants.length === 0 ? (
           <div className="empty-state">
@@ -321,7 +351,10 @@ function App() {
               <button className={`feature-btn ${showLadder ? 'active' : ''}`} onClick={() => setShowLadder(!showLadder)}>
                 <LadderIcon size={16} color={showLadder ? "#fff" : "#4e5968"} style={{ marginRight: '6px' }} /> 사다리 타기
               </button>
-              <button className="feature-btn disabled">🗺️ 지도 보기</button>
+              {/* Map Toggle button in feature bar can also control map? Or remove this button as we have the map container toggle */}
+              <button className={`feature-btn ${isMapExpanded ? 'active' : ''}`} onClick={() => setIsMapExpanded(!isMapExpanded)}>
+                🗺️ 지도 {isMapExpanded ? '접기' : '보기'}
+              </button>
             </div>
             {[...restaurants].sort((a, b) => ((b.likes || 0) - (b.dislikes || 0)) - ((a.likes || 0) - (a.dislikes || 0))).map((rest, index, array) => {
               const score = (rest.likes || 0) - (rest.dislikes || 0);

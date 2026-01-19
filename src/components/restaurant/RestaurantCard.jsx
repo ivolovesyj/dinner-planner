@@ -154,7 +154,7 @@ const RestaurantCard = ({ data, rank, userId, onVote, onDelete }) => {
     }
 
     return (
-        <div className={`card ${isExpanded ? 'expanded' : 'folded'}`}>
+        <div id={data.id} className={`card ${isExpanded ? 'expanded' : 'folded'}`}>
             <div className="card-header-folded" onClick={() => setIsExpanded(!isExpanded)}>
                 <div
                     className="thumbnail"

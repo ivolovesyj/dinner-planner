@@ -575,3 +575,15 @@
   from { transform: translateY(-10px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
+
+@keyframes highlight {
+    0% { transform: scale(1); box-shadow: 0 0 0 rgba(49, 130, 246, 0); }
+    50% { transform: scale(1.02); box-shadow: 0 0 15px rgba(49, 130, 246, 0.5); border-color: #3182f6; }
+    100% { transform: scale(1); box-shadow: 0 0 0 rgba(49, 130, 246, 0); }
+}
+
+.highlight-card {
+    animation: highlight 1.5s ease;
+    z-index: 10;
+}
+

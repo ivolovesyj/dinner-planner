@@ -22,3 +22,6 @@ export const APP_CONFIG = {
     MAX_RESTAURANTS: 20,
     KAKAO_SDK_KEY: '48d2b69cdffc16d0a49b3bcee425db5a'
 };
+
+export const NAVER_MAP_CLIENT_ID = import.meta.env.VITE_NAVER_MAP_CLIENT_ID;
+export const DEFAULT_CENTER = { lat: 37.5665, lng: 126.9780 }; // 서울 시청

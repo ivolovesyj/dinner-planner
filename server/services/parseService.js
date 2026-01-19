@@ -265,7 +265,51 @@ export const parseUrl = async (url) => {
         };
     }
 
+    // --- Geocoding Logic ---
+    if (data && data.location && (!data.latitude || !data.longitude)) {
+        try {
+            console.log(`Trying to geocode address: ${data.location}`);
+            const coords = await getCoordinates(data.location);
+            if (coords) {
+                console.log(`Geocoding successful: ${coords.lat}, ${coords.lng}`);
+                data.latitude = coords.lat;
+                data.longitude = coords.lng;
+            }
+        } catch (geoErr) {
+            console.error("Geocoding failed:", geoErr.message);
+        }
+    }
+
     return data;
+};
+
+// Helper: Get Coordinates from Address using Naver Geocoding API
+import { NAVER_CLIENT_ID, NAVER_CLIENT_SECRET } from '../config/constants.js';
+
+const getCoordinates = async (address) => {
+    if (!NAVER_CLIENT_ID || !NAVER_CLIENT_SECRET) {
+        console.warn("Naver Client ID/Secret missing. Skipping geocoding.");
+        return null;
+    }
+
+    try {
+        const response = await axios.get('https://naveropenapi.apigw.ntruss.com/map-geocode/v2/geocode', {
+            params: { query: address },
+            headers: {
+                'X-NCP-APIGW-API-KEY-ID': NAVER_CLIENT_ID,
+                'X-NCP-APIGW-API-KEY': NAVER_CLIENT_SECRET
+            }
+        });
+
+        if (response.data.addresses && response.data.addresses.length > 0) {
+            const { x, y } = response.data.addresses[0];
+            return { lat: parseFloat(y), lng: parseFloat(x) }; // y=latitude, x=longitude
+        }
+        return null;
+    } catch (err) {
+        console.error("Geocoding API Error:", err.message);
+        return null;
+    }
 };
 
 export default { parseUrl };
