@@ -3,16 +3,16 @@
 
 export const API_BASE_URL = import.meta.env.VITE_API_URL ||
     (import.meta.env.PROD
-        ? 'https://dinner-planner.fly.dev'
+        ? 'https://gooddinner.fly.dev'
         : 'http://localhost:8080');
 
 // Polling Configuration
 export const POLLING_INTERVAL = 3000; // 3 seconds
 
-// Local Storage Keys
+// Local Storage Keys - Keep consistent with existing app
 export const STORAGE_KEYS = {
-    USER_ID: 'dinner_user_id',
-    NICKNAME: 'dinner_nickname',
+    USER_ID: 'dinnerPlannerUserId',
+    NICKNAME: 'dinnerPlannerNickname',
     ADMIN_TOKEN: 'admin_token'
 };
 
