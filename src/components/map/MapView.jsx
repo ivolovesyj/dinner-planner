@@ -73,99 +73,113 @@ const MapView = ({ restaurants, isExpanded, onToggle, onMarkerClick }) => {
         const map = mapInstance.current; // Shortcut
 
         // Update Markers
-        // Clear existing markers
-        markers.current.forEach(marker => marker.setMap(null));
-        markers.current = [];
+        try {
+            // Clear existing markers
+            markers.current.forEach(marker => marker.setMap(null));
+            markers.current = [];
 
-        if (!restaurants || restaurants.length === 0) return;
+            if (!restaurants || restaurants.length === 0) return;
 
-        // Calculate Ranking based on votes
-        const sortedRestaurants = [...restaurants].sort((a, b) =>
-            ((b.likes || 0) - (b.dislikes || 0)) - ((a.likes || 0) - (a.dislikes || 0))
-        );
+            // Calculate Ranking based on votes
+            const sortedRestaurants = [...restaurants].sort((a, b) =>
+                ((b.likes || 0) - (b.dislikes || 0)) - ((a.likes || 0) - (a.dislikes || 0))
+            );
 
-        const bounds = new window.naver.maps.LatLngBounds();
-        let validMarkers = 0;
+            const bounds = new window.naver.maps.LatLngBounds();
+            let validMarkers = 0;
 
-        restaurants.forEach((rest) => {
-            if (!rest.latitude || !rest.longitude) return;
+            restaurants.forEach((rest) => {
+                if (!rest.latitude || !rest.longitude) return;
 
-            validMarkers++;
-            const position = new window.naver.maps.LatLng(rest.latitude, rest.longitude);
-            bounds.extend(position);
+                validMarkers++;
+                const position = new window.naver.maps.LatLng(rest.latitude, rest.longitude);
+                bounds.extend(position);
 
-            const score = (rest.likes || 0) - (rest.dislikes || 0);
-            const rank = sortedRestaurants.findIndex(r => r.id === rest.id) + 1;
+                const score = (rest.likes || 0) - (rest.dislikes || 0);
+                const rank = sortedRestaurants.findIndex(r => r.id === rest.id) + 1;
 
-            // Marker HTML
-            const isTopRank = rank <= 3 && score > 0;
-            const markerHtml = `
-                <div class="custom-marker ${isTopRank ? `rank-${rank}` : ''}">
-                    <div class="marker-badge">${rank}</div>
-                    <div class="marker-label" style="display: none;">${rest.name}</div>
-                </div>
-            `;
+                // Marker HTML
+                const isTopRank = rank <= 3 && score > 0;
+                const markerHtml = `
+                    <div class="custom-marker ${isTopRank ? `rank-${rank}` : ''}">
+                        <div class="marker-badge">${rank}</div>
+                        <div class="marker-label" style="display: none;">${rest.name}</div>
+                    </div>
+                `;
 
-            const marker = new window.naver.maps.Marker({
-                position: position,
-                map: map,
-                icon: {
-                    content: markerHtml,
-                    size: new window.naver.maps.Size(30, 30),
-                    anchor: new window.naver.maps.Point(15, 30)
-                }
-            });
-
-            // Handle Click
-            window.naver.maps.Event.addListener(marker, 'click', () => {
-                onMarkerClick(rest.id);
-            });
-
-            markers.current.push(marker);
-        });
-
-        // Fit Bounds if markers exist
-        if (validMarkers > 0) {
-            if (validMarkers === 1) {
-                map.setCenter(bounds.getCenter());
-                map.setZoom(15);
-            } else {
-                map.fitBounds(bounds, {
-                    top: 50, bottom: 50, left: 50, right: 50
+                const marker = new window.naver.maps.Marker({
+                    position: position,
+                    map: map,
+                    icon: {
+                        content: markerHtml,
+                        size: new window.naver.maps.Size(30, 30),
+                        anchor: new window.naver.maps.Point(15, 30)
+                    }
                 });
+
+                // Handle Click
+                window.naver.maps.Event.addListener(marker, 'click', () => {
+                    onMarkerClick(rest.id);
+                });
+
+                markers.current.push(marker);
+            });
+
+            // Fit Bounds if markers exist
+            if (validMarkers > 0) {
+                if (validMarkers === 1) {
+                    map.setCenter(bounds.getCenter());
+                    map.setZoom(15);
+                } else {
+                    map.fitBounds(bounds, {
+                        top: 50, bottom: 50, left: 50, right: 50
+                    });
+                }
             }
+        } catch (markerErr) {
+            console.error("Marker Render Error:", markerErr);
         }
 
     }, [isLoaded, restaurants]); // Re-run when restaurants change
 
     // Handle Resize (Expand/Collapse)
     useEffect(() => {
-        if (mapInstance.current) {
+        // Safety Check
+        if (!mapInstance.current || !window.naver || !window.naver.maps) return;
+
+        try {
             window.naver.maps.Event.trigger(mapInstance.current, 'resize');
             // Re-fit bounds after resize transition (300ms)
             setTimeout(() => {
-                if (mapInstance.current && markers.current.length > 0) {
+                // Double Safety Check inside timeout
+                if (mapInstance.current && markers.current.length > 0 && window.naver && window.naver.maps) {
                     // Optional: re-fit bounds? 
                     // Usually keeping current center is better, or re-fit if wanted.
                     // Let's re-fit if it was expanded from collapsed state
                     if (isExpanded && restaurants.length > 0) {
-                        // Find bounds again to be safe
-                        const bounds = new window.naver.maps.LatLngBounds();
-                        let hasPoints = false;
-                        restaurants.forEach(r => {
-                            if (r.latitude && r.longitude) {
-                                bounds.extend(new window.naver.maps.LatLng(r.latitude, r.longitude));
-                                hasPoints = true;
+                        try {
+                            // Find bounds again to be safe
+                            const bounds = new window.naver.maps.LatLngBounds();
+                            let hasPoints = false;
+                            restaurants.forEach(r => {
+                                if (r.latitude && r.longitude) {
+                                    bounds.extend(new window.naver.maps.LatLng(r.latitude, r.longitude));
+                                    hasPoints = true;
+                                }
+                            });
+                            if (hasPoints) {
+                                mapInstance.current.fitBounds(bounds, { top: 50, bottom: 50, left: 50, right: 50 });
                             }
-                        });
-                        if (hasPoints) {
-                            mapInstance.current.fitBounds(bounds, { top: 50, bottom: 50, left: 50, right: 50 });
+                        } catch (resizeErr) {
+                            console.warn("Resize fitBounds error:", resizeErr);
                         }
                     }
                 }
             }, 300);
+        } catch (resizeTriggerErr) {
+            console.error("Map Resize Error:", resizeTriggerErr);
         }
-    }, [isExpanded]);
+    }, [isExpanded, restaurants]);
 
     if (!restaurants || restaurants.length === 0) return null;
 
