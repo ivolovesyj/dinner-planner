@@ -1,25 +1,16 @@
-// App.jsx - Refactored with Layered Architecture
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import axios from 'axios';
 import './App.css';
-import { Loader2, Share } from 'lucide-react';
+import { Search, Loader2, Share, Users, RefreshCw } from 'lucide-react';
+import RestaurantCard from './components/RestaurantCard';
+import LadderGame from './components/LadderGame';
+import NicknameModal from './components/NicknameModal'; // Import Modal
+import AdminLogin from './components/AdminLogin';
+import AdminDashboard from './components/AdminDashboard';
+import Footer from './components/Footer'; // Import Footer
+import { logEvent, logPageView } from './utils/ga4'; // GA4 Imports
+import { Milestone, Trophy } from 'lucide-react'; // More icons
 
-// Domain-organized components
-import { RestaurantCard } from './components/restaurant';
-import { LadderGame } from './components/ladder';
-import { NicknameModal } from './components/room';
-import { AdminLogin, AdminDashboard } from './components/admin';
-import { Footer } from './components/layout';
-
-// Hooks
-import { useRoom } from './hooks/useRoom';
-
-// Utils
-import { logEvent, logPageView } from './utils/ga4';
-
-// Constants
-import { STORAGE_KEYS, APP_CONFIG, API_BASE_URL } from './constants';
-
-// Custom Ladder Icon
 const LadderIcon = ({ size = 20, style = {}, color = "currentColor" }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={style}>
     <path d="M8 3v18" />
@@ -36,64 +27,37 @@ function App() {
   if (path === '/admin/login') return <AdminLogin />;
   if (path === '/admin/dashboard') return <AdminDashboard />;
 
-  // Get roomId from URL
-  const params = new URLSearchParams(window.location.search);
-  const initialRoomId = params.get('room');
-
-  // Use custom hook for room management
-  const {
-    roomId,
-    setRoomId,
-    roomData,
-    loading,
-    createRoom,
-    handleAddRestaurant,
-    handleDeleteRestaurant,
-    handleVote,
-    handleLadderTrigger,
-    handleLadderComplete,
-    handleLadderReset,
-    fetchRoom
-  } = useRoom(initialRoomId);
-
-  // Local state
+  const [restaurants, setRestaurants] = useState([]);
+  const [roomData, setRoomData] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
   const [inputVal, setInputVal] = useState("");
   const [showLadder, setShowLadder] = useState(false);
-  const [nickname, setNickname] = useState(null);
-  const [showNicknameModal, setShowNicknameModal] = useState(false);
-  const [userId, setUserId] = useState(null);
+
+  const [roomId, setRoomId] = useState(null);
   const [roomError, setRoomError] = useState(null);
+  const [userId, setUserId] = useState(null);
+  const [nickname, setNickname] = useState(null); // Nickname State
+  const [showNicknameModal, setShowNicknameModal] = useState(false); // Modal control
+  const pollIntervalRef = useRef(null);
 
-  const restaurants = roomData?.restaurants || [];
+  // API Base URL - FORCE Fly.io/api for now to bypass stale Vercel env var
+  const API_BASE = 'https://gooddinner.fly.dev/api';
 
-  // Initialize userId and nickname from localStorage
+  // Generate or retrieve userId
   useEffect(() => {
-    let storedUserId = localStorage.getItem(STORAGE_KEYS.USER_ID);
+    // UserId
+    let storedUserId = localStorage.getItem('dinnerPlannerUserId');
     if (!storedUserId) {
       storedUserId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      localStorage.setItem(STORAGE_KEYS.USER_ID, storedUserId);
+      localStorage.setItem('dinnerPlannerUserId', storedUserId);
     }
     setUserId(storedUserId);
+  }, []);
 
-    // Initialize nickname for room
-    if (initialRoomId) {
-      const roomNickname = localStorage.getItem(`nickname_${initialRoomId}`);
-      const globalNickname = localStorage.getItem(STORAGE_KEYS.NICKNAME);
-      const initialNickname = roomNickname || globalNickname;
-      if (initialNickname) {
-        setNickname(initialNickname);
-      }
-    }
-  }, [initialRoomId]);
-
-  // GA4 Page View
-  useEffect(() => {
-    logPageView();
-  }, [window.location.pathname, window.location.search]);
-
-  // Nickname handlers
   const handleSaveNickname = (name) => {
-    localStorage.setItem(STORAGE_KEYS.NICKNAME, name);
+    // Save to global (as default for future new rooms)
+    localStorage.setItem('dinnerPlannerNickname', name);
+    // Save to room-specific key
     if (userId && roomId) {
       localStorage.setItem(`nickname_${roomId}`, name);
     }
@@ -101,19 +65,102 @@ function App() {
     setShowNicknameModal(false);
   };
 
-  // Room creation with URL update
-  const handleCreateRoom = async () => {
+  // 1. Check URL for Room ID on Mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const roomParam = params.get('room');
+
+    if (roomParam) {
+      setRoomId(roomParam);
+
+      // Initialize nickname for this room
+      const roomNickname = localStorage.getItem(`nickname_${roomParam}`);
+      const globalNickname = localStorage.getItem('dinnerPlannerNickname');
+
+      const initialNickname = roomNickname || globalNickname;
+
+      if (initialNickname) {
+        setNickname(initialNickname);
+      }
+
+      fetchRoomData(roomParam, false, initialNickname);
+      // Start Polling
+      startPolling(roomParam);
+    }
+
+    return () => stopPolling();
+  }, []);
+
+  // GA4 Page View Tracking
+  useEffect(() => {
+    logPageView();
+  }, [window.location.pathname, window.location.search]);
+
+  const startPolling = (id) => {
+    if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+    pollIntervalRef.current = setInterval(() => {
+      fetchRoomData(id, true); // Silent fetch
+    }, 3000); // Poll every 3 seconds
+  };
+
+  const stopPolling = () => {
+    if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+  };
+
+  const fetchRoomData = async (id, silent = false, forcedNickname = null) => {
+    if (!silent) setIsLoading(true);
     try {
-      const newRoomId = await createRoom();
-      const newUrl = `${window.location.pathname}?room=${newRoomId}`;
-      window.history.pushState({ path: newUrl }, '', newUrl);
-      logEvent('Room', 'Create', newRoomId);
+      const params = {};
+      if (userId) params.userId = userId;
+
+      // Use forcedNickname if provided (for first load), otherwise use state
+      const currentNickname = forcedNickname || nickname;
+      if (currentNickname) params.nickname = currentNickname;
+
+      const res = await axios.get(`${API_BASE}/rooms/${id}`, { params });
+
+      if (res.data) {
+        setRoomData(res.data);
+        setRestaurants(res.data.restaurants || []);
+
+      }
+
+      setRoomError(null);
     } catch (err) {
-      alert("모임 생성 실패: " + err.message);
+      console.error("Failed to fetch room:", err);
+      if (err.response && err.response.status === 404) {
+        setRoomError("존재하지 않는 모임입니다.");
+        setRoomId(null);
+      }
+    } finally {
+      if (!silent) setIsLoading(false);
     }
   };
 
-  // Input handlers
+  const createRoom = async () => {
+    setIsLoading(true);
+    try {
+      const res = await axios.post(`${API_BASE}/rooms`);
+      const newRoomId = res.data.roomId;
+
+      // Update URL without reload
+      const newUrl = `${window.location.pathname}?room=${newRoomId}`;
+      window.history.pushState({ path: newUrl }, '', newUrl);
+
+      setRoomId(newRoomId);
+      setRestaurants([]);
+
+      // Track Create Room
+      logEvent('Room', 'Create', newRoomId);
+
+      startPolling(newRoomId);
+    } catch (err) {
+      alert("모임 생성 실패: " + err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && inputVal) {
       handleAddLink(inputVal);
@@ -123,8 +170,11 @@ function App() {
   const handleAddLink = async (url) => {
     if (!url || !roomId) return;
 
+    setIsLoading(true);
+
     const isDuplicate = restaurants.some(r => r.url === url);
     if (isDuplicate) {
+      setIsLoading(false);
       alert("이미 등록된 식당입니다!");
       setInputVal("");
       return;
@@ -137,28 +187,20 @@ function App() {
     }
 
     try {
-      await handleAddRestaurant(url);
+      await axios.post(`${API_BASE}/rooms/${roomId}/restaurants`, {
+        url,
+        author: nickname,
+        userId
+      });
+
       logEvent('Participation', 'Add Restaurant', url);
+      fetchRoomData(roomId, true);
       setInputVal("");
     } catch (error) {
       alert("식당 추가 실패. 링크를 확인해주세요.");
+    } finally {
+      setIsLoading(false);
     }
-  };
-
-  const handlePaste = (e) => {
-    const pastedData = e.clipboardData.getData('text');
-    const urlMatch = pastedData.match(/(https?:\/\/[^\s]+)/);
-    if (urlMatch) {
-      e.preventDefault();
-      const extractedUrl = urlMatch[0];
-      setInputVal(extractedUrl);
-      if (roomId) handleAddLink(extractedUrl);
-    }
-  };
-
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(window.location.href);
-    alert("링크가 복사되었습니다! 친구들에게 공유하세요 😆");
   };
 
   const handleShare = () => {
@@ -169,52 +211,97 @@ function App() {
     });
   };
 
-  // Vote wrapper
-  const onVote = async (id, type, reason) => {
+  const handlePaste = (e) => {
+    const pastedData = e.clipboardData.getData('text');
+    const urlMatch = pastedData.match(/(https?:\/\/[^\s]+)/);
+
+    if (urlMatch) {
+      e.preventDefault();
+      const extractedUrl = urlMatch[0];
+      setInputVal(extractedUrl);
+      if (roomId) handleAddLink(extractedUrl);
+    }
+  };
+
+  const handleVote = async (id, type, reason) => {
     if (!userId) return;
     try {
-      await handleVote(id, type, reason);
+      await axios.post(`${API_BASE}/rooms/${roomId}/vote`, {
+        restaurantId: id,
+        type,
+        userId,
+        reason,
+        nickname
+      });
       logEvent('Participation', 'Vote', type);
+      fetchRoomData(roomId, true);
     } catch (err) {
       console.error("Vote failed", err);
     }
   };
 
-  // Delete wrapper
-  const onDeleteRestaurant = async (restaurantId) => {
+  const handleDeleteRestaurant = async (restaurantId) => {
     if (!window.confirm("정말 이 식당을 삭제하시겠습니까?")) return;
     try {
-      await handleDeleteRestaurant(restaurantId);
+      await axios.delete(`${API_BASE}/rooms/${roomId}/restaurants/${restaurantId}`, {
+        data: { userId }
+      });
+      fetchRoomData(roomId, true);
     } catch (err) {
       alert("삭제 실패: 본인이 등록한 식당만 삭제할 수 있습니다.");
     }
   };
 
-  // Ladder handlers
-  const onLadderTrigger = async (candidateIds) => {
+  const handleLadderTrigger = async (candidateIds) => {
     try {
-      await handleLadderTrigger(candidateIds);
-      fetchRoom(true);
+      const res = await axios.post(`${API_BASE}/rooms/${roomId}/ladder/trigger`, {
+        candidateIds,
+        nickname
+      });
+      // Direct update for immediate UI feedback
+      setRoomData(prev => ({
+        ...prev,
+        ladderGame: res.data
+      }));
+      fetchRoomData(roomId, true);
     } catch (err) {
       alert("사다리 생성 실패");
-      throw err;
+      throw err; // Re-throw to let LadderGame handle the error UI
     }
   };
 
-  const onLadderReset = async () => {
+  const handleLadderReset = async () => {
     try {
-      await handleLadderReset();
+      await axios.delete(`${API_BASE}/rooms/${roomId}/ladder`);
+      fetchRoomData(roomId, true);
     } catch (err) {
       alert("리셋 실패");
     }
   };
 
-  // --- Landing Page Animation ---
+  // Optimistic update for ladder completion
+  const handleLadderComplete = () => {
+    setRoomData(prev => {
+      if (!prev || !prev.ladderGame) return prev;
+      return {
+        ...prev,
+        ladderGame: { ...prev.ladderGame, status: 'completed' }
+      };
+    });
+  };
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(window.location.href);
+    alert("링크가 복사되었습니다! 친구들에게 공유하세요 😆");
+  };
+
+  // --- Render: Landing Page ---
   const [currentIcon, setCurrentIcon] = useState('🍔');
   const [isIconPop, setIsIconPop] = useState(false);
 
   useEffect(() => {
     if (roomId) return;
+    axios.get(`${API_BASE}/rooms/warmup_ping`).catch(() => { });
 
     const icons = ['🍔', '🍕', '🍣', '🍜', '🥘', '🍖', '🍤', '🥓', '🍝', '🌮'];
     let index = 0;
@@ -229,7 +316,6 @@ function App() {
     return () => clearInterval(interval);
   }, [roomId]);
 
-  // --- Render: Landing Page ---
   if (!roomId) {
     return (
       <div className="landing-container">
@@ -246,8 +332,8 @@ function App() {
           <p>친구들과 함께 식당을 고르고<br />다수결로 결정하세요.</p>
           {roomError && <div className="error-badge">{roomError}</div>}
           <div style={{ width: '100%', marginTop: '20px' }}>
-            <button className="btn-primary" onClick={handleCreateRoom} disabled={loading}>
-              {loading ? <Loader2 className="animate-spin" size={20} /> : <>투표방 만들고 친구 초대하기 <span id="changing-icon" className={isIconPop ? 'icon-pop' : ''}>{currentIcon}</span></>}
+            <button className="btn-primary" onClick={createRoom} disabled={isLoading}>
+              {isLoading ? <Loader2 className="animate-spin" size={20} /> : <>투표방 만들고 친구 초대하기 <span id="changing-icon" className={isIconPop ? 'icon-pop' : ''}>{currentIcon}</span></>}
             </button>
           </div>
         </section>
@@ -284,7 +370,7 @@ function App() {
     <div className="app-container">
       <header className="app-header">
         <div className="header-top">
-          <h1 onClick={() => window.location.href = '/'} style={{ cursor: 'pointer' }}>{APP_CONFIG.APP_NAME}</h1>
+          <h1 onClick={() => window.location.href = '/'} style={{ cursor: 'pointer' }}>뭐먹을래?</h1>
           <div className="header-actions">
             {nickname && (
               <button className="nickname-badge" onClick={() => setShowNicknameModal(true)}>👤 {nickname}</button>
@@ -295,7 +381,7 @@ function App() {
           </div>
         </div>
         <div className="header-input-container">
-          {loading ? (
+          {isLoading ? (
             <div className="loading-message"><Loader2 className="animate-spin" size={16} /> 정보를 불러오는 중입니다...</div>
           ) : (
             <>
@@ -326,18 +412,18 @@ function App() {
             {[...restaurants].sort((a, b) => ((b.likes || 0) - (b.dislikes || 0)) - ((a.likes || 0) - (a.dislikes || 0))).map((rest, index, array) => {
               const score = (rest.likes || 0) - (rest.dislikes || 0);
               const rank = array.findIndex(r => ((r.likes || 0) - (r.dislikes || 0)) === score) + 1;
-              return <RestaurantCard key={rest.id} data={rest} rank={rank} userId={userId} onVote={onVote} onDelete={onDeleteRestaurant} />;
+              return <RestaurantCard key={rest.id} data={rest} rank={rank} userId={userId} onVote={handleVote} onDelete={handleDeleteRestaurant} />;
             })}
           </div>
         )}
         {showLadder && (
           <LadderGame
             roomData={roomData || { restaurants }}
-            onTrigger={onLadderTrigger}
-            onReset={onLadderReset}
+            onTrigger={handleLadderTrigger}
+            onReset={handleLadderReset}
             onClose={() => setShowLadder(false)}
             onComplete={handleLadderComplete}
-            apiBase={API_BASE_URL}
+            apiBase={API_BASE}
             nickname={nickname}
           />
         )}

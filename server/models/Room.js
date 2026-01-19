@@ -54,9 +54,6 @@ const roomSchema = new mongoose.Schema({
     }
 });
 
-// Add index for faster lookups
-roomSchema.index({ roomId: 1 });
-
 const Room = mongoose.model('Room', roomSchema);
 
 export default Room;

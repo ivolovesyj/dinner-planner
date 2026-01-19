@@ -1,0 +1,355 @@
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+
+const API_BASE = 'https://gooddinner.fly.dev/api';
+
+const AdminDashboard = () => {
+    const [activeTab, setActiveTab] = useState('rooms'); // Default to rooms now as requested
+
+    // Data States
+    const [campaigns, setCampaigns] = useState([]);
+    const [feedbacks, setFeedbacks] = useState([]);
+    const [rooms, setRooms] = useState([]);
+
+    const [loading, setLoading] = useState(true);
+    const [adminName, setAdminName] = useState('');
+    const [role, setRole] = useState('');
+
+    useEffect(() => {
+        const token = localStorage.getItem('adminToken');
+        const name = localStorage.getItem('adminName');
+        const userRole = localStorage.getItem('adminRole');
+
+        if (!token) {
+            window.location.href = '/admin/login';
+            return;
+        }
+
+        setAdminName(name || 'Partner');
+        setRole(userRole || 'advertiser');
+
+        const fetchData = async () => {
+            try {
+                const config = { headers: { Authorization: `Bearer ${token}` } };
+
+                // Parallel fetch
+                const requests = [axios.get(`${API_BASE}/admin/campaigns`, config)];
+
+                // Only admin fetches feedback and rooms
+                if (userRole === 'admin') {
+                    requests.push(axios.get(`${API_BASE}/admin/feedbacks`, config));
+                    requests.push(axios.get(`${API_BASE}/admin/rooms`, config));
+                }
+
+                const responses = await Promise.all(requests);
+                setCampaigns(responses[0].data);
+                if (responses[1]) setFeedbacks(responses[1].data);
+                if (responses[2]) setRooms(responses[2].data);
+
+            } catch (err) {
+                if (err.response && err.response.status === 401) {
+                    window.location.href = '/admin/login';
+                }
+                console.error("Data load failed", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, []);
+
+    const logout = () => {
+        localStorage.removeItem('adminToken');
+        localStorage.removeItem('adminName');
+        localStorage.removeItem('adminRole');
+        window.location.href = '/admin/login';
+    };
+    const handleUpdateMemo = async (roomId, newMemo) => {
+        try {
+            const token = localStorage.getItem("adminToken");
+            const config = { headers: { Authorization: `Bearer ${token}` } };
+            await axios.put(`${API_BASE}/admin/rooms/${roomId}/memo`, { memo: newMemo }, config);
+
+            // Update local state without full refresh
+            setRooms(prev => prev.map(r => r.roomId === roomId ? { ...r, adminMemo: newMemo } : r));
+            alert("메모가 저장되었습니다. ✅");
+        } catch (err) {
+            console.error("Memo update failed", err);
+            alert("메모 저장에 실패했습니다.");
+        }
+    };
+
+    const handleDeleteRoom = async (roomId) => {
+        if (!window.confirm("정말 이 투표방을 삭제하시겠습니까? 관련 데이터가 모두 삭제됩니다.")) return;
+
+        try {
+            const token = localStorage.getItem("adminToken");
+            const config = { headers: { Authorization: `Bearer ${token}` } };
+            await axios.delete(`${API_BASE}/admin/rooms/${roomId}`, config);
+
+            // Refresh room list locally
+            setRooms(rooms.filter(r => r.roomId !== roomId));
+            alert("방이 성공적으로 삭제되었습니다.");
+        } catch (err) {
+            console.error("Delete failed", err);
+            alert("삭제에 실패했습니다.");
+        }
+    };
+
+    if (loading) return <div style={{ padding: '20px' }}>Loading Stats...</div>;
+
+    const formatTime = (isoString) => {
+        if (!isoString) return '-';
+        const date = new Date(isoString);
+        return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    };
+
+    return (
+        <div style={{ padding: '40px', maxWidth: '1200px', margin: '0 auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <div>
+                    <h1 style={{ marginBottom: '5px' }}>📊 Advertising Dashboard</h1>
+                    <span style={{ color: '#666', fontSize: '14px' }}>
+                        Welcome, <strong>{adminName}</strong> ({role === 'admin' ? 'Super Admin' : 'Partner'})
+                    </span>
+                </div>
+                <button onClick={logout} style={{
+                    padding: '8px 16px', borderRadius: '8px', border: '1px solid #ddd',
+                    background: 'white', cursor: 'pointer'
+                }}>Logout</button>
+            </div>
+
+            {/* Tabs (Only visible to Admin) */}
+            {role === 'admin' && (
+                <div style={{ display: 'flex', borderBottom: '1px solid #eee', marginBottom: '30px', gap: '20px' }}>
+                    <div
+                        onClick={() => setActiveTab('rooms')}
+                        style={{ ...tabStyle, borderBottom: activeTab === 'rooms' ? '2px solid #007AFF' : 'none', color: activeTab === 'rooms' ? '#007AFF' : '#666' }}
+                    >
+                        🏠 방 관리 ({rooms.length})
+                    </div>
+                    <div
+                        onClick={() => setActiveTab('campaigns')}
+                        style={{ ...tabStyle, borderBottom: activeTab === 'campaigns' ? '2px solid #007AFF' : 'none', color: activeTab === 'campaigns' ? '#007AFF' : '#666' }}
+                    >
+                        Campaigns
+                    </div>
+                    <div
+                        onClick={() => setActiveTab('feedback')}
+                        style={{ ...tabStyle, borderBottom: activeTab === 'feedback' ? '2px solid #007AFF' : 'none', color: activeTab === 'feedback' ? '#007AFF' : '#666' }}
+                    >
+                        📥 건의함 ({feedbacks.length})
+                    </div>
+                </div>
+            )}
+
+            {/* VIEW: ROOMS */}
+            {activeTab === 'rooms' && (
+                <div style={{ background: 'white', borderRadius: '16px', boxShadow: '0 2px 12px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                        <thead style={{ background: '#f5f5f7', borderBottom: '1px solid #eee' }}>
+                            <tr>
+                                <th style={thStyle}>방 아이디 (링크)</th>
+                                <th style={thStyle}>생성일</th>
+                                <th style={thStyle}>최근 접속</th>
+                                <th style={thStyle}>멤버 수</th>
+                                <th style={thStyle}>식당 수</th>
+                                <th style={thStyle}>메모 (관리자 전용)</th>
+                                <th style={thStyle}>관리</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {rooms.map(room => (
+                                <tr key={room._id} style={{ borderBottom: '1px solid #f9f9f9' }}>
+                                    <td style={tdStyle}>
+                                        <a href={`/?room=${room.roomId}`} target="_blank" rel="noreferrer" style={{ color: '#007AFF', textDecoration: 'none', fontWeight: 'bold' }}>
+                                            {room.roomId.substring(0, 8)}...
+                                        </a>
+                                    </td>
+                                    <td style={tdStyle}>{formatTime(room.createdAt)}</td>
+                                    <td style={tdStyle}>{formatTime(room.lastAccessedAt)}</td>
+                                    <td style={tdStyle}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                            <span style={tagStyle} title="접속한 적이 있는 모든 고유 사용자 수입니다.">
+                                                👥 총 {room.participants?.length || 0}명
+                                            </span>
+                                            <span
+                                                style={{ ...tagStyle, background: '#e1f5fe', color: '#0288d1' }}
+                                                title={room.nicknameList?.join(', ')}
+                                            >
+                                                👤 식별 {room.identifiedMemberCount || 0}명
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td style={tdStyle}>
+                                        <span style={tagStyle}>
+                                            🍴 {room.restaurants?.length || 0}개
+                                        </span>
+                                    </td>
+                                    <td style={tdStyle}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                            <textarea
+                                                id={`memo-${room.roomId}`}
+                                                defaultValue={room.adminMemo || ""}
+                                                onBlur={(e) => handleUpdateMemo(room.roomId, e.target.value)}
+                                                placeholder="메모를 입력하세요..."
+                                                style={{
+                                                    width: '100%', minWidth: '150px', padding: '8px', borderRadius: '8px',
+                                                    border: '1px solid #eee', fontSize: '13px', resize: 'vertical',
+                                                    fontFamily: 'inherit'
+                                                }}
+                                            />
+                                            <button
+                                                onClick={() => handleUpdateMemo(room.roomId, document.getElementById(`memo-${room.roomId}`).value)}
+                                                style={{
+                                                    padding: "4px 8px", borderRadius: "6px", border: "1px solid #007AFF",
+                                                    background: "white", color: "#007AFF", cursor: "pointer", fontSize: "11px", fontWeight: "600",
+                                                    alignSelf: 'flex-start'
+                                                }}
+                                            >
+                                                저장하기
+                                            </button>
+                                        </div>
+                                    </td>
+                                    <td style={tdStyle}>
+                                        <button
+                                            onClick={() => handleDeleteRoom(room.roomId)}
+                                            style={{
+                                                padding: "6px 12px", borderRadius: "8px", border: "none",
+                                                background: "#FF3B30", color: "white", cursor: "pointer", fontSize: "12px", fontWeight: "600"
+                                            }}
+                                        >
+                                            삭제
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+
+            {/* VIEW: CAMPAIGNS */}
+            {activeTab === 'campaigns' && (
+                <>
+                    {/* Summary Cards */}
+                    <div style={{ display: 'flex', gap: '20px', marginBottom: '40px' }}>
+                        <div style={cardStyle}>
+                            <h3>Active Campaigns</h3>
+                            <p style={bigNumberStyle}>{campaigns.filter(c => c.active).length}</p>
+                        </div>
+                        <div style={cardStyle}>
+                            <h3>Total Impressions</h3>
+                            <p style={bigNumberStyle}>{campaigns.reduce((a, b) => a + (b.impressions || 0), 0).toLocaleString()}</p>
+                        </div>
+                        <div style={cardStyle}>
+                            <h3>Total Clicks</h3>
+                            <p style={bigNumberStyle}>{campaigns.reduce((a, b) => a + (b.clicks || 0), 0).toLocaleString()}</p>
+                        </div>
+                    </div>
+
+                    {/* Table */}
+                    <div style={{ background: 'white', borderRadius: '16px', boxShadow: '0 2px 12px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                            <thead style={{ background: '#f5f5f7', borderBottom: '1px solid #eee' }}>
+                                <tr>
+                                    <th style={thStyle}>Advertiser</th>
+                                    <th style={thStyle}>Target Station</th>
+                                    <th style={thStyle}>Impressions</th>
+                                    <th style={thStyle}>Clicks</th>
+                                    <th style={thStyle}>CTR (%)</th>
+                                    <th style={thStyle}>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {campaigns.map(ad => (
+                                    <tr key={ad._id} style={{ borderBottom: '1px solid #f9f9f9' }}>
+                                        <td style={tdStyle}>
+                                            <div><strong>{ad.sponsorName}</strong></div>
+                                            <div style={{ fontSize: '12px', color: '#888' }}>{ad.title}</div>
+                                        </td>
+                                        <td style={tdStyle}>
+                                            {ad.targetStations.map(s => (
+                                                <span key={s} style={tagStyle}>{s}</span>
+                                            ))}
+                                        </td>
+                                        <td style={tdStyle}>{ad.impressions?.toLocaleString()}</td>
+                                        <td style={tdStyle}>{ad.clicks?.toLocaleString()}</td>
+                                        <td style={{ ...tdStyle, color: ad.ctr > 1.0 ? 'green' : 'black', fontWeight: 'bold' }}>
+                                            {ad.ctr}%
+                                        </td>
+                                        <td style={tdStyle}>
+                                            <span style={{
+                                                ...statusStyle,
+                                                background: ad.active ? '#e8f5e9' : '#ffebee',
+                                                color: ad.active ? '#2e7d32' : '#c62828'
+                                            }}>
+                                                {ad.active ? 'Active' : 'Paused'}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </>
+            )}
+
+            {/* VIEW: FEEDBACK */}
+            {activeTab === 'feedback' && (
+                <div style={{ background: 'white', borderRadius: '16px', boxShadow: '0 2px 12px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
+                    {feedbacks.length === 0 ? (
+                        <div style={{ padding: '60px', textAlign: 'center', color: '#999' }}>
+                            아직 접수된 건의사항이 없습니다. 📭
+                        </div>
+                    ) : (
+                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                            <thead style={{ background: '#f5f5f7', borderBottom: '1px solid #eee' }}>
+                                <tr>
+                                    <th style={{ ...thStyle, width: '150px' }}>날짜</th>
+                                    <th style={{ ...thStyle, width: '200px' }}>연락처</th>
+                                    <th style={thStyle}>내용</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {feedbacks.map(msg => (
+                                    <tr key={msg._id} style={{ borderBottom: '1px solid #f9f9f9' }}>
+                                        <td style={tdStyle}>
+                                            {new Date(msg.createdAt).toLocaleDateString()} {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                        </td>
+                                        <td style={tdStyle}>
+                                            {msg.contact || <span style={{ color: '#ccc' }}>(익명)</span>}
+                                        </td>
+                                        <td style={{ ...tdStyle, whiteSpace: 'pre-wrap', lineHeight: '1.5' }}>
+                                            {msg.content}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+};
+
+const tabStyle = {
+    padding: '10px 4px', cursor: 'pointer', fontWeight: '600', fontSize: '15px'
+};
+const cardStyle = {
+    flex: 1, background: 'white', padding: '24px', borderRadius: '16px',
+    boxShadow: '0 2px 12px rgba(0,0,0,0.05)', textAlign: 'center'
+};
+const bigNumberStyle = { fontSize: '32px', fontWeight: '800', margin: '10px 0 0 0', color: '#007AFF' };
+const thStyle = { padding: '16px', fontSize: '13px', color: '#666', fontWeight: '600' };
+const tdStyle = { padding: '16px', fontSize: '14px' };
+const tagStyle = {
+    background: '#eee', padding: '4px 8px', borderRadius: '6px', fontSize: '12px', marginRight: '4px'
+};
+const statusStyle = {
+    padding: '4px 12px', borderRadius: '100px', fontSize: '12px', fontWeight: '600'
+};
+
+export default AdminDashboard;
