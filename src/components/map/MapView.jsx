@@ -183,11 +183,11 @@ const MapView = ({ restaurants, isExpanded, onToggle, onMarkerClick }) => {
 
     if (!restaurants || restaurants.length === 0) return null;
 
+    // Only render if expanded (toggled from parent)
+    if (!isExpanded) return null;
+
     return (
-        <div className={`map-container ${isExpanded ? 'expanded' : 'collapsed'}`}>
-            <div className="map-toggle-btn" onClick={onToggle}>
-                {isExpanded ? '지도 접기 ▲' : '지도 펼치기 ▼'}
-            </div>
+        <div className="map-container expanded">
             <div className="naver-map" ref={mapRef} />
         </div>
     );

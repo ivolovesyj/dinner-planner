@@ -1,52 +1,24 @@
 .map-container {
     width: 100%;
     background: #f8f9fa;
-    border-bottom: 1px solid #e5e8eb;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    position: sticky;
-    top: 0;
-    z-index: 90;
-    /* Header is usually 100 */
-    display: flex;
-    flex-direction: column;
-}
-
-/* Collapsed state */
-.map-container.collapsed {
-    height: 40px;
-    /* Only toggle button visible */
+    border-radius: 12px;
+    margin-top: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 /* Expanded state */
 .map-container.expanded {
-    height: 350px;
+    height: 300px;
 }
 
 .naver-map {
     width: 100%;
-    flex: 1;
+    height: 100%;
     background: #eee;
 }
 
-.map-toggle-btn {
-    height: 40px;
-    background: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    font-weight: 600;
-    color: #4e5968;
-    cursor: pointer;
-    border-top: 1px solid #e5e8eb;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    z-index: 10;
-}
-
-.map-toggle-btn:hover {
-    background: #f9fafb;
-    color: #3182f6;
-}
+/* Custom Marker Styles */
 
 /* Custom Marker Styles */
 .custom-marker {

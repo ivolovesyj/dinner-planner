@@ -329,15 +329,6 @@ function App() {
         </div>
       </header>
 
-      {/* Map View */}
-      {restaurants.length > 0 && (
-        <MapView
-          restaurants={restaurants}
-          isExpanded={isMapExpanded}
-          onToggle={() => setIsMapExpanded(!isMapExpanded)}
-          onMarkerClick={handleMarkerClick}
-        />
-      )}
 
       <main className="app-content">
         {restaurants.length === 0 ? (
@@ -351,10 +342,15 @@ function App() {
               <button className={`feature-btn ${showLadder ? 'active' : ''}`} onClick={() => setShowLadder(!showLadder)}>
                 <LadderIcon size={16} color={showLadder ? "#fff" : "#4e5968"} style={{ marginRight: '6px' }} /> 사다리 타기
               </button>
-              {/* Map Toggle button in feature bar can also control map? Or remove this button as we have the map container toggle */}
               <button className={`feature-btn ${isMapExpanded ? 'active' : ''}`} onClick={() => setIsMapExpanded(!isMapExpanded)}>
                 🗺️ 지도 {isMapExpanded ? '접기' : '보기'}
               </button>
+              {/* Map View - Inside feature bar, below buttons */}
+              <MapView
+                restaurants={restaurants}
+                isExpanded={isMapExpanded}
+                onMarkerClick={handleMarkerClick}
+              />
             </div>
             {[...restaurants].sort((a, b) => ((b.likes || 0) - (b.dislikes || 0)) - ((a.likes || 0) - (a.dislikes || 0))).map((rest, index, array) => {
               const score = (rest.likes || 0) - (rest.dislikes || 0);
