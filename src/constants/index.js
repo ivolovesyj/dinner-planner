@@ -24,5 +24,5 @@ export const APP_CONFIG = {
 };
 
 // Fallback to hardcoded ID for Docker build context where env vars might be missing
-export const NAVER_MAP_CLIENT_ID = import.meta.env.VITE_NAVER_MAP_CLIENT_ID || '8cr3i0des5';
+export const NAVER_MAP_CLIENT_ID = import.meta.env.VITE_NAVER_MAP_CLIENT_ID || 'r942ztr0hi';
 export const DEFAULT_CENTER = { lat: 37.5665, lng: 126.9780 }; // 서울 시청
