@@ -26,43 +26,28 @@ const MapView = ({ restaurants, isExpanded, onToggle, onMarkerClick }) => {
                 ((b.likes || 0) - (b.dislikes || 0)) - ((a.likes || 0) - (a.dislikes || 0))
             );
 
-            setTimeout(() => {
-                // Double Safety Check inside timeout
-                if (mapInstance.current && markers.current.length > 0 && window.naver && window.naver.maps) {
-                    // Optional: re-fit bounds? 
-                    // Usually keeping current center is better, or re-fit if wanted.
-                    // Let's re-fit if it was expanded from collapsed state
-                    if (isExpanded && restaurants.length > 0) {
-                        try {
-                            // Find bounds again to be safe
-                            const bounds = new window.naver.maps.LatLngBounds();
-                            let hasPoints = false;
-                            restaurants.forEach(r => {
-                                if (r.latitude && r.longitude) {
-                                    bounds.extend(new window.naver.maps.LatLng(r.latitude, r.longitude));
-                                    hasPoints = true;
-                                }
-                            });
-                            if (hasPoints) {
-                                mapInstance.current.fitBounds(bounds, { top: 50, bottom: 50, left: 50, right: 50 });
-                            }
-                        } catch (resizeErr) {
-                            console.warn("Resize fitBounds error:", resizeErr);
-                        }
-                    }
-                }
-            }, 300);
-        } catch (resizeTriggerErr) {
-            console.error("Map Resize Error:", resizeTriggerErr);
+            iframeRef.current.contentWindow.postMessage({
+                type: 'UPDATE_MARKERS',
+                payload: sortedRestaurants
+            }, '*');
         }
-    }, [isExpanded, restaurants]);
-
-    // Only render if expanded (toggled from parent)
-    if (!isExpanded) return null;
+    }, [isMapReady, restaurants]);
 
     return (
-        <div className="map-container expanded">
-            <div className="naver-map" ref={mapRef} />
+        <div className={`map-container ${isExpanded ? 'expanded' : ''}`}>
+            {/* 
+                Use Iframe to isolate Map from parent URL query parameters (?room=...).
+                Naver Map API Auth often fails if the URL doesn't stick to the whitelist perfectly.
+                Using a static HTML file relies on the clean path '/map.html'.
+                Pass Client ID via HASH to avoid query string in the iframe URL itself.
+            */}
+            <iframe
+                ref={iframeRef}
+                src={`/map.html#clientId=${NAVER_MAP_CLIENT_ID}`}
+                title="Naver Map"
+                style={{ width: '100%', height: '100%', border: 'none' }}
+                loading="lazy"
+            />
         </div>
     );
 };
