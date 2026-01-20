@@ -287,7 +287,7 @@ function App() {
       const stickyContainer = document.querySelector('.sticky-feature-container');
       const stickyHeight = stickyContainer ? stickyContainer.offsetHeight : 0;
       const headerHeight = 60; // Approximate header height + padding
-      const offset = stickyHeight + headerHeight + 20; // Extra buffer
+      const offset = stickyHeight + headerHeight + 60; // Extra buffer increased for better visibility
 
       const elementPosition = el.getBoundingClientRect().top;
       const offsetPosition = elementPosition + window.pageYOffset - offset;
