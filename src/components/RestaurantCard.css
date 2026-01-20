@@ -130,7 +130,7 @@
 }
 
 .card.expanded .card-expandable-content {
-    max-height: 2000px;
+    max-height: 5000px;
 }
 
 /* Rank Badge */

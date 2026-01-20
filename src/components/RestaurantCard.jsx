@@ -325,22 +325,32 @@ const RestaurantCard = ({ data, rank, userId, onVote, onDelete }) => {
 
                     {data.menu && (
                         <div className="card-menu-section">
-                            <ul
-                                className="menu-list"
-                                style={showMenu ? {
+                            {showMenu ? (
+                                <div style={{
                                     maxHeight: '220px',
                                     overflowY: 'auto',
-                                    paddingRight: '6px',
+                                    WebkitOverflowScrolling: 'touch',
                                     borderBottom: '1px solid #eee'
-                                } : {}}
-                            >
-                                {String(data.menu || '').split(', ').slice(0, showMenu ? undefined : 3).map((item, idx) => (
-                                    <li key={idx} className="menu-item">
-                                        <span className="menu-dot">•</span>
-                                        {item}
-                                    </li>
-                                ))}
-                            </ul>
+                                }}>
+                                    <ul className="menu-list" style={{ paddingRight: '6px' }}>
+                                        {String(data.menu || '').split(', ').map((item, idx) => (
+                                            <li key={idx} className="menu-item">
+                                                <span className="menu-dot">•</span>
+                                                {item}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            ) : (
+                                <ul className="menu-list">
+                                    {String(data.menu || '').split(', ').slice(0, 3).map((item, idx) => (
+                                        <li key={idx} className="menu-item">
+                                            <span className="menu-dot">•</span>
+                                            {item}
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
                             {String(data.menu || '').split(', ').length > 3 && (
                                 <button
                                     className="menu-more-btn"
