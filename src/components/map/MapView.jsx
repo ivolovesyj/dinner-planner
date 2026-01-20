@@ -124,13 +124,13 @@ const MapView = ({ restaurants, isExpanded, onToggle, onMarkerClick }) => {
                     let rankClass = '';
 
                     if (rank === 1) {
-                        iconContent = '🥇';
+                        iconContent = '1';
                         rankClass = 'rank-1';
                     } else if (rank === 2) {
-                        iconContent = '🥈';
+                        iconContent = '2';
                         rankClass = 'rank-2';
                     } else if (rank === 3) {
-                        iconContent = '🥉';
+                        iconContent = '3';
                         rankClass = 'rank-3';
                     }
 

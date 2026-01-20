@@ -93,7 +93,7 @@
     display: flex;
     align-items: center;
     background: white;
-    padding: 6px 12px;
+    padding: 3px 8px; /* Slimmer padding */
     border-radius: 20px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
     border: 1px solid rgba(0, 0, 0, 0.05);
@@ -113,20 +113,22 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 24px;
-    height: 24px;
+    width: 20px; /* Slightly smaller icon */
+    height: 20px;
     background: #e8f3ff;
     color: #3182f6;
     border-radius: 50%;
-    margin-right: 8px;
-    font-size: 14px;
+    margin-right: 4px; /* Tighter spacing */
+    font-size: 13px;
+    font-weight: 800; /* Bold font */
 }
 
 .marker-text {
     font-weight: 700;
-    font-size: 13px;
+    font-size: 12px; /* Slightly smaller text */
     color: #333;
     white-space: nowrap;
+    padding-right: 2px;
 }
 
 /* Rank Styles for Pill Markers */
@@ -134,19 +136,17 @@
     border: 2px solid #FFD700;
     box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
 }
-
 .custom-marker-pill.rank-1 .marker-icon {
     background: #FFD700;
     color: white;
 }
 
 .custom-marker-pill.rank-2 {
-    border: 2px solid #C0C0C0;
+    border: 2px solid #a8a8a8; /* Slightly darker silver */
     box-shadow: 0 4px 12px rgba(192, 192, 192, 0.4);
 }
-
 .custom-marker-pill.rank-2 .marker-icon {
-    background: #C0C0C0;
+    background: #a8a8a8;
     color: white;
 }
 
@@ -154,7 +154,6 @@
     border: 2px solid #CD7F32;
     box-shadow: 0 4px 12px rgba(205, 127, 50, 0.4);
 }
-
 .custom-marker-pill.rank-3 .marker-icon {
     background: #CD7F32;
     color: white;
@@ -162,6 +161,5 @@
 
 .custom-marker-pill:hover .marker-icon {
     background: #3182f6;
-    /* Reset on hover to brand color or keep rank color? Brand color looks interactive */
     color: white;
 }
