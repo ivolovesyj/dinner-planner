@@ -283,7 +283,20 @@ function App() {
   const handleMarkerClick = (id) => {
     const el = document.getElementById(id);
     if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // Calculate offset based on sticky header/map height
+      const stickyContainer = document.querySelector('.sticky-feature-container');
+      const stickyHeight = stickyContainer ? stickyContainer.offsetHeight : 0;
+      const headerHeight = 60; // Approximate header height + padding
+      const offset = stickyHeight + headerHeight + 20; // Extra buffer
+
+      const elementPosition = el.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - offset;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: "smooth"
+      });
+
       el.classList.add('highlight-card');
       setTimeout(() => el.classList.remove('highlight-card'), 2000);
     }
