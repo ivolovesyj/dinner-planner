@@ -351,121 +351,119 @@ function App() {
               <div className="step-desc">실시간으로 투표하고<br />가장 인기 있는 곳을 확정해요!</div>
             </div>
           </div>
-      </div>
-        </section >
+        </section>
 
-      {/* Temporary Map Test Section */ }
-      < section style = {{ padding: '20px', textAlign: 'center' }
-  }>
-            <h3>🗺️ 지도 API 연동 테스트</h3>
-            <p>이 지도가 보이면 설정이 완벽한 것입니다.</p>
-            <div style={{ height: '300px', margin: '20px auto', maxWidth: '600px', border: '1px solid #ddd' }}>
-                 <MapView isExpanded={true} restaurants={[]} />
-            </div>
-        </section >
-
-    <Footer />
-      </div >
-    );
-}
-
-// --- Render: Room View ---
-return (
-  <div className="app-container">
-    <header className="app-header">
-      <div className="header-top">
-        <h1 onClick={() => window.location.href = '/'} style={{ cursor: 'pointer' }}>{APP_CONFIG.APP_NAME}</h1>
-        <div className="header-actions">
-          {nickname && (
-            <button className="nickname-badge" onClick={() => setShowNicknameModal(true)}>👤 {nickname}</button>
-          )}
-          <button className="icon-btn" onClick={handleCopyLink} title="링크 공유">
-            <Share size={20} />
-          </button>
-        </div>
-      </div>
-      <div className="header-input-container">
-        {loading ? (
-          <div className="loading-message"><Loader2 className="animate-spin" size={16} /> 정보를 불러오는 중입니다...</div>
-        ) : (
-          <>
-            <input
-              type="text" className="header-input" placeholder="식당 네이버/카카오 링크 붙여넣기"
-              value={inputVal} onChange={(e) => setInputVal(e.target.value)}
-              onPaste={handlePaste} onKeyDown={handleKeyDown}
-            />
-            <button className={`header-submit-btn ${inputVal ? 'visible' : ''}`} onClick={() => handleAddLink(inputVal)} disabled={!inputVal}>추가</button>
-          </>
-        )}
-      </div>
-    </header>
-
-
-    <main className="app-content">
-      {restaurants.length === 0 ? (
-        <div className="empty-state">
-          <p>상단에 링크를 붙여넣어 투표을 시작하세요!</p>
-          <div className="share-hint" onClick={handleShare}>친구 초대하기 🔗</div>
-        </div>
-      ) : (
-        <div className="restaurant-list">
-          {/* Sticky container for feature-bar and map */}
-          <div className="sticky-feature-container">
-            <div className="feature-bar">
-              <button className={`feature-btn ${showLadder ? 'active' : ''}`} onClick={() => setShowLadder(!showLadder)}>
-                <LadderIcon size={16} color={showLadder ? "#fff" : "#4e5968"} style={{ marginRight: '6px' }} /> 사다리 타기
-              </button>
-              <button className={`feature-btn ${isMapExpanded ? 'active' : ''}`} onClick={() => setIsMapExpanded(!isMapExpanded)}>
-                🗺️ 지도 {isMapExpanded ? '접기' : '보기'}
-              </button>
-              {hasPendingSort && (
-                <button className="feature-btn refresh-btn" onClick={handleRefreshOrder} style={{ color: '#3182f6', background: '#e8f3ff' }}>
-                  <RotateCw size={16} /> 순서 업데이트
-                </button>
-              )}
-            </div>
-            {/* Map View - Below feature bar buttons */}
-            <MapView
-              restaurants={restaurants}
-              isExpanded={isMapExpanded}
-              onMarkerClick={handleMarkerClick}
-            />
+        {/* Temporary Map Test Section */}
+        <section style={{ padding: '20px', textAlign: 'center' }}>
+          <h3>🗺️ 지도 API 연동 테스트</h3>
+          <p>이 지도가 보이면 설정이 완벽한 것입니다.</p>
+          <div style={{ height: '300px', margin: '20px auto', maxWidth: '600px', border: '1px solid #ddd' }}>
+            <MapView isExpanded={true} restaurants={[]} />
           </div>
-          {stableRestaurants.map((rest, index) => {
-            // Calculate rank based on SCORE, not index in stable list
-            // We need the sorted array to determine true rank
-            const sortedForRank = [...stableRestaurants].sort((a, b) =>
-              ((b.likes || 0) - (b.dislikes || 0)) - ((a.likes || 0) - (a.dislikes || 0))
-            );
-            const score = (rest.likes || 0) - (rest.dislikes || 0);
-            // Finding rank: index in sorted array where score matches
-            const rank = sortedForRank.findIndex(r => ((r.likes || 0) - (r.dislikes || 0)) === score) + 1;
+        </section>
 
-            return <RestaurantCard key={rest.id} data={rest} rank={rank} userId={userId} onVote={onVote} onDelete={onDeleteRestaurant} />;
-          })}
+        <Footer />
+      </div>
+    );
+  }
+
+  // --- Render: Room View ---
+  return (
+    <div className="app-container">
+      <header className="app-header">
+        <div className="header-top">
+          <h1 onClick={() => window.location.href = '/'} style={{ cursor: 'pointer' }}>{APP_CONFIG.APP_NAME}</h1>
+          <div className="header-actions">
+            {nickname && (
+              <button className="nickname-badge" onClick={() => setShowNicknameModal(true)}>👤 {nickname}</button>
+            )}
+            <button className="icon-btn" onClick={handleCopyLink} title="링크 공유">
+              <Share size={20} />
+            </button>
+          </div>
         </div>
-      )
-      }
-      {
-        showLadder && (
-          <LadderGame
-            roomData={roomData || { restaurants }}
-            onTrigger={onLadderTrigger}
-            onReset={onLadderReset}
-            onClose={() => setShowLadder(false)}
-            onComplete={handleLadderComplete}
-            apiBase={API_BASE_URL}
-            nickname={nickname}
-          />
+        <div className="header-input-container">
+          {loading ? (
+            <div className="loading-message"><Loader2 className="animate-spin" size={16} /> 정보를 불러오는 중입니다...</div>
+          ) : (
+            <>
+              <input
+                type="text" className="header-input" placeholder="식당 네이버/카카오 링크 붙여넣기"
+                value={inputVal} onChange={(e) => setInputVal(e.target.value)}
+                onPaste={handlePaste} onKeyDown={handleKeyDown}
+              />
+              <button className={`header-submit-btn ${inputVal ? 'visible' : ''}`} onClick={() => handleAddLink(inputVal)} disabled={!inputVal}>추가</button>
+            </>
+          )}
+        </div>
+      </header>
+
+
+      <main className="app-content">
+        {restaurants.length === 0 ? (
+          <div className="empty-state">
+            <p>상단에 링크를 붙여넣어 투표을 시작하세요!</p>
+            <div className="share-hint" onClick={handleShare}>친구 초대하기 🔗</div>
+          </div>
+        ) : (
+          <div className="restaurant-list">
+            {/* Sticky container for feature-bar and map */}
+            <div className="sticky-feature-container">
+              <div className="feature-bar">
+                <button className={`feature-btn ${showLadder ? 'active' : ''}`} onClick={() => setShowLadder(!showLadder)}>
+                  <LadderIcon size={16} color={showLadder ? "#fff" : "#4e5968"} style={{ marginRight: '6px' }} /> 사다리 타기
+                </button>
+                <button className={`feature-btn ${isMapExpanded ? 'active' : ''}`} onClick={() => setIsMapExpanded(!isMapExpanded)}>
+                  🗺️ 지도 {isMapExpanded ? '접기' : '보기'}
+                </button>
+                {hasPendingSort && (
+                  <button className="feature-btn refresh-btn" onClick={handleRefreshOrder} style={{ color: '#3182f6', background: '#e8f3ff' }}>
+                    <RotateCw size={16} /> 순서 업데이트
+                  </button>
+                )}
+              </div>
+              {/* Map View - Below feature bar buttons */}
+              <MapView
+                restaurants={restaurants}
+                isExpanded={isMapExpanded}
+                onMarkerClick={handleMarkerClick}
+              />
+            </div>
+            {stableRestaurants.map((rest, index) => {
+              // Calculate rank based on SCORE, not index in stable list
+              // We need the sorted array to determine true rank
+              const sortedForRank = [...stableRestaurants].sort((a, b) =>
+                ((b.likes || 0) - (b.dislikes || 0)) - ((a.likes || 0) - (a.dislikes || 0))
+              );
+              const score = (rest.likes || 0) - (rest.dislikes || 0);
+              // Finding rank: index in sorted array where score matches
+              const rank = sortedForRank.findIndex(r => ((r.likes || 0) - (r.dislikes || 0)) === score) + 1;
+
+              return <RestaurantCard key={rest.id} data={rest} rank={rank} userId={userId} onVote={onVote} onDelete={onDeleteRestaurant} />;
+            })}
+          </div>
         )
-      }
-    </main >
-    {(showNicknameModal || !nickname) && (
-      <NicknameModal onSave={handleSaveNickname} onClose={nickname ? () => setShowNicknameModal(false) : null} initialValue={nickname || ""} />
-    )}
-    <Footer />
-  </div >
-);
+        }
+        {
+          showLadder && (
+            <LadderGame
+              roomData={roomData || { restaurants }}
+              onTrigger={onLadderTrigger}
+              onReset={onLadderReset}
+              onClose={() => setShowLadder(false)}
+              onComplete={handleLadderComplete}
+              apiBase={API_BASE_URL}
+              nickname={nickname}
+            />
+          )
+        }
+      </main >
+      {(showNicknameModal || !nickname) && (
+        <NicknameModal onSave={handleSaveNickname} onClose={nickname ? () => setShowNicknameModal(false) : null} initialValue={nickname || ""} />
+      )}
+      <Footer />
+    </div >
+  );
 }
 
 export default App;
