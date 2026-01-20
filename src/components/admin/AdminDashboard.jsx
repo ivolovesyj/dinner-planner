@@ -163,7 +163,7 @@ const AdminDashboard = () => {
                             {rooms.map(room => (
                                 <tr key={room._id} style={{ borderBottom: '1px solid #f9f9f9' }}>
                                     <td style={tdStyle}>
-                                        <a href={`/?room=${room.roomId}`} target="_blank" rel="noreferrer" style={{ color: '#007AFF', textDecoration: 'none', fontWeight: 'bold' }}>
+                                        <a href={`/room/${room.roomId}`} target="_blank" rel="noreferrer" style={{ color: '#007AFF', textDecoration: 'none', fontWeight: 'bold' }}>
                                             {room.roomId.substring(0, 8)}...
                                         </a>
                                     </td>
