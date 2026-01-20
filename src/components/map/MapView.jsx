@@ -102,11 +102,37 @@ const MapView = ({ restaurants, isExpanded, onToggle, onMarkerClick }) => {
                     return;
                 }
 
+                // Calculate Ranks
+                const sortedByScore = [...restaurants].sort((a, b) =>
+                    ((b.likes || 0) - (b.dislikes || 0)) - ((a.likes || 0) - (a.dislikes || 0))
+                );
+
+                const getRank = (rest) => {
+                    const score = (rest.likes || 0) - (rest.dislikes || 0);
+                    // Find first index with this score (handle ties)
+                    return sortedByScore.findIndex(r => ((r.likes || 0) - (r.dislikes || 0)) === score) + 1;
+                };
+
                 const bounds = new window.naver.maps.LatLngBounds();
 
                 const createMarker = (lat, lng, rest) => {
                     const position = new window.naver.maps.LatLng(lat, lng);
                     bounds.extend(position);
+
+                    const rank = getRank(rest);
+                    let iconContent = '🍽️';
+                    let rankClass = '';
+
+                    if (rank === 1) {
+                        iconContent = '🥇';
+                        rankClass = 'rank-1';
+                    } else if (rank === 2) {
+                        iconContent = '🥈';
+                        rankClass = 'rank-2';
+                    } else if (rank === 3) {
+                        iconContent = '🥉';
+                        rankClass = 'rank-3';
+                    }
 
                     const marker = new window.naver.maps.Marker({
                         position: position,
@@ -114,12 +140,12 @@ const MapView = ({ restaurants, isExpanded, onToggle, onMarkerClick }) => {
                         title: rest.name,
                         icon: {
                             content: `
-                                <div class="custom-marker-pill">
-                                    <div class="marker-icon">🍽️</div>
+                                <div class="custom-marker-pill ${rankClass}">
+                                    <div class="marker-icon">${iconContent}</div>
                                     <div class="marker-text">${rest.name}</div>
                                 </div>
                             `,
-                            anchor: new window.naver.maps.Point(24, 24), // Center-ish anchor for pill
+                            anchor: new window.naver.maps.Point(24, 24),
                         }
                     });
 

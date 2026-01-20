@@ -129,7 +129,39 @@
     white-space: nowrap;
 }
 
+/* Rank Styles for Pill Markers */
+.custom-marker-pill.rank-1 {
+    border: 2px solid #FFD700;
+    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
+}
+
+.custom-marker-pill.rank-1 .marker-icon {
+    background: #FFD700;
+    color: white;
+}
+
+.custom-marker-pill.rank-2 {
+    border: 2px solid #C0C0C0;
+    box-shadow: 0 4px 12px rgba(192, 192, 192, 0.4);
+}
+
+.custom-marker-pill.rank-2 .marker-icon {
+    background: #C0C0C0;
+    color: white;
+}
+
+.custom-marker-pill.rank-3 {
+    border: 2px solid #CD7F32;
+    box-shadow: 0 4px 12px rgba(205, 127, 50, 0.4);
+}
+
+.custom-marker-pill.rank-3 .marker-icon {
+    background: #CD7F32;
+    color: white;
+}
+
 .custom-marker-pill:hover .marker-icon {
     background: #3182f6;
+    /* Reset on hover to brand color or keep rank color? Brand color looks interactive */
     color: white;
 }
