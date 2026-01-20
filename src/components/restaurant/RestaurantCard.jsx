@@ -402,7 +402,7 @@ const RestaurantCard = ({ data, rank, userId, onVote, onDelete }) => {
                                         setShowMenu(!showMenu);
                                     }}
                                 >
-                                    {showMenu ? '메뉴 접기 🔼' : `+ ${String(data.menu || '').split(', ').length - 3}개 더보기`}
+                                    {showMenu ? '메뉴 접기' : `+ ${String(data.menu || '').split(', ').length - 3}개 더보기`}
                                 </button>
                             )}
                         </div>
