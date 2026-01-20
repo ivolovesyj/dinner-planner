@@ -33,7 +33,7 @@ const MapView = ({ restaurants, isExpanded, onToggle, onMarkerClick }) => {
 
         script = document.createElement('script');
         script.id = scriptId;
-        script.src = `https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=${NAVER_MAP_CLIENT_ID}`;
+        script.src = `https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=${NAVER_MAP_CLIENT_ID}&submodules=geocoder`;
         script.async = true;
         script.onload = handleScriptLoad;
         script.onerror = handleScriptError;
