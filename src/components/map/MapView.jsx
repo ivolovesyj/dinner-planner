@@ -40,6 +40,7 @@ const MapView = ({ restaurants, isExpanded, onToggle, onMarkerClick }) => {
     }, []);
 
 
+    const prevDataRef = useRef("");
     const initialBoundsFitted = useRef(false);
 
     // Initialize Map and Markers
@@ -82,10 +83,11 @@ const MapView = ({ restaurants, isExpanded, onToggle, onMarkerClick }) => {
                     loc: r.location
                 })));
 
-                if (mapRef.current.prevData === currentDataStr) {
-                    return; // data hasn't changed, skip update
+                // Skip update ONLY if data is identical AND we have markers rendered
+                if (prevDataRef.current === currentDataStr && markers.current.length > 0) {
+                    return;
                 }
-                mapRef.current.prevData = currentDataStr;
+                prevDataRef.current = currentDataStr;
 
                 // Clear existing markers
                 markers.current.forEach(m => m.setMap(null));
