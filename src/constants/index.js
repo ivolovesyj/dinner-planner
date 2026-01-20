@@ -23,6 +23,6 @@ export const APP_CONFIG = {
     KAKAO_SDK_KEY: '48d2b69cdffc16d0a49b3bcee425db5a'
 };
 
-// Force usage of verified ID (r942ztr0hi) to bypass potentially incorrect Vercel Env Vars
-export const NAVER_MAP_CLIENT_ID = 'r942ztr0hi'; // import.meta.env.VITE_NAVER_MAP_CLIENT_ID || 'r942ztr0hi';
+// Use environment variable for Client ID
+export const NAVER_MAP_CLIENT_ID = import.meta.env.VITE_NAVER_MAP_CLIENT_ID;
 export const DEFAULT_CENTER = { lat: 37.5665, lng: 126.9780 }; // 서울 시청
