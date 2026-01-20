@@ -10,7 +10,6 @@ import { NicknameModal } from './components/room';
 import { AdminLogin, AdminDashboard } from './components/admin';
 import { Footer } from './components/layout';
 import { MapView } from './components/map';
-import SimpleTestMap from './components/map/SimpleTestMap'; // Temporary Test
 
 // Hooks
 import { useRoom } from './hooks/useRoom';
@@ -415,12 +414,11 @@ function App() {
                 )}
               </div>
               {/* Map View - Below feature bar buttons */}
-              {/* <MapView
+              <MapView
                 restaurants={restaurants}
                 isExpanded={isMapExpanded}
                 onMarkerClick={handleMarkerClick}
-              /> */}
-              {isMapExpanded && <SimpleTestMap />}
+              />
             </div>
             {stableRestaurants.map((rest, index) => {
               // Calculate rank based on SCORE, not index in stable list
