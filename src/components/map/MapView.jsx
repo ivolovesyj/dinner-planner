@@ -73,6 +73,20 @@ const MapView = ({ restaurants, isExpanded, onToggle, onMarkerClick }) => {
 
             // Update Markers
             try {
+                // Check if data actually changed to prevent flickering
+                const currentDataStr = JSON.stringify(restaurants.map(r => ({
+                    id: r.id,
+                    lat: r.latitude || 0,
+                    lng: r.longitude || 0,
+                    name: r.name,
+                    loc: r.location
+                })));
+
+                if (mapRef.current.prevData === currentDataStr) {
+                    return; // data hasn't changed, skip update
+                }
+                mapRef.current.prevData = currentDataStr;
+
                 // Clear existing markers
                 markers.current.forEach(m => m.setMap(null));
                 markers.current = [];
