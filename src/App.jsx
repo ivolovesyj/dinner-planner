@@ -37,9 +37,10 @@ function App() {
   if (path === '/admin/login') return <AdminLogin />;
   if (path === '/admin/dashboard') return <AdminDashboard />;
 
-  // Get roomId from URL
-  const params = new URLSearchParams(window.location.search);
-  const initialRoomId = params.get('room');
+  // Get roomId from URL PATH (not query string)
+  // Format: /room/{roomId} instead of /?room={roomId}
+  const pathMatch = path.match(/^\/room\/([a-f0-9-]+)$/i);
+  const initialRoomId = pathMatch ? pathMatch[1] : null;
 
   // Use custom hook for room management
   const {
@@ -152,7 +153,7 @@ function App() {
   // GA4 Page View
   useEffect(() => {
     logPageView();
-  }, [window.location.pathname, window.location.search]);
+  }, [window.location.pathname]);
 
   // Nickname handlers
   const handleSaveNickname = (name) => {
@@ -168,7 +169,7 @@ function App() {
   const handleCreateRoom = async () => {
     try {
       const newRoomId = await createRoom();
-      const newUrl = `${window.location.pathname}?room=${newRoomId}`;
+      const newUrl = `/room/${newRoomId}`;
       window.history.pushState({ path: newUrl }, '', newUrl);
       logEvent('Room', 'Create', newRoomId);
     } catch (err) {
