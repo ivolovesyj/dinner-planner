@@ -91,17 +91,7 @@ function App() {
     }
   }, [initialRoomId]);
 
-  // PRE-LOAD Naver Map Script on App Mount (Test: Does early loading help with auth?)
-  useEffect(() => {
-    const scriptId = 'naver-map-script';
-    if (document.getElementById(scriptId)) return; // Already loaded
 
-    const script = document.createElement('script');
-    script.id = scriptId;
-    script.src = `https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=${import.meta.env.VITE_NAVER_MAP_CLIENT_ID || 'r942ztr0hi'}`;
-    script.async = true;
-    document.head.appendChild(script);
-  }, []);
 
   // --- Stable Sort Logic ---
   const [stableRestaurants, setStableRestaurants] = useState([]);

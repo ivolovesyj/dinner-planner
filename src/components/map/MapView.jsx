@@ -32,7 +32,7 @@ const MapView = ({ restaurants, isExpanded, onToggle, onMarkerClick }) => {
 
         const script = document.createElement('script');
         script.id = scriptId;
-        script.src = `https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=${NAVER_MAP_CLIENT_ID}`;
+        script.src = `https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=${NAVER_MAP_CLIENT_ID}`;
         script.async = true;
         script.onload = handleScriptLoad;
         script.onerror = handleScriptError;
