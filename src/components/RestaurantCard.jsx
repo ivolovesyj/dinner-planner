@@ -330,7 +330,7 @@ const RestaurantCard = ({ data, rank, userId, onVote, onDelete }) => {
                                 style={showMenu ? {
                                     maxHeight: '220px',
                                     overflowY: 'auto',
-                                    paddingRight: '4px',
+                                    paddingRight: '6px',
                                     borderBottom: '1px solid #eee'
                                 } : {}}
                             >
@@ -344,12 +344,19 @@ const RestaurantCard = ({ data, rank, userId, onVote, onDelete }) => {
                             {String(data.menu || '').split(', ').length > 3 && (
                                 <button
                                     className="menu-more-btn"
+                                    style={{
+                                        width: '100%',
+                                        padding: '8px 0',
+                                        marginTop: '4px',
+                                        fontWeight: '600',
+                                        color: '#007AFF'
+                                    }}
                                     onClick={(e) => {
                                         e.preventDefault();
                                         setShowMenu(!showMenu);
                                     }}
                                 >
-                                    {showMenu ? '접기' : `+ ${String(data.menu || '').split(', ').length - 3}개 더보기`}
+                                    {showMenu ? '메뉴 접기 🔼' : `+ ${String(data.menu || '').split(', ').length - 3}개 더보기`}
                                 </button>
                             )}
                         </div>
