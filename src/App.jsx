@@ -353,15 +353,6 @@ function App() {
           </div>
         </section>
 
-        {/* Temporary Map Test Section */}
-        <section style={{ padding: '20px', textAlign: 'center' }}>
-          <h3>🗺️ 지도 API 연동 테스트</h3>
-          <p>이 지도가 보이면 설정이 완벽한 것입니다.</p>
-          <div style={{ height: '300px', margin: '20px auto', maxWidth: '600px', border: '1px solid #ddd' }}>
-            <MapView isExpanded={true} restaurants={[]} />
-          </div>
-        </section>
-
         <Footer />
       </div>
     );
