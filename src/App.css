@@ -11,7 +11,7 @@
 }
 
 .app-header {
-  padding: calc(var(--safe-area-top) + 16px) 16px 16px;
+  padding: calc(var(--safe-area-top) + 12px) 16px 12px;
   background-color: rgba(242, 242, 247, 0.8);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -22,7 +22,7 @@
 }
 
 .app-header h1 {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 700;
   letter-spacing: -0.5px;
 }
@@ -37,13 +37,13 @@
 
 .header-input {
   width: 100%;
-  padding: 14px 20px;
+  padding: 10px 16px;
   border-radius: 24px;
   /* More pill-shaped */
   border: none;
   background-color: var(--ios-blue);
   /* Button color by default */
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
   color: #FFF;
   /* White text for button look */
@@ -527,7 +527,7 @@
 /* Feature Bar (Toolbox) */
 .sticky-feature-container {
   position: sticky;
-  top: 115px;
+  top: 95px;
   /* Adjust based on header height */
   z-index: 90;
   background-color: var(--ios-bg);
