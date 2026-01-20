@@ -98,11 +98,12 @@ const MapView = ({ restaurants, isExpanded, onToggle, onMarkerClick }) => {
                         title: rest.name,
                         icon: {
                             content: `
-                                <div style="padding: 5px 10px; background: white; border: 1px solid #ccc; border-radius: 15px; font-weight: bold; box-shadow: 2px 2px 5px rgba(0,0,0,0.1); white-space: nowrap;">
-                                    ${rest.name}
+                                <div class="custom-marker-pill">
+                                    <div class="marker-icon">🍽️</div>
+                                    <div class="marker-text">${rest.name}</div>
                                 </div>
                             `,
-                            anchor: new window.naver.maps.Point(15, 15),
+                            anchor: new window.naver.maps.Point(24, 24), // Center-ish anchor for pill
                         }
                     });
 

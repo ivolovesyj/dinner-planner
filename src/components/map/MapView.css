@@ -87,3 +87,49 @@
     pointer-events: none;
     z-index: 5;
 }
+
+/* Modern Pill Marker Style */
+.custom-marker-pill {
+    display: flex;
+    align-items: center;
+    background: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+.custom-marker-pill:hover {
+    transform: scale(1.1) translateY(-2px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+    border-color: #3182f6;
+    z-index: 100 !important;
+}
+
+.marker-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background: #e8f3ff;
+    color: #3182f6;
+    border-radius: 50%;
+    margin-right: 8px;
+    font-size: 14px;
+}
+
+.marker-text {
+    font-weight: 700;
+    font-size: 13px;
+    color: #333;
+    white-space: nowrap;
+}
+
+.custom-marker-pill:hover .marker-icon {
+    background: #3182f6;
+    color: white;
+}
