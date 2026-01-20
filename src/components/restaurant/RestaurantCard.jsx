@@ -361,23 +361,48 @@ const RestaurantCard = ({ data, rank, userId, onVote, onDelete }) => {
 
                     {data.menu && (
                         <div className="card-menu-section">
-                            <ul className="menu-list">
-                                {String(data.menu || '').split(', ').slice(0, showMenu ? undefined : 3).map((item, idx) => (
-                                    <li key={idx} className="menu-item">
-                                        <span className="menu-dot">•</span>
-                                        {item}
-                                    </li>
-                                ))}
-                            </ul>
+                            {showMenu ? (
+                                <div style={{
+                                    maxHeight: '220px',
+                                    overflowY: 'auto',
+                                    WebkitOverflowScrolling: 'touch',
+                                    borderBottom: '1px solid #eee'
+                                }}>
+                                    <ul className="menu-list" style={{ paddingRight: '6px' }}>
+                                        {String(data.menu || '').split(', ').map((item, idx) => (
+                                            <li key={idx} className="menu-item">
+                                                <span className="menu-dot">•</span>
+                                                {item}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            ) : (
+                                <ul className="menu-list">
+                                    {String(data.menu || '').split(', ').slice(0, 3).map((item, idx) => (
+                                        <li key={idx} className="menu-item">
+                                            <span className="menu-dot">•</span>
+                                            {item}
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
                             {String(data.menu || '').split(', ').length > 3 && (
                                 <button
                                     className="menu-more-btn"
+                                    style={{
+                                        width: '100%',
+                                        padding: '8px 0',
+                                        marginTop: '4px',
+                                        fontWeight: '600',
+                                        color: '#007AFF'
+                                    }}
                                     onClick={(e) => {
                                         e.preventDefault();
                                         setShowMenu(!showMenu);
                                     }}
                                 >
-                                    {showMenu ? '접기' : `+ ${String(data.menu || '').split(', ').length - 3}개 더보기`}
+                                    {showMenu ? '메뉴 접기 🔼' : `+ ${String(data.menu || '').split(', ').length - 3}개 더보기`}
                                 </button>
                             )}
                         </div>
