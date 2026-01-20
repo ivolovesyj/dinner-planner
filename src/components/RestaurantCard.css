@@ -301,6 +301,23 @@
     margin: 0;
 }
 
+.menu-list.scrollable {
+    max-height: 200px;
+    overflow-y: auto;
+    padding-right: 4px;
+    /* Custom Scrollbar for iOS feel */
+    -webkit-overflow-scrolling: touch;
+}
+
+.menu-list.scrollable::-webkit-scrollbar {
+    width: 4px;
+}
+
+.menu-list.scrollable::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+}
+
 .menu-item {
     font-size: 14px;
     color: #333;
