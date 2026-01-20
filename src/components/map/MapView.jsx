@@ -39,6 +39,7 @@ const MapView = ({ restaurants, isExpanded, onToggle, onMarkerClick }) => {
         document.head.appendChild(script);
     }, []);
 
+
     // Initialize Map and Markers
     useEffect(() => {
         // Strict guard clauses
@@ -73,18 +74,30 @@ const MapView = ({ restaurants, isExpanded, onToggle, onMarkerClick }) => {
             markers.current.forEach(m => m.setMap(null));
             markers.current = [];
 
-            if (!restaurants || restaurants.length === 0) return;
+            if (!restaurants || restaurants.length === 0) {
+                // Reset to default center if empty
+                map.setCenter(new window.naver.maps.LatLng(DEFAULT_CENTER.lat, DEFAULT_CENTER.lng));
+                map.setZoom(14);
+                return;
+            }
 
             const bounds = new window.naver.maps.LatLngBounds();
             const sortedRestaurants = [...restaurants].sort((a, b) =>
                 ((b.likes || 0) - (b.dislikes || 0)) - ((a.likes || 0) - (a.dislikes || 0))
             );
 
-            restaurants.forEach((rest) => {
-                if (!rest.latitude || !rest.longitude) return;
+            let hasValidResult = false;
 
-                const position = new window.naver.maps.LatLng(rest.latitude, rest.longitude);
+            restaurants.forEach((rest) => {
+                const lat = parseFloat(rest.latitude);
+                const lng = parseFloat(rest.longitude);
+
+                // Validator: Must be number, non-zero (assuming Korea is not at 0,0)
+                if (isNaN(lat) || isNaN(lng) || lat === 0 || lng === 0) return;
+
+                const position = new window.naver.maps.LatLng(lat, lng);
                 bounds.extend(position);
+                hasValidResult = true;
 
                 const score = (rest.likes || 0) - (rest.dislikes || 0);
                 const rank = sortedRestaurants.findIndex(r => r.id === rest.id) + 1;
@@ -114,9 +127,13 @@ const MapView = ({ restaurants, isExpanded, onToggle, onMarkerClick }) => {
                 markers.current.push(marker);
             });
 
-            if (restaurants.length > 0) {
+            if (restaurants.length > 0 && hasValidResult) {
                 // Determine fitBounds options based on device
                 map.fitBounds(bounds, { top: 40, right: 40, bottom: 40, left: 40 });
+            } else {
+                // Determine fitBounds options based on device
+                map.setCenter(new window.naver.maps.LatLng(DEFAULT_CENTER.lat, DEFAULT_CENTER.lng));
+                map.setZoom(14);
             }
         } catch (markerErr) {
             console.error("Marker Error:", markerErr);
