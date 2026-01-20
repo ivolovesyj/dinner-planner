@@ -1,54 +1,123 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { NAVER_MAP_CLIENT_ID } from '../../constants';
+import { NAVER_MAP_CLIENT_ID, DEFAULT_CENTER } from '../../constants';
 import './MapView.css';
 
 const MapView = ({ restaurants, isExpanded, onToggle, onMarkerClick }) => {
-    const iframeRef = useRef(null);
-    const [isMapReady, setIsMapReady] = useState(false);
+    const mapRef = useRef(null);
+    const mapInstance = useRef(null);
+    const markers = useRef([]);
+    const [isLoaded, setIsLoaded] = useState(false);
 
-    // Initial Load - Listen for Map Ready message
+    // Load Naver Map Script
     useEffect(() => {
-        const handleMessage = (event) => {
-            if (event.data && event.data.type === 'MAP_READY') {
-                setIsMapReady(true);
-            }
-        };
+        const scriptId = 'naver-map-script';
 
-        window.addEventListener('message', handleMessage);
-        return () => window.removeEventListener('message', handleMessage);
+        const handleScriptLoad = () => setIsLoaded(true);
+        const handleScriptError = () => console.error("Naver Map Script Load Failed");
+
+        let script = document.getElementById(scriptId);
+
+        if (script) {
+            setIsLoaded(true);
+            return;
+        }
+
+        script = document.createElement('script');
+        script.id = scriptId;
+        script.src = `https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=${NAVER_MAP_CLIENT_ID}`;
+        script.async = true;
+        script.onload = handleScriptLoad;
+        script.onerror = handleScriptError;
+        document.head.appendChild(script);
     }, []);
 
-    // Send Data to Iframe when Ready or Data Changes
+    // Initialize Map and Markers
     useEffect(() => {
-        if (isMapReady && iframeRef.current) {
-            // Sort restaurants for consistent numbering
-            const sortedRestaurants = [...(restaurants || [])].sort((a, b) =>
-                ((b.likes || 0) - (b.dislikes || 0)) - ((a.likes || 0) - (a.dislikes || 0))
-            );
+        if (!isLoaded || !mapRef.current || !window.naver || !window.naver.maps) return;
 
-            iframeRef.current.contentWindow.postMessage({
-                type: 'UPDATE_MARKERS',
-                payload: sortedRestaurants
-            }, '*');
+        try {
+            if (!mapInstance.current) {
+                mapInstance.current = new window.naver.maps.Map(mapRef.current, {
+                    center: new window.naver.maps.LatLng(DEFAULT_CENTER.lat, DEFAULT_CENTER.lng),
+                    zoom: 14,
+                    scaleControl: false,
+                    logoControl: false,
+                    mapDataControl: false,
+                    zoomControl: true,
+                    zoomControlOptions: { position: window.naver.maps.Position.TOP_RIGHT }
+                });
+
+                // Resize trigger
+                window.naver.maps.Event.trigger(mapInstance.current, 'resize');
+            }
+        } catch (err) {
+            console.error(err);
         }
-    }, [isMapReady, restaurants]);
+
+        const map = mapInstance.current;
+
+        // Update Markers
+        markers.current.forEach(m => m.setMap(null));
+        markers.current = [];
+
+        if (!restaurants || restaurants.length === 0) return;
+
+        const bounds = new window.naver.maps.LatLngBounds();
+        const sortedRestaurants = [...restaurants].sort((a, b) =>
+            ((b.likes || 0) - (b.dislikes || 0)) - ((a.likes || 0) - (a.dislikes || 0))
+        );
+
+        restaurants.forEach((rest) => {
+            if (!rest.latitude || !rest.longitude) return;
+
+            const position = new window.naver.maps.LatLng(rest.latitude, rest.longitude);
+            bounds.extend(position);
+
+            const score = (rest.likes || 0) - (rest.dislikes || 0);
+            const rank = sortedRestaurants.findIndex(r => r.id === rest.id) + 1;
+            const isTopRank = rank <= 3 && score > 0;
+
+            const markerHtml = `
+                    <div class="custom-marker ${isTopRank ? `rank-${rank}` : ''}">
+                        <div class="marker-badge">${rank}</div>
+                         <div class="marker-label">${rest.name}</div>
+                    </div>
+                `;
+
+            const marker = new window.naver.maps.Marker({
+                position: position,
+                map: map,
+                icon: {
+                    content: markerHtml,
+                    size: new window.naver.maps.Size(32, 32),
+                    anchor: new window.naver.maps.Point(16, 16)
+                }
+            });
+
+            window.naver.maps.Event.addListener(marker, 'click', () => {
+                if (onMarkerClick) onMarkerClick(rest.id);
+            });
+
+            markers.current.push(marker);
+        });
+
+        if (restaurants.length > 0) {
+            map.fitBounds(bounds, { top: 40, right: 40, bottom: 40, left: 40 });
+        }
+
+    }, [isLoaded, restaurants, isExpanded]);
+
+    // Resize handling
+    useEffect(() => {
+        if (mapInstance.current && isExpanded) {
+            window.naver.maps.Event.trigger(mapInstance.current, 'resize');
+        }
+    }, [isExpanded]);
+
 
     return (
         <div className={`map-container ${isExpanded ? 'expanded' : ''}`}>
-            {/* 
-                Use Iframe to isolate Map from parent URL query parameters (?room=...).
-                Naver Map API Auth often fails if the URL doesn't stick to the whitelist perfectly.
-                Using a static HTML file relies on the clean path '/map.html'.
-                Pass Client ID via HASH to avoid query string in the iframe URL itself.
-            */}
-            <iframe
-                ref={iframeRef}
-                name="naver-map-iso"
-                src="/"
-                title="Naver Map"
-                style={{ width: '100%', height: '100%', border: 'none' }}
-                loading="lazy"
-            />
+            <div className="naver-map" ref={mapRef} />
         </div>
     );
 };
