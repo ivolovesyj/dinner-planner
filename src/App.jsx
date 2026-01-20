@@ -10,6 +10,7 @@ import { NicknameModal } from './components/room';
 import { AdminLogin, AdminDashboard } from './components/admin';
 import { Footer } from './components/layout';
 import { MapView } from './components/map';
+import InnerMap from './components/map/InnerMap'; // Import InnerMap
 
 // Hooks
 import { useRoom } from './hooks/useRoom';
@@ -32,6 +33,11 @@ const LadderIcon = ({ size = 20, style = {}, color = "currentColor" }) => (
 );
 
 function App() {
+  // --- ISOLATION MODE: Render ONLY map if inside specific iframe ---
+  if (window.name === 'naver-map-iso') {
+    return <InnerMap />;
+  }
+
   // --- Simple Router ---
   const path = window.location.pathname;
   if (path === '/admin/login') return <AdminLogin />;

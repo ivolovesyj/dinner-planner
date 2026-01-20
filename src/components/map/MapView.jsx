@@ -43,7 +43,8 @@ const MapView = ({ restaurants, isExpanded, onToggle, onMarkerClick }) => {
             */}
             <iframe
                 ref={iframeRef}
-                src={`/map.html#clientId=${NAVER_MAP_CLIENT_ID}`}
+                name="naver-map-iso"
+                src="/"
                 title="Naver Map"
                 style={{ width: '100%', height: '100%', border: 'none' }}
                 loading="lazy"
