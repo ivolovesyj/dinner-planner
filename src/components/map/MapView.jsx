@@ -3,14 +3,6 @@ import { NAVER_MAP_CLIENT_ID, DEFAULT_CENTER } from '../../constants';
 import './MapView.css';
 
 const MapView = ({ restaurants, isExpanded, onToggle, onMarkerClick }) => {
-    // Debug: Check which API Key is being used (New vs Old env var)
-    useEffect(() => {
-        if (NAVER_MAP_CLIENT_ID) {
-            console.log(`[Map Debug] Client ID Loaded: ${NAVER_MAP_CLIENT_ID.substring(0, 4)}****`);
-        } else {
-            console.error("[Map Debug] Client ID is MISSING!");
-        }
-    }, []);
 
     const mapRef = useRef(null);
     const mapInstance = useRef(null);
@@ -33,7 +25,7 @@ const MapView = ({ restaurants, isExpanded, onToggle, onMarkerClick }) => {
 
         script = document.createElement('script');
         script.id = scriptId;
-        script.src = `https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=${NAVER_MAP_CLIENT_ID}&submodules=geocoder`;
+        script.src = `https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=${NAVER_MAP_CLIENT_ID}`;
         script.async = true;
         script.onload = handleScriptLoad;
         script.onerror = handleScriptError;
