@@ -325,7 +325,15 @@ const RestaurantCard = ({ data, rank, userId, onVote, onDelete }) => {
 
                     {data.menu && (
                         <div className="card-menu-section">
-                            <ul className={`menu-list ${showMenu ? 'scrollable' : ''}`}>
+                            <ul
+                                className="menu-list"
+                                style={showMenu ? {
+                                    maxHeight: '220px',
+                                    overflowY: 'auto',
+                                    paddingRight: '4px',
+                                    borderBottom: '1px solid #eee'
+                                } : {}}
+                            >
                                 {String(data.menu || '').split(', ').slice(0, showMenu ? undefined : 3).map((item, idx) => (
                                     <li key={idx} className="menu-item">
                                         <span className="menu-dot">•</span>
