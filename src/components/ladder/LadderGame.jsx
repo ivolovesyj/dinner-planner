@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
-import { FRONTEND_URL } from '../../constants';
 import './LadderGame.css';
 import { X } from 'lucide-react';
 
@@ -334,8 +333,8 @@ function LadderGame({ roomData, roomId, onTrigger, onReset, onClose, onComplete,
         // Use explicit room URL with query param to auto-open ladder
         // Prefer explicit roomId prop, fallback to roomData.roomId
         const targetRoomId = roomId || roomData?.roomId;
-        const shareUrl = `${FRONTEND_URL}/room/${targetRoomId}?show_ladder=true`;
-        const imageUrl = winnerImage || `${FRONTEND_URL}/og-image-v3.png`;
+        const shareUrl = `${window.location.origin}/room/${targetRoomId}?show_ladder=true`;
+        const imageUrl = winnerImage || `${window.location.origin}/og-image-v3.png`;
 
         // 디버깅: SDK 상태 확인
         console.log('🔍 Kakao SDK 상태:', {
