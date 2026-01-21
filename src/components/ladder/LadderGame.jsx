@@ -443,7 +443,19 @@ function LadderGame({ roomData, roomId, onTrigger, onReset, onClose, onComplete,
                     </div>
                 ) : (
                     <div id="game-view" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                        {/* ladder-sync-notice removed per user request */}
+                        {/* Data Mapping Error Guard */}
+                        {ladderData && ladderData.candidateIds?.length > 0 && candidates.length === 0 && (
+                            <div className="error-state" style={{ padding: '20px', textAlign: 'center', color: 'red' }}>
+                                <p>⚠️ 데이터 동기화 오류</p>
+                                <p style={{ fontSize: '12px', color: '#666', margin: '10px 0' }}>
+                                    후보자 정보를 불러오는데 실패했습니다.<br />
+                                    (IDs: {ladderData.candidateIds.length}, Mapped: {candidates.length})
+                                </p>
+                                <button className="btn btn-ladder-reset" onClick={onReset} style={{ background: '#ff4757', color: 'white' }}>
+                                    게임 리셋하기
+                                </button>
+                            </div>
+                        )}
 
                         <div className="ladder-canvas-wrapper">
                             <canvas ref={canvasRef} id="ladderCanvas" width="340" height="420" className="ladder-canvas"></canvas>
