@@ -15,14 +15,13 @@ const LadderIcon = ({ size = 20, style = {}, color = "currentColor" }) => (
 
 function LadderGame({ roomData, roomId, onTrigger, onReset, onClose, onComplete, apiBase, nickname }) {
     const ladderData = roomData?.ladderGame;
-    // Fix: Initialize based on props to avoid flash of "Start" state
-    const [isFinished, setIsFinished] = useState(ladderData?.status === 'completed');
+    // Revert state init to fix Gray Screen issue
+    const [isFinished, setIsFinished] = useState(false);
     const [isAnimating, setIsAnimating] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
     const [isResetting, setIsResetting] = useState(false);
     const isValidGame = ladderData && ladderData.candidateIds && ladderData.candidateIds.length >= 2;
-    // Show selector if game is not valid OR (not finished AND not completed)
-    const [showSelector, setShowSelector] = useState(!isValidGame && ladderData?.status !== 'completed');
+    const [showSelector, setShowSelector] = useState(!isValidGame);
     const [selectedIds, setSelectedIds] = useState([]);
 
     // Guard: if roomData isn't ready
