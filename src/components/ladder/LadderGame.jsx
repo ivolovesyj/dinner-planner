@@ -14,19 +14,22 @@ const LadderIcon = ({ size = 20, style = {}, color = "currentColor" }) => (
 );
 
 function LadderGame({ roomData, roomId, onTrigger, onReset, onClose, onComplete, apiBase, nickname }) {
-    const canvasRef = useRef(null);
-    const [isFinished, setIsFinished] = useState(false);
+    const ladderData = roomData?.ladderGame;
+    // Fix: Initialize based on props to avoid flash of "Start" state
+    const [isFinished, setIsFinished] = useState(ladderData?.status === 'completed');
     const [isAnimating, setIsAnimating] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
     const [isResetting, setIsResetting] = useState(false);
-    const isValidGame = roomData?.ladderGame && roomData.ladderGame.candidateIds && roomData.ladderGame.candidateIds.length >= 2;
-    const [showSelector, setShowSelector] = useState(!isValidGame);
+    const isValidGame = ladderData && ladderData.candidateIds && ladderData.candidateIds.length >= 2;
+    // Show selector if game is not valid OR (not finished AND not completed)
+    const [showSelector, setShowSelector] = useState(!isValidGame && ladderData?.status !== 'completed');
     const [selectedIds, setSelectedIds] = useState([]);
 
     // Guard: if roomData isn't ready
     if (!roomData) return null;
 
-    const ladderData = roomData.ladderGame;
+    // Remove redundant ladderData definition since we moved it up
+    // const ladderData = roomData.ladderGame; (Deleted)
 
     // Fix: Define candidates in strictly mapped order of candidateIds to ensure visual/logical match
     const candidates = ladderData ? ladderData.candidateIds.map(id =>
@@ -334,7 +337,7 @@ function LadderGame({ roomData, roomId, onTrigger, onReset, onClose, onComplete,
         // Prefer explicit roomId prop, fallback to roomData.roomId
         const targetRoomId = roomId || roomData?.roomId;
         const shareUrl = `${window.location.origin}/room/${targetRoomId}?show_ladder=true`;
-        const imageUrl = winnerImage || `${window.location.origin}/og-image-v3.png`;
+        const imageUrl = `${window.location.origin}/og-image-v3.png`;
 
         // 디버깅: SDK 상태 확인
         console.log('🔍 Kakao SDK 상태:', {
@@ -349,7 +352,7 @@ function LadderGame({ roomData, roomId, onTrigger, onReset, onClose, onComplete,
                 window.Kakao.Share.sendDefault({
                     objectType: 'feed',
                     content: {
-                        title: '✨ 오늘의 맛집이 결정되었습니다!',
+                        title: '🏆 오늘의 맛집이 결정되었습니다!',
                         description: `"${winnerName}"가 사다리 타기에서 당첨되었어요! 🍲`,
                         imageUrl: imageUrl,
                         link: {
