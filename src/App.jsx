@@ -88,6 +88,12 @@ function App() {
       if (initialNickname) {
         setNickname(initialNickname);
       }
+
+      // Check for auto-open ladder param
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('show_ladder') === 'true') {
+        setShowLadder(true);
+      }
     }
   }, [initialRoomId]);
 

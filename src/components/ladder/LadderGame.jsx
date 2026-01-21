@@ -312,9 +312,27 @@ function LadderGame({ roomData, onTrigger, onReset, onClose, onComplete, apiBase
     };
 
     const handleShareResult = () => {
-        const winnerName = document.getElementById('ladder-winner-name')?.innerText || '맛집';
-        const shareUrl = window.location.href;
-        const imageUrl = `${window.location.origin}/og-image-v3.png`;
+        // Calculate winner logic reused to ensure consistency
+        let winnerName = '맛집';
+        let winnerImage = null;
+
+        if (ladderData) {
+            const result = calculateLadderPath(ladderData);
+            const finalCol = result ? result.finalCol : -1;
+            const winnerId = ladderData.candidateIds?.[finalCol];
+            const winner = (roomData.restaurants || []).find(r =>
+                String(r.id) === String(winnerId) || String(r._id) === String(winnerId)
+            );
+
+            if (winner) {
+                winnerName = winner.name;
+                winnerImage = winner.image;
+            }
+        }
+
+        // Use explicit room URL with query param to auto-open ladder
+        const shareUrl = `${window.location.origin}/room/${roomData.roomId}?show_ladder=true`;
+        const imageUrl = winnerImage || `${window.location.origin}/og-image-v3.png`;
 
         // 디버깅: SDK 상태 확인
         console.log('🔍 Kakao SDK 상태:', {
