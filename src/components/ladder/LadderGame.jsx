@@ -349,7 +349,7 @@ function LadderGame({ roomData, roomId, onTrigger, onReset, onClose, onComplete,
                 window.Kakao.Share.sendDefault({
                     objectType: 'feed',
                     content: {
-                        title: '🏆 오늘의 맛집이 결정되었습니다!',
+                        title: '✨ 오늘의 맛집이 결정되었습니다!',
                         description: `"${winnerName}"가 사다리 타기에서 당첨되었어요! 🍲`,
                         imageUrl: imageUrl,
                         link: {
