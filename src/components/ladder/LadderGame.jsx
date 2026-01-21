@@ -357,13 +357,7 @@ function LadderGame({ roomData, roomId, onTrigger, onReset, onClose, onComplete,
                             mobileWebUrl: shareUrl,
                         },
                     },
-                    buttons: [{
-                        title: '투표 페이지 보기',
-                        link: {
-                            webUrl: shareUrl,
-                            mobileWebUrl: shareUrl,
-                        },
-                    }],
+                    // buttons removed per user request
                 });
                 console.log('✅ Kakao Share 호출 완료');
             } catch (err) {
