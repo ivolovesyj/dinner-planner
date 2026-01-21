@@ -397,7 +397,14 @@ function App() {
         </div>
         <div className="header-input-container">
           {loading ? (
-            <div className="loading-message"><Loader2 className="animate-spin" size={16} /> 정보를 불러오는 중입니다...</div>
+            <div className="loading-message">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Loader2 className="animate-spin" size={16} /> 정보를 불러오는 중입니다...
+              </div>
+              <div style={{ fontSize: '0.75rem', marginTop: '6px', opacity: 0.8, color: '#666', fontWeight: 'normal' }}>
+                오랜만에 접속 시 로딩이 10초 정도 걸릴 수 있습니다. 잠시만 기다려주세요.
+              </div>
+            </div>
           ) : (
             <>
               <input
