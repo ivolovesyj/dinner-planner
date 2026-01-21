@@ -1,6 +1,8 @@
 // API Configuration Constants
 // Using VITE_ prefix for Vite environment variables
 
+export const FRONTEND_URL = 'https://dinner-planner-nine.vercel.app';
+
 export const API_BASE_URL = import.meta.env.VITE_API_URL ||
     (import.meta.env.PROD
         ? 'https://gooddinner.fly.dev'
