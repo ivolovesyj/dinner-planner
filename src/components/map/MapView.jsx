@@ -94,11 +94,8 @@ const MapView = ({ restaurants, isExpanded, onToggle, onMarkerClick }) => {
                 markers.current = [];
 
                 if (!restaurants || restaurants.length === 0) {
-                    if (!initialBoundsFitted.current) {
-                        map.setCenter(new window.naver.maps.LatLng(DEFAULT_CENTER.lat, DEFAULT_CENTER.lng));
-                        map.setZoom(14);
-                        initialBoundsFitted.current = true;
-                    }
+                    // Do NOT set initialBoundsFitted to true here.
+                    // Wait for data to arrive.
                     return;
                 }
 

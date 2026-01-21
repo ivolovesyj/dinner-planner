@@ -431,6 +431,7 @@ function App() {
               </div>
               {/* Map View - Below feature bar buttons */}
               <MapView
+                key={roomId}
                 restaurants={restaurants}
                 isExpanded={isMapExpanded}
                 onMarkerClick={handleMarkerClick}
