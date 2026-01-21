@@ -462,7 +462,9 @@ function App() {
           showLadder && (
             <LadderGame
               roomData={roomData || { restaurants }}
+              roomId={roomId}
               onTrigger={onLadderTrigger}
+              // ...
               onReset={onLadderReset}
               onClose={() => setShowLadder(false)}
               onComplete={handleLadderComplete}

@@ -13,7 +13,7 @@ const LadderIcon = ({ size = 20, style = {}, color = "currentColor" }) => (
     </svg>
 );
 
-function LadderGame({ roomData, onTrigger, onReset, onClose, onComplete, apiBase, nickname }) {
+function LadderGame({ roomData, roomId, onTrigger, onReset, onClose, onComplete, apiBase, nickname }) {
     const canvasRef = useRef(null);
     const [isFinished, setIsFinished] = useState(false);
     const [isAnimating, setIsAnimating] = useState(false);
@@ -331,7 +331,9 @@ function LadderGame({ roomData, onTrigger, onReset, onClose, onComplete, apiBase
         }
 
         // Use explicit room URL with query param to auto-open ladder
-        const shareUrl = `${window.location.origin}/room/${roomData.roomId}?show_ladder=true`;
+        // Prefer explicit roomId prop, fallback to roomData.roomId
+        const targetRoomId = roomId || roomData?.roomId;
+        const shareUrl = `${window.location.origin}/room/${targetRoomId}?show_ladder=true`;
         const imageUrl = winnerImage || `${window.location.origin}/og-image-v3.png`;
 
         // 디버깅: SDK 상태 확인
