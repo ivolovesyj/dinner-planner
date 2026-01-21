@@ -9,7 +9,7 @@ import * as adminController from '../controllers/adminController.js';
 const router = Router();
 
 // Health check
-router.get('/', (req, res) => {
+router.get('/api/health', (req, res) => {
     res.json({ status: 'ok', service: 'dinner-planner-api' });
 });
 
