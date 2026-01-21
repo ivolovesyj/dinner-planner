@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
 import './LadderGame.css';
 import { X } from 'lucide-react';
@@ -45,18 +45,13 @@ function LadderGame({ roomData, roomId, onTrigger, onReset, onClose, onComplete,
         setIsResetting(false);
     }, [onReset]);
 
-    // Smart Close Logic
+    // Smart Close Logic - FIXED: Don't auto-reset anymore
     const handleClose = useCallback(() => {
-        // If game is playing (has data but not finished), reset it.
-        // If game is completed or not started, just close.
-        if (ladderData && ladderData.status !== 'completed' && !isFinished) {
-            handleReset();
-        }
         onClose();
-    }, [ladderData, isFinished, handleReset, onClose]);
+    }, [onClose]);
 
-    // Check for completed status on mount/update
-    useEffect(() => {
+    // Check for completed status on mount/update - use useLayoutEffect for instant UI
+    useLayoutEffect(() => {
         // Only set finished from server status if we are NOT currently animating
         // This prevents polling from cutting off the animation prematurely
         if (ladderData?.status === 'completed' && !isAnimating) {
@@ -462,7 +457,12 @@ function LadderGame({ roomData, roomId, onTrigger, onReset, onClose, onComplete,
                         )}
 
                         {!isFinished && !isAnimating && candidates.length >= 2 && (
-                            <button className="btn btn-primary" onClick={startLadder}>사다리 시작!</button>
+                            <div className="ready-actions" style={{ display: 'flex', gap: '10px' }}>
+                                <button className="btn btn-primary" onClick={startLadder}>사다리 시작!</button>
+                                <button className="btn btn-ladder-reset" onClick={handleReset} style={{ background: '#f1f3f5', color: '#4e5968', fontSize: '0.85rem' }}>
+                                    다시 고르기
+                                </button>
+                            </div>
                         )}
 
                         {isFinished && (
