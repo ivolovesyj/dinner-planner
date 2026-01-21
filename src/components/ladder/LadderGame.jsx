@@ -57,8 +57,8 @@ function LadderGame({ roomData, roomId, onTrigger, onReset, onClose, onComplete,
         onClose();
     }, [ladderData, isFinished, handleReset, onClose]);
 
-    // Check for completed status on mount/update
-    useEffect(() => {
+    // Check for completed status on mount/update - use Layout Effect for sync update
+    useLayoutEffect(() => {
         if (ladderData?.status === 'completed') {
             setIsFinished(true); // Show result immediately
             setShowSelector(false); // Ensure selector is hidden
