@@ -57,11 +57,13 @@ function LadderGame({ roomData, roomId, onTrigger, onReset, onClose, onComplete,
 
     // Check for completed status on mount/update
     useEffect(() => {
-        if (ladderData?.status === 'completed') {
-            setIsFinished(true); // Show result immediately
-            setShowSelector(false); // Ensure selector is hidden
+        // Only set finished from server status if we are NOT currently animating
+        // This prevents polling from cutting off the animation prematurely
+        if (ladderData?.status === 'completed' && !isAnimating) {
+            setIsFinished(true);
+            setShowSelector(false);
         }
-    }, [ladderData]);
+    }, [ladderData, isAnimating]);
 
     // Auto-selection removed per user request for cleaner reset
     // Fix: Valid candidates persists until cleared. We must force clear selectedIds when game resets.
@@ -217,6 +219,9 @@ function LadderGame({ roomData, roomId, onTrigger, onReset, onClose, onComplete,
                 requestAnimationFrame(step);
             });
         }
+
+        // Small delay to ensure the last point is drawn and visual path is complete
+        await new Promise(resolve => setTimeout(resolve, 500));
 
         setIsAnimating(false);
         setIsFinished(true);
