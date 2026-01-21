@@ -236,15 +236,20 @@ function LadderGame({ roomData, roomId, onTrigger, onReset, onClose, onComplete,
         }
     }, [ladderData, isAnimating, drawStaticLadder, roomData.roomId, apiBase, onComplete]);
 
-    // View Switching Logic
+    // View Switching Logic - use actual mapped candidates as source of truth
     useEffect(() => {
-        if (isValidGame) {
+        const hasValidCandidates = candidates.length >= 2;
+        const isCompleted = ladderData?.status === 'completed';
+
+        // Show selector if: no valid candidates AND not completed
+        // Hide selector if: has valid candidates OR is completed
+        if (hasValidCandidates || isCompleted) {
             setShowSelector(false);
         } else {
             setShowSelector(true);
             setIsFinished(false);
         }
-    }, [isValidGame]);
+    }, [candidates.length, ladderData?.status]);
 
     // Helper: Calculate the full path for a given ladder data
     // This ensures both the visual drawing and the winner calculation use EXACTLY the same logic.
