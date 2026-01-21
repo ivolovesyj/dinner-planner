@@ -14,21 +14,19 @@ const LadderIcon = ({ size = 20, style = {}, color = "currentColor" }) => (
 );
 
 function LadderGame({ roomData, roomId, onTrigger, onReset, onClose, onComplete, apiBase, nickname }) {
-    const ladderData = roomData?.ladderGame;
-    // Revert state init to fix Gray Screen issue
+    const canvasRef = useRef(null);
     const [isFinished, setIsFinished] = useState(false);
     const [isAnimating, setIsAnimating] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
     const [isResetting, setIsResetting] = useState(false);
-    const isValidGame = ladderData && ladderData.candidateIds && ladderData.candidateIds.length >= 2;
+    const isValidGame = roomData?.ladderGame && roomData.ladderGame.candidateIds && roomData.ladderGame.candidateIds.length >= 2;
     const [showSelector, setShowSelector] = useState(!isValidGame);
     const [selectedIds, setSelectedIds] = useState([]);
 
     // Guard: if roomData isn't ready
     if (!roomData) return null;
 
-    // Remove redundant ladderData definition since we moved it up
-    // const ladderData = roomData.ladderGame; (Deleted)
+    const ladderData = roomData.ladderGame;
 
     // Fix: Define candidates in strictly mapped order of candidateIds to ensure visual/logical match
     const candidates = ladderData ? ladderData.candidateIds.map(id =>
@@ -57,8 +55,8 @@ function LadderGame({ roomData, roomId, onTrigger, onReset, onClose, onComplete,
         onClose();
     }, [ladderData, isFinished, handleReset, onClose]);
 
-    // Check for completed status on mount/update - use Layout Effect for sync update
-    useLayoutEffect(() => {
+    // Check for completed status on mount/update
+    useEffect(() => {
         if (ladderData?.status === 'completed') {
             setIsFinished(true); // Show result immediately
             setShowSelector(false); // Ensure selector is hidden
@@ -236,20 +234,15 @@ function LadderGame({ roomData, roomId, onTrigger, onReset, onClose, onComplete,
         }
     }, [ladderData, isAnimating, drawStaticLadder, roomData.roomId, apiBase, onComplete]);
 
-    // View Switching Logic - use actual mapped candidates as source of truth
+    // View Switching Logic
     useEffect(() => {
-        const hasValidCandidates = candidates.length >= 2;
-        const isCompleted = ladderData?.status === 'completed';
-
-        // Show selector if: no valid candidates AND not completed
-        // Hide selector if: has valid candidates OR is completed
-        if (hasValidCandidates || isCompleted) {
+        if (isValidGame) {
             setShowSelector(false);
         } else {
             setShowSelector(true);
             setIsFinished(false);
         }
-    }, [candidates.length, ladderData?.status]);
+    }, [isValidGame]);
 
     // Helper: Calculate the full path for a given ladder data
     // This ensures both the visual drawing and the winner calculation use EXACTLY the same logic.
@@ -341,7 +334,7 @@ function LadderGame({ roomData, roomId, onTrigger, onReset, onClose, onComplete,
         // Prefer explicit roomId prop, fallback to roomData.roomId
         const targetRoomId = roomId || roomData?.roomId;
         const shareUrl = `${window.location.origin}/room/${targetRoomId}?show_ladder=true`;
-        const imageUrl = `${window.location.origin}/og-image-v3.png`;
+        const imageUrl = winnerImage || `${window.location.origin}/og-image-v3.png`;
 
         // 디버깅: SDK 상태 확인
         console.log('🔍 Kakao SDK 상태:', {
@@ -448,19 +441,7 @@ function LadderGame({ roomData, roomId, onTrigger, onReset, onClose, onComplete,
                     </div>
                 ) : (
                     <div id="game-view" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                        {/* Data Mapping Error Guard */}
-                        {ladderData && ladderData.candidateIds?.length > 0 && candidates.length === 0 && (
-                            <div className="error-state" style={{ padding: '20px', textAlign: 'center', color: 'red' }}>
-                                <p>⚠️ 데이터 동기화 오류</p>
-                                <p style={{ fontSize: '12px', color: '#666', margin: '10px 0' }}>
-                                    후보자 정보를 불러오는데 실패했습니다.<br />
-                                    (IDs: {ladderData.candidateIds.length}, Mapped: {candidates.length})
-                                </p>
-                                <button className="btn btn-ladder-reset" onClick={onReset} style={{ background: '#ff4757', color: 'white' }}>
-                                    게임 리셋하기
-                                </button>
-                            </div>
-                        )}
+                        {/* ladder-sync-notice removed per user request */}
 
                         <div className="ladder-canvas-wrapper">
                             <canvas ref={canvasRef} id="ladderCanvas" width="340" height="420" className="ladder-canvas"></canvas>
