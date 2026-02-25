@@ -140,6 +140,11 @@ const RestaurantCard = ({ data, rank, userId, onVote, onDelete }) => {
                     className="thumbnail"
                     style={{ backgroundImage: `url(${images[0]})` }}
                 >
+                    {data.isSponsored && (
+                        <div className="rank-medal rank-ad">
+                            AD
+                        </div>
+                    )}
                     {rank <= 3 && (data.likes || 0) > 0 && (
                         <div className={`rank-medal rank-${rank}`}>
                             {rank}
@@ -191,6 +196,11 @@ const RestaurantCard = ({ data, rank, userId, onVote, onDelete }) => {
 
                 <div className="card-image-container" onClick={openModal}>
                     {/* Rank Badge - shown only when votes exist */}
+                    {data.isSponsored && (
+                        <div className="ad-list-badge">
+                            AD
+                        </div>
+                    )}
                     {((data.likes || 0) + (data.dislikes || 0) > 0) && (
                         <div className={`rank-badge ${getRankClass()}`}>
                             {rank === 1 && '🥇'}

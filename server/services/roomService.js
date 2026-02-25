@@ -63,21 +63,33 @@ export const readRoom = async (roomId) => {
                 }
 
                 const injectionIndex = Math.min(room.restaurants.length, 1);
+                const source = ad.source?.parsedRestaurant || {};
+                const sourceImages = Array.isArray(source.images) ? source.images.filter(Boolean) : [];
+                const creativeImage = ad.creative?.imageUrl || ad.imageUrl || '';
+                const mergedImages = [
+                    ...(creativeImage ? [creativeImage] : []),
+                    ...sourceImages
+                ].filter(Boolean).filter((img, idx, arr) => arr.indexOf(img) === idx);
 
                 const adData = {
                     id: `ad_${ad._id}`,
                     isSponsored: true,
-                    name: ad.creative?.title || ad.title,
-                    description: ad.creative?.description || ad.description,
-                    image: ad.creative?.imageUrl || ad.imageUrl,
-                    url: ad.creative?.linkUrl || ad.linkUrl,
+                    name: ad.creative?.title || source.name || ad.title,
+                    description: ad.creative?.description || source.description || ad.description,
+                    image: mergedImages[0] || source.image || ad.imageUrl,
+                    images: mergedImages.length ? mergedImages : (source.image ? [source.image] : []),
+                    url: ad.creative?.linkUrl || ad.linkUrl || ad.source?.naverMapUrl,
                     sponsorName: ad.sponsorName,
                     likes: ad.likes || 0,
                     dislikes: ad.dislikes || 0,
                     userVotes: ad.userVotes ? Object.fromEntries(ad.userVotes) : {},
-                    tags: ['Sponsored'],
-                    category: 'Advertisement',
-                    menu: ad.creative?.menuPreview || 'Sponsored'
+                    tags: Array.isArray(source.tags) && source.tags.length ? source.tags : (source.category ? [source.category] : []),
+                    category: source.category || '광고',
+                    menu: ad.creative?.menuPreview || source.menu || '정보 없음',
+                    location: source.location || '',
+                    station: source.station || '',
+                    latitude: source.latitude || undefined,
+                    longitude: source.longitude || undefined
                 };
 
                 room.restaurants.splice(injectionIndex, 0, adData);

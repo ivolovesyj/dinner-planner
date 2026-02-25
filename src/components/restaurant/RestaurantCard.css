@@ -143,6 +143,23 @@
     background: linear-gradient(135deg, #CD7F32, #8B4513);
 }
 
+.rank-medal.rank-ad {
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #007aff, #34aadc);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.4px;
+}
+
+.thumbnail .rank-medal.rank-ad {
+    top: -4px;
+    left: auto;
+    right: -4px;
+}
+
 /* Content visibility */
 .card-expandable-content {
     max-height: 0;
@@ -222,6 +239,27 @@
 .rank-badge.rank-default {
     display: none;
     /* Only show top 3 */
+}
+
+.ad-list-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 10;
+    min-width: 42px;
+    height: 28px;
+    padding: 0 10px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #007aff, #34aadc);
+    color: #fff;
+    border: 2px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 4px 12px rgba(0, 122, 255, 0.28);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.3px;
 }
 
 /* Category Badge -> Moves to Bottom Left */

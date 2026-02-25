@@ -159,10 +159,12 @@ const MapView = ({ restaurants, isExpanded, onToggle, onMarkerClick }) => {
                         rankClass = 'rank-3';
                     }
 
+                    const baseZIndex = 100 + markers.current.length;
                     const marker = new window.naver.maps.Marker({
                         position: position,
                         map: map,
                         title: rest.name,
+                        zIndex: baseZIndex,
                         icon: {
                             content: `
                                 <div class="custom-marker-pill ${rankClass}">
@@ -179,6 +181,12 @@ const MapView = ({ restaurants, isExpanded, onToggle, onMarkerClick }) => {
                     window.naver.maps.Event.addListener(marker, 'click', () => {
                         if (onMarkerClick) onMarkerClick(rest.id);
                         map.panTo(position);
+                    });
+                    window.naver.maps.Event.addListener(marker, 'mouseover', () => {
+                        if (typeof marker.setZIndex === 'function') marker.setZIndex(9999);
+                    });
+                    window.naver.maps.Event.addListener(marker, 'mouseout', () => {
+                        if (typeof marker.setZIndex === 'function') marker.setZIndex(baseZIndex);
                     });
                 };
 
