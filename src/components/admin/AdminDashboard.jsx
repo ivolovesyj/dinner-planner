@@ -1,227 +1,461 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+    chargePoints,
+    createCampaign,
+    deleteRoom,
+    getCampaigns,
+    getFeedbacks,
+    getMe,
+    getRooms,
+    parseCampaignLink,
+    reviewCampaign,
+    submitCampaign,
+    updateCampaign,
+    updateCampaignStatus,
+    updateMemo
+} from '../../api/adminApi';
 
-const API_BASE = 'https://gooddinner.fly.dev/api';
+const emptyForm = {
+    id: null,
+    sourceUrl: '',
+    parsedSource: null,
+    targetStations: '',
+    title: '',
+    description: '',
+    imageUrl: '',
+    menuPreview: '',
+    linkUrl: '',
+    budgetPoints: 10000,
+    impressionCost: 4,
+    clickCost: 250
+};
 
 const AdminDashboard = () => {
-    const [activeTab, setActiveTab] = useState('rooms'); // Default to rooms now as requested
-
-    // Data States
+    const [loading, setLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState('campaigns');
+    const [profile, setProfile] = useState(null);
     const [campaigns, setCampaigns] = useState([]);
     const [feedbacks, setFeedbacks] = useState([]);
     const [rooms, setRooms] = useState([]);
+    const [campaignForm, setCampaignForm] = useState(emptyForm);
+    const [campaignFormLoading, setCampaignFormLoading] = useState(false);
+    const [linkParsing, setLinkParsing] = useState(false);
+    const [chargeAmount, setChargeAmount] = useState(10000);
+    const [reviewReasonMap, setReviewReasonMap] = useState({});
 
-    const [loading, setLoading] = useState(true);
-    const [adminName, setAdminName] = useState('');
-    const [role, setRole] = useState('');
+    const role = profile?.role || localStorage.getItem('adminRole') || 'advertiser';
+    const isAdmin = role === 'admin';
+
+    const loadDashboardData = async () => {
+        const [me, campaignList] = await Promise.all([getMe(), getCampaigns()]);
+        setProfile(me);
+        setCampaigns(campaignList);
+
+        if (me.role === 'admin') {
+            const [roomList, feedbackList] = await Promise.all([getRooms(), getFeedbacks()]);
+            setRooms(roomList);
+            setFeedbacks(feedbackList);
+        } else {
+            setRooms([]);
+            setFeedbacks([]);
+        }
+    };
 
     useEffect(() => {
-        const token = localStorage.getItem('adminToken');
-        const name = localStorage.getItem('adminName');
-        const userRole = localStorage.getItem('adminRole');
-
+        const token = localStorage.getItem('adminToken') || localStorage.getItem('admin_token');
         if (!token) {
             window.location.href = '/admin/login';
             return;
         }
 
-        setAdminName(name || 'Partner');
-        setRole(userRole || 'advertiser');
-
-        const fetchData = async () => {
+        (async () => {
             try {
-                const config = { headers: { Authorization: `Bearer ${token}` } };
-
-                // Parallel fetch
-                const requests = [axios.get(`${API_BASE}/admin/campaigns`, config)];
-
-                // Only admin fetches feedback and rooms
-                if (userRole === 'admin') {
-                    requests.push(axios.get(`${API_BASE}/admin/feedbacks`, config));
-                    requests.push(axios.get(`${API_BASE}/admin/rooms`, config));
-                }
-
-                const responses = await Promise.all(requests);
-                setCampaigns(responses[0].data);
-                if (responses[1]) setFeedbacks(responses[1].data);
-                if (responses[2]) setRooms(responses[2].data);
-
+                await loadDashboardData();
             } catch (err) {
-                if (err.response && err.response.status === 401) {
+                console.error('Dashboard load failed', err);
+                if ([401, 403].includes(err.response?.status)) {
+                    localStorage.removeItem('adminToken');
+                    localStorage.removeItem('admin_token');
+                    localStorage.removeItem('adminName');
+                    localStorage.removeItem('adminRole');
                     window.location.href = '/admin/login';
+                    return;
                 }
-                console.error("Data load failed", err);
+                alert(err.response?.data?.error || '대시보드 데이터를 불러오지 못했습니다.');
             } finally {
                 setLoading(false);
             }
-        };
-
-        fetchData();
+        })();
     }, []);
 
     const logout = () => {
         localStorage.removeItem('adminToken');
+        localStorage.removeItem('admin_token');
         localStorage.removeItem('adminName');
         localStorage.removeItem('adminRole');
+        localStorage.removeItem('adminPointsBalance');
         window.location.href = '/admin/login';
     };
+
+    const resetCampaignForm = () => setCampaignForm(emptyForm);
+
+    const onSelectCampaign = (campaign) => {
+        setCampaignForm({
+            id: campaign._id,
+            sourceUrl: campaign.source?.naverMapUrl || '',
+            parsedSource: campaign.source?.parsedRestaurant || null,
+            targetStations: (campaign.targetStations || []).join(', '),
+            title: campaign.creative?.title || campaign.title || '',
+            description: campaign.creative?.description || campaign.description || '',
+            imageUrl: campaign.creative?.imageUrl || campaign.imageUrl || '',
+            menuPreview: campaign.creative?.menuPreview || '',
+            linkUrl: campaign.creative?.linkUrl || campaign.linkUrl || '',
+            budgetPoints: campaign.budget?.totalPointsLimit || 10000,
+            impressionCost: campaign.pricing?.impressionCost || 4,
+            clickCost: campaign.pricing?.clickCost || 250
+        });
+        setActiveTab('campaigns');
+    };
+
+    const handleParseLink = async () => {
+        if (!campaignForm.sourceUrl) return;
+        try {
+            setLinkParsing(true);
+            const parsed = await parseCampaignLink(campaignForm.sourceUrl);
+            setCampaignForm(prev => ({
+                ...prev,
+                parsedSource: {
+                    name: parsed.name || '',
+                    category: parsed.category || '',
+                    image: parsed.image || parsed.images?.[0] || '',
+                    images: parsed.images || [],
+                    location: parsed.location || '',
+                    station: parsed.station || '',
+                    menu: parsed.menu || '',
+                    description: parsed.description || ''
+                },
+                title: prev.title || parsed.name || '',
+                description: prev.description || parsed.description || '',
+                imageUrl: prev.imageUrl || parsed.image || parsed.images?.[0] || '',
+                menuPreview: prev.menuPreview || parsed.menu || '',
+                linkUrl: prev.linkUrl || parsed.url || prev.sourceUrl,
+                targetStations: prev.targetStations || (parsed.station ? parsed.station.split(' ')[0] : '')
+            }));
+        } catch (err) {
+            alert(err.response?.data?.error || '링크 파싱 실패');
+        } finally {
+            setLinkParsing(false);
+        }
+    };
+
+    const buildCampaignPayload = () => {
+        const targetStations = campaignForm.targetStations
+            .split(',')
+            .map(s => s.trim())
+            .filter(Boolean);
+
+        return {
+            source: {
+                naverMapUrl: campaignForm.sourceUrl,
+                parsedRestaurant: campaignForm.parsedSource || {}
+            },
+            targetStations,
+            creative: {
+                title: campaignForm.title,
+                description: campaignForm.description,
+                imageUrl: campaignForm.imageUrl,
+                menuPreview: campaignForm.menuPreview,
+                linkUrl: campaignForm.linkUrl || campaignForm.sourceUrl
+            },
+            title: campaignForm.title,
+            description: campaignForm.description,
+            imageUrl: campaignForm.imageUrl,
+            linkUrl: campaignForm.linkUrl || campaignForm.sourceUrl,
+            sponsorName: profile?.companyName || localStorage.getItem('adminName') || '',
+            budget: { totalPointsLimit: Number(campaignForm.budgetPoints) || 10000 },
+            pricing: {
+                impressionCost: Number(campaignForm.impressionCost) || 4,
+                clickCost: Number(campaignForm.clickCost) || 250
+            }
+        };
+    };
+
+    const handleSaveCampaign = async () => {
+        try {
+            setCampaignFormLoading(true);
+            const payload = buildCampaignPayload();
+            if (campaignForm.id) {
+                await updateCampaign(campaignForm.id, payload);
+            } else {
+                const created = await createCampaign(payload);
+                setCampaignForm(prev => ({ ...prev, id: created._id }));
+            }
+            await loadDashboardData();
+            alert('캠페인이 저장되었습니다.');
+        } catch (err) {
+            alert(err.response?.data?.error || '캠페인 저장 실패');
+        } finally {
+            setCampaignFormLoading(false);
+        }
+    };
+
+    const handleSubmitCampaign = async () => {
+        if (!campaignForm.id) {
+            alert('먼저 저장해주세요.');
+            return;
+        }
+        try {
+            await submitCampaign(campaignForm.id);
+            await loadDashboardData();
+            alert('광고 심사 신청이 완료되었습니다.');
+        } catch (err) {
+            alert(err.response?.data?.error || '심사 신청 실패');
+        }
+    };
+
+    const handleToggleCampaignStatus = async (campaign, status) => {
+        try {
+            await updateCampaignStatus(campaign._id, status);
+            await loadDashboardData();
+        } catch (err) {
+            alert(err.response?.data?.error || '상태 변경 실패');
+        }
+    };
+
+    const handleReview = async (campaign, action) => {
+        try {
+            await reviewCampaign(campaign._id, action, reviewReasonMap[campaign._id] || '');
+            await loadDashboardData();
+        } catch (err) {
+            alert(err.response?.data?.error || '심사 처리 실패');
+        }
+    };
+
+    const handleChargePoints = async () => {
+        try {
+            await chargePoints(Number(chargeAmount), null, '광고주 테스트 충전');
+            await loadDashboardData();
+            alert('포인트가 충전되었습니다.');
+        } catch (err) {
+            alert(err.response?.data?.error || '포인트 충전 실패');
+        }
+    };
+
     const handleUpdateMemo = async (roomId, newMemo) => {
         try {
-            const token = localStorage.getItem("adminToken");
-            const config = { headers: { Authorization: `Bearer ${token}` } };
-            await axios.put(`${API_BASE}/admin/rooms/${roomId}/memo`, { memo: newMemo }, config);
-
-            // Update local state without full refresh
+            await updateMemo(roomId, newMemo);
             setRooms(prev => prev.map(r => r.roomId === roomId ? { ...r, adminMemo: newMemo } : r));
-            alert("메모가 저장되었습니다. ✅");
         } catch (err) {
-            console.error("Memo update failed", err);
-            alert("메모 저장에 실패했습니다.");
+            alert(err.response?.data?.error || '메모 저장 실패');
         }
     };
 
     const handleDeleteRoom = async (roomId) => {
-        if (!window.confirm("정말 이 투표방을 삭제하시겠습니까? 관련 데이터가 모두 삭제됩니다.")) return;
-
+        if (!window.confirm('정말 이 방을 삭제하시겠습니까?')) return;
         try {
-            const token = localStorage.getItem("adminToken");
-            const config = { headers: { Authorization: `Bearer ${token}` } };
-            await axios.delete(`${API_BASE}/admin/rooms/${roomId}`, config);
-
-            // Refresh room list locally
-            setRooms(rooms.filter(r => r.roomId !== roomId));
-            alert("방이 성공적으로 삭제되었습니다.");
+            await deleteRoom(roomId);
+            setRooms(prev => prev.filter(r => r.roomId !== roomId));
         } catch (err) {
-            console.error("Delete failed", err);
-            alert("삭제에 실패했습니다.");
+            alert(err.response?.data?.error || '방 삭제 실패');
         }
     };
 
-    if (loading) return <div style={{ padding: '20px' }}>Loading Stats...</div>;
+    const campaignSummary = useMemo(() => ({
+        total: campaigns.length,
+        active: campaigns.filter(c => c.status === 'active').length,
+        submitted: campaigns.filter(c => c.status === 'submitted').length,
+        impressions: campaigns.reduce((a, b) => a + (b.impressions || 0), 0),
+        clicks: campaigns.reduce((a, b) => a + (b.clicks || 0), 0)
+    }), [campaigns]);
 
-    const formatTime = (isoString) => {
-        if (!isoString) return '-';
-        const date = new Date(isoString);
-        return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    };
+    if (loading) return <div style={{ padding: 24 }}>Loading dashboard...</div>;
 
     return (
-        <div style={{ padding: '40px', maxWidth: '1200px', margin: '0 auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <div>
-                    <h1 style={{ marginBottom: '5px' }}>📊 Advertising Dashboard</h1>
-                    <span style={{ color: '#666', fontSize: '14px' }}>
-                        Welcome, <strong>{adminName}</strong> ({role === 'admin' ? 'Super Admin' : 'Partner'})
-                    </span>
-                </div>
-                <button onClick={logout} style={{
-                    padding: '8px 16px', borderRadius: '8px', border: '1px solid #ddd',
-                    background: 'white', cursor: 'pointer'
-                }}>Logout</button>
+        <div style={{ maxWidth: 1280, margin: '0 auto', padding: 24 }}>
+            <Header profile={profile} onLogout={logout} />
+
+            <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
+                <TabButton active={activeTab === 'campaigns'} onClick={() => setActiveTab('campaigns')}>
+                    캠페인 관리
+                </TabButton>
+                {isAdmin && (
+                    <>
+                        <TabButton active={activeTab === 'rooms'} onClick={() => setActiveTab('rooms')}>
+                            방 관리
+                        </TabButton>
+                        <TabButton active={activeTab === 'feedback'} onClick={() => setActiveTab('feedback')}>
+                            건의함
+                        </TabButton>
+                    </>
+                )}
             </div>
 
-            {/* Tabs (Only visible to Admin) */}
-            {role === 'admin' && (
-                <div style={{ display: 'flex', borderBottom: '1px solid #eee', marginBottom: '30px', gap: '20px' }}>
-                    <div
-                        onClick={() => setActiveTab('rooms')}
-                        style={{ ...tabStyle, borderBottom: activeTab === 'rooms' ? '2px solid #007AFF' : 'none', color: activeTab === 'rooms' ? '#007AFF' : '#666' }}
-                    >
-                        🏠 방 관리 ({rooms.length})
+            {activeTab === 'campaigns' && (
+                <>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px,1fr))', gap: 12, marginBottom: 16 }}>
+                        <StatCard title="내 포인트" value={`${(profile?.pointsBalance || 0).toLocaleString()} P`} />
+                        <StatCard title="캠페인" value={campaignSummary.total} />
+                        <StatCard title="집행중" value={campaignSummary.active} />
+                        <StatCard title="심사대기" value={campaignSummary.submitted} />
                     </div>
-                    <div
-                        onClick={() => setActiveTab('campaigns')}
-                        style={{ ...tabStyle, borderBottom: activeTab === 'campaigns' ? '2px solid #007AFF' : 'none', color: activeTab === 'campaigns' ? '#007AFF' : '#666' }}
-                    >
-                        Campaigns
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(360px, 520px) 1fr', gap: 16, alignItems: 'start' }}>
+                        <div style={panelStyle}>
+                            <h3 style={{ marginTop: 0 }}>광고 캠페인 작성 / 수정</h3>
+                            <p style={mutedText}>네이버지도 링크를 넣고 자동으로 가져온 뒤, 광고용 사진/메뉴/문구를 수정해서 신청하세요.</p>
+                            <Field label="광고 대상 식당 링크 (네이버/카카오)">
+                                <div style={{ display: 'flex', gap: 8 }}>
+                                    <input style={inputStyle} value={campaignForm.sourceUrl} onChange={(e) => setCampaignForm(prev => ({ ...prev, sourceUrl: e.target.value }))} />
+                                    <button style={secondaryBtn} onClick={handleParseLink} disabled={linkParsing}>
+                                        {linkParsing ? '파싱중' : '자동불러오기'}
+                                    </button>
+                                </div>
+                            </Field>
+                            {campaignForm.parsedSource && (
+                                <div style={{ marginBottom: 12, border: '1px dashed #d1d5db', borderRadius: 10, padding: 10, background: '#fafafa' }}>
+                                    <div style={{ fontSize: 12, color: '#666', marginBottom: 6 }}>원본 식당 정보 (자동 수집)</div>
+                                    <div style={{ fontWeight: 700, marginBottom: 4 }}>{campaignForm.parsedSource.name || '-'}</div>
+                                    <div style={{ fontSize: 12, color: '#555', marginBottom: 4 }}>
+                                        {campaignForm.parsedSource.station || '-'} {campaignForm.parsedSource.category ? `· ${campaignForm.parsedSource.category}` : ''}
+                                    </div>
+                                    <div style={{ fontSize: 12, color: '#777', whiteSpace: 'pre-wrap', lineHeight: 1.35 }}>
+                                        {campaignForm.parsedSource.menu || '메뉴 정보 없음'}
+                                    </div>
+                                </div>
+                            )}
+                            <Field label="타겟 역 (쉼표 구분)">
+                                <input style={inputStyle} value={campaignForm.targetStations} onChange={(e) => setCampaignForm(prev => ({ ...prev, targetStations: e.target.value }))} placeholder="강남역, 역삼역" />
+                            </Field>
+                            <Field label="광고 제목">
+                                <input style={inputStyle} value={campaignForm.title} onChange={(e) => setCampaignForm(prev => ({ ...prev, title: e.target.value }))} />
+                            </Field>
+                            <Field label="광고 설명">
+                                <textarea style={{ ...inputStyle, minHeight: 70 }} value={campaignForm.description} onChange={(e) => setCampaignForm(prev => ({ ...prev, description: e.target.value }))} />
+                            </Field>
+                            <Field label="광고 이미지 URL">
+                                <input style={inputStyle} value={campaignForm.imageUrl} onChange={(e) => setCampaignForm(prev => ({ ...prev, imageUrl: e.target.value }))} />
+                            </Field>
+                            <Field label="메뉴/혜택 문구">
+                                <textarea style={{ ...inputStyle, minHeight: 70 }} value={campaignForm.menuPreview} onChange={(e) => setCampaignForm(prev => ({ ...prev, menuPreview: e.target.value }))} />
+                            </Field>
+                            <Field label="랜딩 링크">
+                                <input style={inputStyle} value={campaignForm.linkUrl} onChange={(e) => setCampaignForm(prev => ({ ...prev, linkUrl: e.target.value }))} />
+                            </Field>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+                                <Field label="예산 포인트">
+                                    <input type="number" style={inputStyle} value={campaignForm.budgetPoints} onChange={(e) => setCampaignForm(prev => ({ ...prev, budgetPoints: e.target.value }))} />
+                                </Field>
+                                <Field label="노출당 포인트">
+                                    <input type="number" style={inputStyle} value={campaignForm.impressionCost} onChange={(e) => setCampaignForm(prev => ({ ...prev, impressionCost: e.target.value }))} />
+                                </Field>
+                                <Field label="클릭당 포인트">
+                                    <input type="number" style={inputStyle} value={campaignForm.clickCost} onChange={(e) => setCampaignForm(prev => ({ ...prev, clickCost: e.target.value }))} />
+                                </Field>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
+                                <button style={primaryBtn} onClick={handleSaveCampaign} disabled={campaignFormLoading}>
+                                    {campaignFormLoading ? '저장중...' : (campaignForm.id ? '캠페인 저장' : '새 캠페인 생성')}
+                                </button>
+                                <button style={secondaryBtn} onClick={handleSubmitCampaign} disabled={!campaignForm.id}>
+                                    심사 신청
+                                </button>
+                                <button style={secondaryBtn} onClick={resetCampaignForm}>
+                                    폼 초기화
+                                </button>
+                            </div>
+
+                            {!isAdmin && (
+                                <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid #eee' }}>
+                                    <h4 style={{ margin: '0 0 8px 0' }}>포인트 충전 (토스 연동 전 임시)</h4>
+                                    <div style={{ display: 'flex', gap: 8 }}>
+                                        <input type="number" style={inputStyle} value={chargeAmount} onChange={(e) => setChargeAmount(e.target.value)} />
+                                        <button style={secondaryBtn} onClick={handleChargePoints}>수동 충전</button>
+                                    </div>
+                                    <p style={mutedText}>향후 토스페이먼츠 결제 완료 후 이 API 대신 결제 콜백으로 포인트를 적립하는 구조로 교체하면 됩니다.</p>
+                                </div>
+                            )}
+                        </div>
+
+                        <div style={panelStyle}>
+                            <h3 style={{ marginTop: 0 }}>{isAdmin ? '전체 광고 캠페인' : '내 광고 캠페인'}</h3>
+                            <CampaignTable
+                                campaigns={campaigns}
+                                isAdmin={isAdmin}
+                                onSelect={onSelectCampaign}
+                                onToggleStatus={handleToggleCampaignStatus}
+                                onReview={handleReview}
+                                reviewReasonMap={reviewReasonMap}
+                                setReviewReasonMap={setReviewReasonMap}
+                            />
+                        </div>
                     </div>
-                    <div
-                        onClick={() => setActiveTab('feedback')}
-                        style={{ ...tabStyle, borderBottom: activeTab === 'feedback' ? '2px solid #007AFF' : 'none', color: activeTab === 'feedback' ? '#007AFF' : '#666' }}
-                    >
-                        📥 건의함 ({feedbacks.length})
-                    </div>
-                </div>
+
+                    {!isAdmin && profile?.recentTransactions?.length > 0 && (
+                        <div style={{ ...panelStyle, marginTop: 16 }}>
+                            <h3 style={{ marginTop: 0 }}>최근 포인트 변동</h3>
+                            <table style={tableStyle}>
+                                <thead>
+                                    <tr>
+                                        <th style={thStyle}>시각</th>
+                                        <th style={thStyle}>유형</th>
+                                        <th style={thStyle}>금액</th>
+                                        <th style={thStyle}>잔액</th>
+                                        <th style={thStyle}>메모</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {profile.recentTransactions.map((tx) => (
+                                        <tr key={tx._id}>
+                                            <td style={tdStyle}>{formatTime(tx.createdAt)}</td>
+                                            <td style={tdStyle}>{tx.type}</td>
+                                            <td style={{ ...tdStyle, color: tx.amount >= 0 ? '#166534' : '#b91c1c', fontWeight: 700 }}>
+                                                {tx.amount > 0 ? '+' : ''}{tx.amount?.toLocaleString()}P
+                                            </td>
+                                            <td style={tdStyle}>{tx.balanceAfter?.toLocaleString()}P</td>
+                                            <td style={tdStyle}>{tx.memo || '-'}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </>
             )}
 
-            {/* VIEW: ROOMS */}
-            {activeTab === 'rooms' && (
-                <div style={{ background: 'white', borderRadius: '16px', boxShadow: '0 2px 12px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                        <thead style={{ background: '#f5f5f7', borderBottom: '1px solid #eee' }}>
+            {isAdmin && activeTab === 'rooms' && (
+                <div style={panelStyle}>
+                    <h3 style={{ marginTop: 0 }}>방 관리</h3>
+                    <table style={tableStyle}>
+                        <thead>
                             <tr>
-                                <th style={thStyle}>방 아이디 (링크)</th>
+                                <th style={thStyle}>방</th>
                                 <th style={thStyle}>생성일</th>
                                 <th style={thStyle}>최근 접속</th>
-                                <th style={thStyle}>멤버 수</th>
-                                <th style={thStyle}>식당 수</th>
-                                <th style={thStyle}>메모 (관리자 전용)</th>
+                                <th style={thStyle}>멤버</th>
+                                <th style={thStyle}>식당</th>
+                                <th style={thStyle}>메모</th>
                                 <th style={thStyle}>관리</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {rooms.map(room => (
-                                <tr key={room._id} style={{ borderBottom: '1px solid #f9f9f9' }}>
-                                    <td style={tdStyle}>
-                                        <a href={`/room/${room.roomId}`} target="_blank" rel="noreferrer" style={{ color: '#007AFF', textDecoration: 'none', fontWeight: 'bold' }}>
-                                            {room.roomId.substring(0, 8)}...
-                                        </a>
-                                    </td>
+                            {rooms.map((room) => (
+                                <tr key={room._id}>
+                                    <td style={tdStyle}><a href={`/room/${room.roomId}`} target="_blank" rel="noreferrer">{room.roomId.slice(0, 8)}...</a></td>
                                     <td style={tdStyle}>{formatTime(room.createdAt)}</td>
                                     <td style={tdStyle}>{formatTime(room.lastAccessedAt)}</td>
+                                    <td style={tdStyle}>{room.participants?.length || 0}</td>
+                                    <td style={tdStyle}>{room.restaurants?.length || 0}</td>
                                     <td style={tdStyle}>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                            <span style={tagStyle} title="접속한 적이 있는 모든 고유 사용자 수입니다.">
-                                                👥 총 {room.participants?.length || 0}명
-                                            </span>
-                                            <span
-                                                style={{ ...tagStyle, background: '#e1f5fe', color: '#0288d1' }}
-                                                title={room.nicknameList?.join(', ')}
-                                            >
-                                                👤 식별 {room.identifiedMemberCount || 0}명
-                                            </span>
-                                        </div>
+                                        <textarea
+                                            defaultValue={room.adminMemo || ''}
+                                            style={{ ...inputStyle, minHeight: 58 }}
+                                            onBlur={(e) => handleUpdateMemo(room.roomId, e.target.value)}
+                                        />
                                     </td>
                                     <td style={tdStyle}>
-                                        <span style={tagStyle}>
-                                            🍴 {room.restaurants?.length || 0}개
-                                        </span>
-                                    </td>
-                                    <td style={tdStyle}>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                            <textarea
-                                                id={`memo-${room.roomId}`}
-                                                defaultValue={room.adminMemo || ""}
-                                                onBlur={(e) => handleUpdateMemo(room.roomId, e.target.value)}
-                                                placeholder="메모를 입력하세요..."
-                                                style={{
-                                                    width: '100%', minWidth: '150px', padding: '8px', borderRadius: '8px',
-                                                    border: '1px solid #eee', fontSize: '13px', resize: 'vertical',
-                                                    fontFamily: 'inherit'
-                                                }}
-                                            />
-                                            <button
-                                                onClick={() => handleUpdateMemo(room.roomId, document.getElementById(`memo-${room.roomId}`).value)}
-                                                style={{
-                                                    padding: "4px 8px", borderRadius: "6px", border: "1px solid #007AFF",
-                                                    background: "white", color: "#007AFF", cursor: "pointer", fontSize: "11px", fontWeight: "600",
-                                                    alignSelf: 'flex-start'
-                                                }}
-                                            >
-                                                저장하기
-                                            </button>
-                                        </div>
-                                    </td>
-                                    <td style={tdStyle}>
-                                        <button
-                                            onClick={() => handleDeleteRoom(room.roomId)}
-                                            style={{
-                                                padding: "6px 12px", borderRadius: "8px", border: "none",
-                                                background: "#FF3B30", color: "white", cursor: "pointer", fontSize: "12px", fontWeight: "600"
-                                            }}
-                                        >
-                                            삭제
-                                        </button>
+                                        <button style={dangerBtn} onClick={() => handleDeleteRoom(room.roomId)}>삭제</button>
                                     </td>
                                 </tr>
                             ))}
@@ -230,100 +464,26 @@ const AdminDashboard = () => {
                 </div>
             )}
 
-            {/* VIEW: CAMPAIGNS */}
-            {activeTab === 'campaigns' && (
-                <>
-                    {/* Summary Cards */}
-                    <div style={{ display: 'flex', gap: '20px', marginBottom: '40px' }}>
-                        <div style={cardStyle}>
-                            <h3>Active Campaigns</h3>
-                            <p style={bigNumberStyle}>{campaigns.filter(c => c.active).length}</p>
-                        </div>
-                        <div style={cardStyle}>
-                            <h3>Total Impressions</h3>
-                            <p style={bigNumberStyle}>{campaigns.reduce((a, b) => a + (b.impressions || 0), 0).toLocaleString()}</p>
-                        </div>
-                        <div style={cardStyle}>
-                            <h3>Total Clicks</h3>
-                            <p style={bigNumberStyle}>{campaigns.reduce((a, b) => a + (b.clicks || 0), 0).toLocaleString()}</p>
-                        </div>
-                    </div>
-
-                    {/* Table */}
-                    <div style={{ background: 'white', borderRadius: '16px', boxShadow: '0 2px 12px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                            <thead style={{ background: '#f5f5f7', borderBottom: '1px solid #eee' }}>
-                                <tr>
-                                    <th style={thStyle}>Advertiser</th>
-                                    <th style={thStyle}>Target Station</th>
-                                    <th style={thStyle}>Impressions</th>
-                                    <th style={thStyle}>Clicks</th>
-                                    <th style={thStyle}>CTR (%)</th>
-                                    <th style={thStyle}>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {campaigns.map(ad => (
-                                    <tr key={ad._id} style={{ borderBottom: '1px solid #f9f9f9' }}>
-                                        <td style={tdStyle}>
-                                            <div><strong>{ad.sponsorName}</strong></div>
-                                            <div style={{ fontSize: '12px', color: '#888' }}>{ad.title}</div>
-                                        </td>
-                                        <td style={tdStyle}>
-                                            {ad.targetStations.map(s => (
-                                                <span key={s} style={tagStyle}>{s}</span>
-                                            ))}
-                                        </td>
-                                        <td style={tdStyle}>{ad.impressions?.toLocaleString()}</td>
-                                        <td style={tdStyle}>{ad.clicks?.toLocaleString()}</td>
-                                        <td style={{ ...tdStyle, color: ad.ctr > 1.0 ? 'green' : 'black', fontWeight: 'bold' }}>
-                                            {ad.ctr}%
-                                        </td>
-                                        <td style={tdStyle}>
-                                            <span style={{
-                                                ...statusStyle,
-                                                background: ad.active ? '#e8f5e9' : '#ffebee',
-                                                color: ad.active ? '#2e7d32' : '#c62828'
-                                            }}>
-                                                {ad.active ? 'Active' : 'Paused'}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </>
-            )}
-
-            {/* VIEW: FEEDBACK */}
-            {activeTab === 'feedback' && (
-                <div style={{ background: 'white', borderRadius: '16px', boxShadow: '0 2px 12px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
+            {isAdmin && activeTab === 'feedback' && (
+                <div style={panelStyle}>
+                    <h3 style={{ marginTop: 0 }}>건의함</h3>
                     {feedbacks.length === 0 ? (
-                        <div style={{ padding: '60px', textAlign: 'center', color: '#999' }}>
-                            아직 접수된 건의사항이 없습니다. 📭
-                        </div>
+                        <p style={mutedText}>아직 접수된 건의사항이 없습니다.</p>
                     ) : (
-                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                            <thead style={{ background: '#f5f5f7', borderBottom: '1px solid #eee' }}>
+                        <table style={tableStyle}>
+                            <thead>
                                 <tr>
-                                    <th style={{ ...thStyle, width: '150px' }}>날짜</th>
-                                    <th style={{ ...thStyle, width: '200px' }}>연락처</th>
+                                    <th style={thStyle}>일시</th>
+                                    <th style={thStyle}>연락처</th>
                                     <th style={thStyle}>내용</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {feedbacks.map(msg => (
-                                    <tr key={msg._id} style={{ borderBottom: '1px solid #f9f9f9' }}>
-                                        <td style={tdStyle}>
-                                            {new Date(msg.createdAt).toLocaleDateString()} {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                        </td>
-                                        <td style={tdStyle}>
-                                            {msg.contact || <span style={{ color: '#ccc' }}>(익명)</span>}
-                                        </td>
-                                        <td style={{ ...tdStyle, whiteSpace: 'pre-wrap', lineHeight: '1.5' }}>
-                                            {msg.content}
-                                        </td>
+                                {feedbacks.map((msg) => (
+                                    <tr key={msg._id}>
+                                        <td style={tdStyle}>{formatTime(msg.createdAt)}</td>
+                                        <td style={tdStyle}>{msg.contact || '-'}</td>
+                                        <td style={{ ...tdStyle, whiteSpace: 'pre-wrap' }}>{msg.content}</td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -335,21 +495,211 @@ const AdminDashboard = () => {
     );
 };
 
-const tabStyle = {
-    padding: '10px 4px', cursor: 'pointer', fontWeight: '600', fontSize: '15px'
+const Header = ({ profile, onLogout }) => (
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, gap: 12 }}>
+        <div>
+            <h1 style={{ margin: 0 }}>광고 운영 대시보드</h1>
+            <div style={{ color: '#666', fontSize: 13 }}>
+                {profile?.companyName || profile?.username} ({profile?.role || 'advertiser'})
+            </div>
+        </div>
+        <button style={secondaryBtn} onClick={onLogout}>로그아웃</button>
+    </div>
+);
+
+const CampaignTable = ({ campaigns, isAdmin, onSelect, onToggleStatus, onReview, reviewReasonMap, setReviewReasonMap }) => (
+    <div style={{ overflowX: 'auto' }}>
+        <table style={tableStyle}>
+            <thead>
+                <tr>
+                    <th style={thStyle}>캠페인</th>
+                    <th style={thStyle}>타겟 역</th>
+                    <th style={thStyle}>상태</th>
+                    <th style={thStyle}>노출/클릭</th>
+                    <th style={thStyle}>소진 포인트</th>
+                    <th style={thStyle}>작업</th>
+                </tr>
+            </thead>
+            <tbody>
+                {campaigns.map((c) => (
+                    <tr key={c._id}>
+                        <td style={tdStyle}>
+                            <div style={{ fontWeight: 700 }}>{c.title || c.creative?.title || '(제목 없음)'}</div>
+                            <div style={{ color: '#666', fontSize: 12 }}>{c.sponsorName} / {c.ownerUsername || '-'}</div>
+                        </td>
+                        <td style={tdStyle}>{(c.targetStations || []).join(', ') || '-'}</td>
+                        <td style={tdStyle}><StatusBadge status={c.status} /></td>
+                        <td style={tdStyle}>{(c.impressions || 0).toLocaleString()} / {(c.clicks || 0).toLocaleString()} (CTR {c.ctr}%)</td>
+                        <td style={tdStyle}>{(c.spentPoints || 0).toLocaleString()}P</td>
+                        <td style={tdStyle}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                                    <button style={secondaryBtnSmall} onClick={() => onSelect(c)}>불러오기</button>
+                                    {['approved', 'paused', 'active'].includes(c.status) && (
+                                        <button
+                                            style={secondaryBtnSmall}
+                                            onClick={() => onToggleStatus(c, c.status === 'active' ? 'paused' : 'active')}
+                                        >
+                                            {c.status === 'active' ? '중지' : '집행 시작'}
+                                        </button>
+                                    )}
+                                </div>
+                                {isAdmin && c.status === 'submitted' && (
+                                    <>
+                                        <input
+                                            style={inputStyleSmall}
+                                            placeholder="반려 사유 (선택)"
+                                            value={reviewReasonMap[c._id] || ''}
+                                            onChange={(e) => setReviewReasonMap(prev => ({ ...prev, [c._id]: e.target.value }))}
+                                        />
+                                        <div style={{ display: 'flex', gap: 6 }}>
+                                            <button style={secondaryBtnSmall} onClick={() => onReview(c, 'approve')}>승인</button>
+                                            <button style={dangerBtnSmall} onClick={() => onReview(c, 'reject')}>반려</button>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        </td>
+                    </tr>
+                ))}
+            </tbody>
+        </table>
+    </div>
+);
+
+const StatusBadge = ({ status }) => {
+    const colorMap = {
+        draft: ['#f0f0f0', '#555'],
+        submitted: ['#fff3cd', '#8a6d3b'],
+        approved: ['#dbeafe', '#1d4ed8'],
+        active: ['#dcfce7', '#166534'],
+        paused: ['#fee2e2', '#991b1b'],
+        rejected: ['#fce7f3', '#9d174d'],
+        completed: ['#e0e7ff', '#3730a3']
+    };
+    const [bg, fg] = colorMap[status] || ['#eee', '#333'];
+    return <span style={{ background: bg, color: fg, padding: '4px 10px', borderRadius: 999, fontSize: 12, fontWeight: 700 }}>{status}</span>;
 };
-const cardStyle = {
-    flex: 1, background: 'white', padding: '24px', borderRadius: '16px',
-    boxShadow: '0 2px 12px rgba(0,0,0,0.05)', textAlign: 'center'
+
+const Field = ({ label, children }) => (
+    <div style={{ marginBottom: 10 }}>
+        <div style={{ fontSize: 12, color: '#555', marginBottom: 4 }}>{label}</div>
+        {children}
+    </div>
+);
+
+const StatCard = ({ title, value }) => (
+    <div style={panelStyle}>
+        <div style={{ color: '#666', fontSize: 12 }}>{title}</div>
+        <div style={{ fontSize: 24, fontWeight: 800, marginTop: 6 }}>{value}</div>
+    </div>
+);
+
+const formatTime = (isoString) => {
+    if (!isoString) return '-';
+    const d = new Date(isoString);
+    return `${d.toLocaleDateString()} ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
 };
-const bigNumberStyle = { fontSize: '32px', fontWeight: '800', margin: '10px 0 0 0', color: '#007AFF' };
-const thStyle = { padding: '16px', fontSize: '13px', color: '#666', fontWeight: '600' };
-const tdStyle = { padding: '16px', fontSize: '14px' };
-const tagStyle = {
-    background: '#eee', padding: '4px 8px', borderRadius: '6px', fontSize: '12px', marginRight: '4px'
+
+const panelStyle = {
+    background: '#fff',
+    border: '1px solid #eee',
+    borderRadius: 12,
+    padding: 16,
+    boxShadow: '0 2px 10px rgba(0,0,0,0.03)'
 };
-const statusStyle = {
-    padding: '4px 12px', borderRadius: '100px', fontSize: '12px', fontWeight: '600'
+
+const tableStyle = {
+    width: '100%',
+    borderCollapse: 'collapse',
+    textAlign: 'left'
 };
+
+const thStyle = {
+    padding: '10px 8px',
+    borderBottom: '1px solid #eee',
+    color: '#666',
+    fontSize: 12
+};
+
+const tdStyle = {
+    padding: '10px 8px',
+    borderBottom: '1px solid #f4f4f4',
+    verticalAlign: 'top',
+    fontSize: 13
+};
+
+const mutedText = { color: '#777', fontSize: 12, lineHeight: 1.4, marginTop: 4 };
+
+const inputStyle = {
+    width: '100%',
+    boxSizing: 'border-box',
+    border: '1px solid #ddd',
+    borderRadius: 8,
+    padding: '10px 12px',
+    fontSize: 13,
+    fontFamily: 'inherit'
+};
+
+const inputStyleSmall = {
+    ...inputStyle,
+    padding: '8px 10px',
+    fontSize: 12
+};
+
+const primaryBtn = {
+    border: 'none',
+    background: '#0ea5e9',
+    color: '#fff',
+    borderRadius: 8,
+    padding: '10px 12px',
+    fontWeight: 700,
+    cursor: 'pointer'
+};
+
+const secondaryBtn = {
+    border: '1px solid #ddd',
+    background: '#fff',
+    color: '#222',
+    borderRadius: 8,
+    padding: '10px 12px',
+    fontWeight: 600,
+    cursor: 'pointer'
+};
+
+const secondaryBtnSmall = {
+    ...secondaryBtn,
+    padding: '6px 8px',
+    fontSize: 12
+};
+
+const dangerBtn = {
+    border: 'none',
+    background: '#ef4444',
+    color: '#fff',
+    borderRadius: 8,
+    padding: '8px 12px',
+    cursor: 'pointer'
+};
+
+const dangerBtnSmall = {
+    ...dangerBtn,
+    padding: '6px 8px',
+    fontSize: 12
+};
+
+const TabButton = ({ active, onClick, children }) => (
+    <button
+        onClick={onClick}
+        style={{
+            ...secondaryBtn,
+            background: active ? '#eef6ff' : '#fff',
+            borderColor: active ? '#93c5fd' : '#ddd',
+            color: active ? '#1d4ed8' : '#333'
+        }}
+    >
+        {children}
+    </button>
+);
 
 export default AdminDashboard;

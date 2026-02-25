@@ -8,7 +8,7 @@ import { STORAGE_KEYS } from '../constants';
  * @returns {Object}
  */
 const getAuthHeader = () => {
-    const token = localStorage.getItem(STORAGE_KEYS.ADMIN_TOKEN);
+    const token = localStorage.getItem(STORAGE_KEYS.ADMIN_TOKEN) || localStorage.getItem('adminToken');
     return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
@@ -23,12 +23,73 @@ export const login = async (username, password) => {
     return response.data;
 };
 
+export const signup = async (payload) => {
+    const response = await client.post('/api/admin/signup', payload);
+    return response.data;
+};
+
+export const getMe = async () => {
+    const response = await client.get('/api/admin/me', {
+        headers: getAuthHeader()
+    });
+    return response.data;
+};
+
 /**
  * Get all campaigns (protected)
  * @returns {Promise<Object[]>}
  */
 export const getCampaigns = async () => {
     const response = await client.get('/api/admin/campaigns', {
+        headers: getAuthHeader()
+    });
+    return response.data;
+};
+
+export const createCampaign = async (payload) => {
+    const response = await client.post('/api/admin/campaigns', payload, {
+        headers: getAuthHeader()
+    });
+    return response.data;
+};
+
+export const updateCampaign = async (campaignId, payload) => {
+    const response = await client.put(`/api/admin/campaigns/${campaignId}`, payload, {
+        headers: getAuthHeader()
+    });
+    return response.data;
+};
+
+export const submitCampaign = async (campaignId) => {
+    const response = await client.patch(`/api/admin/campaigns/${campaignId}/submit`, {}, {
+        headers: getAuthHeader()
+    });
+    return response.data;
+};
+
+export const reviewCampaign = async (campaignId, action, rejectionReason = '') => {
+    const response = await client.patch(`/api/admin/campaigns/${campaignId}/review`, { action, rejectionReason }, {
+        headers: getAuthHeader()
+    });
+    return response.data;
+};
+
+export const updateCampaignStatus = async (campaignId, status) => {
+    const response = await client.patch(`/api/admin/campaigns/${campaignId}/status`, { status }, {
+        headers: getAuthHeader()
+    });
+    return response.data;
+};
+
+export const parseCampaignLink = async (url) => {
+    const response = await client.post('/api/admin/campaigns/parse-link', { url }, {
+        headers: getAuthHeader()
+    });
+    return response.data;
+};
+
+export const chargePoints = async (amount, advertiserId = null, memo = '') => {
+    const response = await client.post('/api/admin/points/charge', { amount, advertiserId, memo }, {
         headers: getAuthHeader()
     });
     return response.data;
@@ -105,7 +166,16 @@ export const submitFeedback = async (content, contact = null) => {
 
 export default {
     login,
+    signup,
+    getMe,
     getCampaigns,
+    createCampaign,
+    updateCampaign,
+    submitCampaign,
+    reviewCampaign,
+    updateCampaignStatus,
+    parseCampaignLink,
+    chargePoints,
     getFeedbacks,
     getRooms,
     updateMemo,

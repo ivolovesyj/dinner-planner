@@ -1,6 +1,8 @@
 // Room Service - Room CRUD + Ad Injection Logic
 import Room from '../models/Room.js';
 import AdCampaign from '../models/AdCampaign.js';
+import Advertiser from '../models/Advertiser.js';
+import PointTransaction from '../models/PointTransaction.js';
 import { randomUUID } from 'crypto';
 
 /**
@@ -45,30 +47,75 @@ export const readRoom = async (roomId) => {
             // 2. Fetch Active Ads for this station
             const ad = await AdCampaign.findOne({
                 active: true,
+                status: 'active',
                 targetStations: targetStation
-            }).lean();
+            }).sort({ priority: -1, createdAt: -1 });
 
             // 3. Inject Ad
             if (ad) {
+                const impressionCost = ad.pricing?.impressionCost || 4;
+                if (ad.ownerId) {
+                    const advertiser = await Advertiser.findById(ad.ownerId).lean();
+                    if (!advertiser || (advertiser.pointsBalance || 0) < impressionCost) {
+                        await AdCampaign.updateOne({ _id: ad._id }, { $set: { active: false, status: 'paused' } }).exec();
+                        return room;
+                    }
+                }
+
                 const injectionIndex = Math.min(room.restaurants.length, 1);
 
                 const adData = {
                     id: `ad_${ad._id}`,
                     isSponsored: true,
-                    name: ad.title,
-                    description: ad.description,
-                    image: ad.imageUrl,
-                    url: ad.linkUrl,
+                    name: ad.creative?.title || ad.title,
+                    description: ad.creative?.description || ad.description,
+                    image: ad.creative?.imageUrl || ad.imageUrl,
+                    url: ad.creative?.linkUrl || ad.linkUrl,
                     sponsorName: ad.sponsorName,
                     likes: 0, dislikes: 0, tags: ['Sponsored'],
                     category: 'Advertisement',
-                    menu: 'Sponsored'
+                    menu: ad.creative?.menuPreview || 'Sponsored'
                 };
 
                 room.restaurants.splice(injectionIndex, 0, adData);
 
-                // Track Impression (Async - fire and forget)
-                AdCampaign.updateOne({ _id: ad._id }, { $inc: { impressions: 1 } }).exec();
+                // Track Impression + point charge (async)
+                (async () => {
+                    try {
+                        ad.impressions = (ad.impressions || 0) + 1;
+                        ad.budget = {
+                            ...(ad.budget?.toObject?.() || ad.budget || {}),
+                            spentPoints: (ad.budget?.spentPoints || 0) + impressionCost
+                        };
+                        await ad.save();
+
+                        if (ad.ownerId) {
+                            const advertiser = await Advertiser.findById(ad.ownerId);
+                            if (advertiser) {
+                                if ((advertiser.pointsBalance || 0) < impressionCost) {
+                                    ad.active = false;
+                                    ad.status = 'paused';
+                                } else {
+                                    advertiser.pointsBalance = Math.max((advertiser.pointsBalance || 0) - impressionCost, 0);
+                                    await advertiser.save();
+
+                                    await PointTransaction.create({
+                                        advertiserId: advertiser._id,
+                                        advertiserUsername: advertiser.username,
+                                        type: 'impression_charge',
+                                        amount: -impressionCost,
+                                        balanceAfter: advertiser.pointsBalance,
+                                        campaignId: ad._id,
+                                        memo: `Ad impression charge (${ad.title || ad.sponsorName})`,
+                                        paymentProvider: 'none'
+                                    });
+                                }
+                            }
+                        }
+                    } catch (trackErr) {
+                        console.error('Ad impression tracking failed:', trackErr);
+                    }
+                })();
             }
         }
 

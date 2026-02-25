@@ -2,18 +2,62 @@ import mongoose from 'mongoose';
 
 const AdCampaignSchema = new mongoose.Schema({
     // Basic Ad Content
-    title: { type: String, required: true },       // Restaurant Name
-    description: { type: String, required: true }, // Ad Copy (e.g. "Free Drink Coupon")
-    imageUrl: { type: String, required: true },    // Thumbnail URL
-    linkUrl: { type: String, required: true },     // Destination URL
-    sponsorName: { type: String, required: true }, // "Burger King"
+    title: { type: String, default: '' },       // Restaurant Name
+    description: { type: String, default: '' }, // Ad Copy (e.g. "Free Drink Coupon")
+    imageUrl: { type: String, default: '' },    // Thumbnail URL
+    linkUrl: { type: String, default: '' },     // Destination URL
+    sponsorName: { type: String, default: '' }, // "Burger King"
 
     // Ownership
     ownerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Advertiser' },
+    ownerUsername: { type: String, default: '' },
 
     // Targeting
     targetStations: [String], // e.g., ["강남", "홍대", "신림"] - Station names (normalized)
     radius: { type: Number, default: 1000 },      // in meters (future use)
+    source: {
+        naverMapUrl: { type: String, default: '' },
+        parsedRestaurant: {
+            name: { type: String, default: '' },
+            category: { type: String, default: '' },
+            image: { type: String, default: '' },
+            images: { type: [String], default: [] },
+            location: { type: String, default: '' },
+            station: { type: String, default: '' },
+            menu: { type: String, default: '' },
+            description: { type: String, default: '' }
+        }
+    },
+    creative: {
+        title: { type: String, default: '' },
+        description: { type: String, default: '' },
+        imageUrl: { type: String, default: '' },
+        menuPreview: { type: String, default: '' },
+        linkUrl: { type: String, default: '' }
+    },
+    pricing: {
+        baseStartFee: { type: Number, default: 10000 },
+        impressionCost: { type: Number, default: 4 },
+        clickCost: { type: Number, default: 250 }
+    },
+    budget: {
+        totalPointsLimit: { type: Number, default: 10000 },
+        spentPoints: { type: Number, default: 0 }
+    },
+    schedule: {
+        startAt: { type: Date, default: null },
+        endAt: { type: Date, default: null }
+    },
+    status: {
+        type: String,
+        enum: ['draft', 'submitted', 'approved', 'rejected', 'active', 'paused', 'completed'],
+        default: 'draft'
+    },
+    review: {
+        reviewedBy: { type: String, default: '' },
+        reviewedAt: { type: Date, default: null },
+        rejectionReason: { type: String, default: '' }
+    },
 
     // Stats & Control
     active: { type: Boolean, default: true },
@@ -26,5 +70,7 @@ const AdCampaignSchema = new mongoose.Schema({
 
 // Index for targeting search
 AdCampaignSchema.index({ targetStations: 1 });
+AdCampaignSchema.index({ ownerId: 1, createdAt: -1 });
+AdCampaignSchema.index({ status: 1, active: 1 });
 
 export default mongoose.model('AdCampaign', AdCampaignSchema);

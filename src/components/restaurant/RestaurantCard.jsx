@@ -160,6 +160,11 @@ const RestaurantCard = ({ data, rank, userId, onVote, onDelete }) => {
                         </div>
                         <div className="card-content">
                             <p className="sponsored-desc">{data.description}</p>
+                            {data.menu && data.menu !== 'Sponsored' && (
+                                <p className="sponsored-desc" style={{ marginTop: '6px', color: '#4e5968' }}>
+                                    {data.menu}
+                                </p>
+                            )}
                         </div>
                     </div>
                 </a>
