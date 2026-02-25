@@ -2,18 +2,15 @@ import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import axios from 'axios';
 import './RestaurantCard.css';
-import { ThumbsUp, ThumbsDown, ChevronDown, ChevronUp, MapPin, Trash2 } from 'lucide-react';
-import CustomModal from '../common/CustomModal';
+import { ThumbsUp, ThumbsDown, ChevronDown, MapPin, Trash2 } from 'lucide-react';
 
 const RestaurantCard = ({ data, rank, userId, onVote, onDelete }) => {
-    const [showReasons, setShowReasons] = useState(false);
     const [showMenu, setShowMenu] = useState(false); // Validated separate state
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false); // Default logic changed: All closed by default
     const [touchStart, setTouchStart] = useState(0);
     const [touchEnd, setTouchEnd] = useState(0);
-    const [showDislikeConfirm, setShowDislikeConfirm] = useState(false);
     const [isNew, setIsNew] = useState(false);
 
     // Initial check for NEW status
@@ -80,24 +77,6 @@ const RestaurantCard = ({ data, rank, userId, onVote, onDelete }) => {
     };
 
     const handleDislike = () => {
-        // If already voted down, toggle off directly
-        if (userVote === 'down') {
-            onVote(data.id, 'down');
-            return;
-        }
-        setShowDislikeConfirm(true);
-    };
-
-    const handleConfirmDislike = () => {
-        setShowDislikeConfirm(false);
-        const reason = prompt("무엇이 별로인지 알려주세요!");
-        if (reason !== null) {
-            onVote(data.id, 'down', reason || '이유 없음');
-        }
-    };
-
-    const handleCancelDislike = () => {
-        setShowDislikeConfirm(false);
         onVote(data.id, 'down');
     };
 
@@ -428,41 +407,7 @@ const RestaurantCard = ({ data, rank, userId, onVote, onDelete }) => {
                         </button>
                     </div>
 
-                    {data.dislikeReasons && data.dislikeReasons.length > 0 && (
-                        <div className="reasons-section">
-                            <button
-                                className="toggle-reasons"
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    setShowReasons(!showReasons);
-                                }}
-                            >
-                                {showReasons ? '별로인 이유 숨기기' : `별로인 이유 보기 (${data.dislikeReasons.length})`}
-                                {showReasons ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                            </button>
-
-                            {showReasons && (
-                                <ul className="reasons-list">
-                                    {data.dislikeReasons.map((item, idx) => (
-                                        <li key={idx}>
-                                            <span className="reason-text">• {item.reason}</span>
-                                        </li>
-                                    ))}
-                                </ul>
-                            )}
-                        </div>
-                    )}
                 </div>
-
-                <CustomModal
-                    isOpen={showDislikeConfirm}
-                    title="별로인 이유를 남기시겠어요?"
-                    message={`작성해주신 피드백은 익명으로 전달되어\n추천한 친구가 알 수 없습니다.`}
-                    onConfirm={handleConfirmDislike}
-                    onCancel={handleCancelDislike}
-                    confirmText="네"
-                    cancelText="아니요(투표만 하기)"
-                />
             </div>
         </div>
     );
