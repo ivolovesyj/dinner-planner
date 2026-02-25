@@ -93,7 +93,7 @@ const AdminLogin = () => {
                     <>
                         <input
                             type="text"
-                            placeholder="회사명"
+                            placeholder="회사명(식당명)"
                             value={companyName}
                             onChange={(e) => setCompanyName(e.target.value)}
                             style={{

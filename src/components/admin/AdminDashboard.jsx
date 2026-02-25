@@ -474,7 +474,7 @@ const AdminDashboard = () => {
                                 <th style={thStyle}>방</th>
                                 <th style={thStyle}>생성일</th>
                                 <th style={thStyle}>최근 접속</th>
-                                <th style={thStyle}>멤버</th>
+                                <th style={thStyle}>멤버 수</th>
                                 <th style={thStyle}>식당</th>
                                 <th style={thStyle}>메모</th>
                                 <th style={thStyle}>관리</th>
@@ -486,7 +486,22 @@ const AdminDashboard = () => {
                                     <td style={tdStyle}><a href={`/room/${room.roomId}`} target="_blank" rel="noreferrer">{room.roomId.slice(0, 8)}...</a></td>
                                     <td style={tdStyle}>{formatTime(room.createdAt)}</td>
                                     <td style={tdStyle}>{formatTime(room.lastAccessedAt)}</td>
-                                    <td style={tdStyle}>{room.participants?.length || 0}</td>
+                                    <td style={tdStyle}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                            <span
+                                                style={miniTagStyle}
+                                                title="접속한 적이 있는 전체 고유 사용자 수"
+                                            >
+                                                👥 총 {(room.participants?.length || 0)}명
+                                            </span>
+                                            <span
+                                                style={{ ...miniTagStyle, background: '#e8f3ff', color: '#007AFF' }}
+                                                title={(room.nicknameList && room.nicknameList.length > 0) ? room.nicknameList.join(', ') : '닉네임 없음'}
+                                            >
+                                                👤 식별 {(room.identifiedMemberCount || 0)}명
+                                            </span>
+                                        </div>
+                                    </td>
                                     <td style={tdStyle}>{room.restaurants?.length || 0}</td>
                                     <td style={tdStyle}>
                                         <textarea
@@ -687,6 +702,18 @@ const tdStyle = {
 };
 
 const mutedText = { color: 'var(--ios-gray-text)', fontSize: 12, lineHeight: 1.4, marginTop: 4 };
+const miniTagStyle = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 4,
+    background: '#f1f2f5',
+    color: '#4b5563',
+    borderRadius: 999,
+    padding: '3px 8px',
+    fontSize: 11,
+    fontWeight: 600,
+    width: 'fit-content'
+};
 
 const inputStyle = {
     width: '100%',
