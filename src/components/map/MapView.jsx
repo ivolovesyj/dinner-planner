@@ -43,6 +43,27 @@ const MapView = ({ restaurants, isExpanded, onToggle, onMarkerClick }) => {
     const prevDataRef = useRef("");
     const initialBoundsFitted = useRef(false);
 
+    const fitMapToCurrentMarkers = (map) => {
+        if (!map || !window.naver || !window.naver.maps) return;
+
+        if (!isExpanded) {
+            initialBoundsFitted.current = false;
+            return;
+        }
+
+        if (!markers.current.length) {
+            map.setCenter(new window.naver.maps.LatLng(DEFAULT_CENTER.lat, DEFAULT_CENTER.lng));
+            map.setZoom(14);
+            initialBoundsFitted.current = true;
+            return;
+        }
+
+        const markerBounds = new window.naver.maps.LatLngBounds();
+        markers.current.forEach((marker) => markerBounds.extend(marker.getPosition()));
+        map.fitBounds(markerBounds, { top: 40, right: 40, bottom: 40, left: 40 });
+        initialBoundsFitted.current = true;
+    };
+
     // Initialize Map and Markers
     useEffect(() => {
         // Strict guard clauses
@@ -110,11 +131,8 @@ const MapView = ({ restaurants, isExpanded, onToggle, onMarkerClick }) => {
                     return sortedByScore.findIndex(r => ((r.likes || 0) - (r.dislikes || 0)) === score) + 1;
                 };
 
-                const bounds = new window.naver.maps.LatLngBounds();
-
                 const createMarker = (lat, lng, rest) => {
                     const position = new window.naver.maps.LatLng(lat, lng);
-                    bounds.extend(position);
 
                     const rank = getRank(rest);
                     let iconContent = '🍽️';
@@ -182,10 +200,7 @@ const MapView = ({ restaurants, isExpanded, onToggle, onMarkerClick }) => {
                                 // Only fit bounds if we haven't done it yet
                                 if (pendingGeocodes === 0 && (hasValidResult || geocodedMarkersAdded > 0)) {
                                     if (!initialBoundsFitted.current) {
-                                        const newBounds = new window.naver.maps.LatLngBounds();
-                                        markers.current.forEach(m => newBounds.extend(m.getPosition()));
-                                        map.fitBounds(newBounds, { top: 40, right: 40, bottom: 40, left: 40 });
-                                        initialBoundsFitted.current = true;
+                                        fitMapToCurrentMarkers(map);
                                     }
                                 }
                             } else {
@@ -194,9 +209,7 @@ const MapView = ({ restaurants, isExpanded, onToggle, onMarkerClick }) => {
 
                             if (pendingGeocodes === 0 && !hasValidResult && geocodedMarkersAdded === 0) {
                                 if (!initialBoundsFitted.current) {
-                                    map.setCenter(new window.naver.maps.LatLng(DEFAULT_CENTER.lat, DEFAULT_CENTER.lng));
-                                    map.setZoom(14);
-                                    initialBoundsFitted.current = true;
+                                    fitMapToCurrentMarkers(map);
                                 }
                             }
                         });
@@ -205,14 +218,11 @@ const MapView = ({ restaurants, isExpanded, onToggle, onMarkerClick }) => {
 
                 if (hasValidResult && pendingGeocodes === 0) {
                     if (!initialBoundsFitted.current) {
-                        map.fitBounds(bounds, { top: 40, right: 40, bottom: 40, left: 40 });
-                        initialBoundsFitted.current = true;
+                        fitMapToCurrentMarkers(map);
                     }
                 } else if (!hasValidResult && pendingGeocodes === 0) {
                     if (!initialBoundsFitted.current) {
-                        map.setCenter(new window.naver.maps.LatLng(DEFAULT_CENTER.lat, DEFAULT_CENTER.lng));
-                        map.setZoom(14);
-                        initialBoundsFitted.current = true;
+                        fitMapToCurrentMarkers(map);
                     }
                 }
 
@@ -246,7 +256,8 @@ const MapView = ({ restaurants, isExpanded, onToggle, onMarkerClick }) => {
     useEffect(() => {
         if (mapInstance.current && isExpanded && window.naver && window.naver.maps) {
             window.naver.maps.Event.trigger(mapInstance.current, 'resize');
-            // Consider recentering?
+            // Re-fit after expanding because fitBounds while collapsed can calculate against zero-height container.
+            setTimeout(() => fitMapToCurrentMarkers(mapInstance.current), 0);
         }
     }, [isExpanded]);
 
