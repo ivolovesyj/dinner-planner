@@ -27,6 +27,10 @@ export const connectDB = async () => {
                     role: 'admin'
                 });
                 console.log('✅ Super Admin created: username=admin');
+            } else if (adminExists.role !== 'admin') {
+                adminExists.role = 'admin';
+                await adminExists.save();
+                console.log('✅ Existing admin account role fixed to admin');
             }
         } catch (err) {
             console.error('Seed Admin Setup Failed:', err);

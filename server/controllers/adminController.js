@@ -14,6 +14,12 @@ const DEFAULT_PRICING = {
     clickCost: 250
 };
 
+const getEffectiveRole = (userLike) => {
+    if (!userLike) return 'advertiser';
+    if (userLike.username === 'admin') return 'admin';
+    return userLike.role || 'advertiser';
+};
+
 const sanitizeCampaignForResponse = (campaign) => {
     const c = campaign.toObject ? campaign.toObject() : campaign;
     const ctr = c.impressions > 0 ? ((c.clicks / c.impressions) * 100).toFixed(1) : '0.0';
@@ -27,7 +33,7 @@ const sanitizeCampaignForResponse = (campaign) => {
 };
 
 const requireAdmin = (req, res) => {
-    if (req.user?.role !== 'admin') {
+    if (getEffectiveRole(req.user) !== 'admin') {
         res.status(403).json({ error: 'Admin only' });
         return false;
     }
@@ -35,7 +41,7 @@ const requireAdmin = (req, res) => {
 };
 
 const canManageCampaign = (req, campaign) => {
-    if (req.user?.role === 'admin') return true;
+    if (getEffectiveRole(req.user) === 'admin') return true;
     return String(campaign.ownerId) === String(req.user?.id);
 };
 
@@ -55,15 +61,22 @@ export const login = async (req, res) => {
         }
 
         if (targetUser.password === password) {
+            let resolvedRole = getEffectiveRole(targetUser);
+            if (targetUser.username === 'admin' && targetUser.role !== 'admin') {
+                targetUser.role = 'admin';
+                await targetUser.save();
+                resolvedRole = 'admin';
+            }
+
             const token = jwt.sign({
                 id: targetUser._id,
                 username: targetUser.username,
-                role: targetUser.role
+                role: resolvedRole
             }, JWT_SECRET, { expiresIn: '24h' });
 
             res.json({
                 token,
-                role: targetUser.role,
+                role: resolvedRole,
                 name: targetUser.companyName,
                 username: targetUser.username,
                 pointsBalance: targetUser.pointsBalance || 0
@@ -83,8 +96,8 @@ export const login = async (req, res) => {
 export const signup = async (req, res) => {
     const { username, password, companyName, contactName, contactEmail, phone } = req.body;
 
-    if (!username || !password || !companyName) {
-        return res.status(400).json({ error: 'username, password, companyName are required' });
+    if (!username || !password || !companyName || !phone) {
+        return res.status(400).json({ error: 'username, password, companyName, phone are required' });
     }
 
     try {
@@ -101,7 +114,7 @@ export const signup = async (req, res) => {
             billingProfile: {
                 contactName: contactName || '',
                 contactEmail: contactEmail || '',
-                phone: phone || ''
+                phone
             }
         });
 
@@ -121,7 +134,7 @@ export const signup = async (req, res) => {
  */
 export const getCampaigns = async (req, res) => {
     try {
-        const query = req.user.role === 'admin'
+        const query = getEffectiveRole(req.user) === 'admin'
             ? {}
             : { ownerId: req.user.id };
         const campaigns = await AdCampaign.find(query).sort({ createdAt: -1 }).lean();
@@ -138,7 +151,7 @@ export const getCampaigns = async (req, res) => {
  */
 export const getFeedbacks = async (req, res) => {
     try {
-        if (req.user.role !== 'admin') {
+        if (getEffectiveRole(req.user) !== 'admin') {
             return res.status(403).json({ error: 'Admin only' });
         }
         const feedbacks = await Feedback.find().sort({ createdAt: -1 }).lean();
@@ -153,7 +166,7 @@ export const getFeedbacks = async (req, res) => {
  */
 export const getRooms = async (req, res) => {
     try {
-        if (req.user.role !== "admin") {
+        if (getEffectiveRole(req.user) !== "admin") {
             return res.status(403).json({ error: "Admin only" });
         }
         const rooms = await Room.find().sort({ lastAccessedAt: -1 }).lean();
@@ -212,7 +225,7 @@ export const getRooms = async (req, res) => {
  */
 export const updateMemo = async (req, res) => {
     try {
-        if (req.user.role !== "admin") {
+        if (getEffectiveRole(req.user) !== "admin") {
             return res.status(403).json({ error: "Admin only" });
         }
         const { roomId } = req.params;
@@ -231,7 +244,7 @@ export const updateMemo = async (req, res) => {
  */
 export const deleteRoom = async (req, res) => {
     try {
-        if (req.user.role !== "admin") {
+        if (getEffectiveRole(req.user) !== "admin") {
             return res.status(403).json({ error: "Admin only" });
         }
         const { roomId } = req.params;
@@ -263,7 +276,7 @@ export const me = async (req, res) => {
             id: user._id,
             username: user.username,
             companyName: user.companyName,
-            role: user.role,
+            role: getEffectiveRole(user),
             pointsBalance: user.pointsBalance || 0,
             pointsPending: user.pointsPending || 0,
             billingProfile: user.billingProfile || {},
@@ -297,7 +310,7 @@ export const parseCampaignLink = async (req, res) => {
  */
 export const createCampaign = async (req, res) => {
     try {
-        const ownerId = req.user.role === 'admin' && req.body.ownerId ? req.body.ownerId : req.user.id;
+        const ownerId = getEffectiveRole(req.user) === 'admin' && req.body.ownerId ? req.body.ownerId : req.user.id;
         const owner = await Advertiser.findById(ownerId);
         if (!owner) return res.status(404).json({ error: 'Owner not found' });
 
@@ -345,7 +358,7 @@ export const updateCampaign = async (req, res) => {
         const payload = req.body || {};
 
         // Prevent advertisers from editing approved/active campaign pricing after approval
-        const isAdmin = req.user.role === 'admin';
+        const isAdmin = getEffectiveRole(req.user) === 'admin';
         if (!isAdmin && ['approved', 'active'].includes(campaign.status)) {
             return res.status(409).json({ error: 'Approved/active campaign cannot be edited. Pause or duplicate campaign.' });
         }
@@ -492,7 +505,7 @@ export const chargePoints = async (req, res) => {
         const { amount, advertiserId, memo, orderId } = req.body;
         if (!amount || amount <= 0) return res.status(400).json({ error: 'Positive amount required' });
 
-        const targetId = req.user.role === 'admin' && advertiserId ? advertiserId : req.user.id;
+        const targetId = getEffectiveRole(req.user) === 'admin' && advertiserId ? advertiserId : req.user.id;
         const advertiser = await Advertiser.findById(targetId);
         if (!advertiser) return res.status(404).json({ error: 'Advertiser not found' });
 

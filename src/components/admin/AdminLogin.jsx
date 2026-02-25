@@ -6,7 +6,7 @@ const AdminLogin = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [companyName, setCompanyName] = useState('');
-    const [contactEmail, setContactEmail] = useState('');
+    const [phone, setPhone] = useState('');
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(false);
 
@@ -20,7 +20,7 @@ const AdminLogin = () => {
                     username,
                     password,
                     companyName,
-                    contactEmail
+                    phone
                 });
                 alert('광고주 계정이 생성되었습니다. 로그인해주세요.');
                 setMode('login');
@@ -61,7 +61,7 @@ const AdminLogin = () => {
 
                 <input
                     type="text"
-                    placeholder="Username (e.g. admin)"
+                    placeholder="사용자명"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     style={{
@@ -72,7 +72,7 @@ const AdminLogin = () => {
 
                 <input
                     type="password"
-                    placeholder="Password"
+                    placeholder="비밀번호"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     style={{
@@ -85,7 +85,7 @@ const AdminLogin = () => {
                     <>
                         <input
                             type="text"
-                            placeholder="Company Name"
+                            placeholder="회사명"
                             value={companyName}
                             onChange={(e) => setCompanyName(e.target.value)}
                             style={{
@@ -94,10 +94,10 @@ const AdminLogin = () => {
                             }}
                         />
                         <input
-                            type="email"
-                            placeholder="Contact Email (optional)"
-                            value={contactEmail}
-                            onChange={(e) => setContactEmail(e.target.value)}
+                            type="text"
+                            placeholder="연락처 (필수)"
+                            value={phone}
+                            onChange={(e) => setPhone(e.target.value)}
                             style={{
                                 width: '100%', padding: '12px', marginBottom: '12px',
                                 borderRadius: '8px', border: '1px solid #ddd', boxSizing: 'border-box'

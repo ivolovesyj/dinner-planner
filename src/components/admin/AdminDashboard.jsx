@@ -50,6 +50,7 @@ const AdminDashboard = () => {
         const [me, campaignList] = await Promise.all([getMe(), getCampaigns()]);
         setProfile(me);
         setCampaigns(campaignList);
+        setActiveTab(me.role === 'admin' ? 'rooms' : 'campaigns');
 
         if (me.role === 'admin') {
             const [roomList, feedbackList] = await Promise.all([getRooms(), getFeedbacks()]);
@@ -265,8 +266,21 @@ const AdminDashboard = () => {
         active: campaigns.filter(c => c.status === 'active').length,
         submitted: campaigns.filter(c => c.status === 'submitted').length,
         impressions: campaigns.reduce((a, b) => a + (b.impressions || 0), 0),
-        clicks: campaigns.reduce((a, b) => a + (b.clicks || 0), 0)
+        clicks: campaigns.reduce((a, b) => a + (b.clicks || 0), 0),
+        spentPoints: campaigns.reduce((a, b) => a + (b.spentPoints || 0), 0),
+        advertiserCount: new Set(campaigns.map(c => c.ownerUsername).filter(Boolean)).size
     }), [campaigns]);
+
+    const userStats = useMemo(() => {
+        const now = Date.now();
+        return {
+            rooms: rooms.length,
+            activeRooms24h: rooms.filter(r => r.lastAccessedAt && (now - new Date(r.lastAccessedAt).getTime()) < 24 * 60 * 60 * 1000).length,
+            participants: rooms.reduce((sum, r) => sum + (r.participants?.length || 0), 0),
+            identifiedUsers: rooms.reduce((sum, r) => sum + (r.identifiedMemberCount || 0), 0),
+            restaurants: rooms.reduce((sum, r) => sum + (r.restaurants?.length || 0), 0)
+        };
+    }, [rooms]);
 
     if (loading) return <div style={{ padding: 24 }}>Loading dashboard...</div>;
 
@@ -293,13 +307,33 @@ const AdminDashboard = () => {
             {activeTab === 'campaigns' && (
                 <>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px,1fr))', gap: 12, marginBottom: 16 }}>
-                        <StatCard title="내 포인트" value={`${(profile?.pointsBalance || 0).toLocaleString()} P`} />
-                        <StatCard title="캠페인" value={campaignSummary.total} />
-                        <StatCard title="집행중" value={campaignSummary.active} />
-                        <StatCard title="심사대기" value={campaignSummary.submitted} />
+                        {isAdmin ? (
+                            <>
+                                <StatCard title="광고주 수" value={campaignSummary.advertiserCount} />
+                                <StatCard title="전체 캠페인" value={campaignSummary.total} />
+                                <StatCard title="집행중 캠페인" value={campaignSummary.active} />
+                                <StatCard title="심사대기" value={campaignSummary.submitted} />
+                                <StatCard title="광고매출(소진P)" value={`${campaignSummary.spentPoints.toLocaleString()} P`} />
+                                <StatCard title="총 노출 / 클릭" value={`${campaignSummary.impressions.toLocaleString()} / ${campaignSummary.clicks.toLocaleString()}`} />
+                                <StatCard title="총 방 수" value={userStats.rooms} />
+                                <StatCard title="24시간 활성 방" value={userStats.activeRooms24h} />
+                                <StatCard title="누적 참여자(합산)" value={userStats.participants} />
+                                <StatCard title="식별 사용자(합산)" value={userStats.identifiedUsers} />
+                                <StatCard title="등록 식당 수(합산)" value={userStats.restaurants} />
+                                <StatCard title="건의함 수" value={feedbacks.length} />
+                            </>
+                        ) : (
+                            <>
+                                <StatCard title="내 포인트" value={`${(profile?.pointsBalance || 0).toLocaleString()} P`} />
+                                <StatCard title="캠페인" value={campaignSummary.total} />
+                                <StatCard title="집행중" value={campaignSummary.active} />
+                                <StatCard title="심사대기" value={campaignSummary.submitted} />
+                            </>
+                        )}
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(360px, 520px) 1fr', gap: 16, alignItems: 'start' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: isAdmin ? '1fr' : 'minmax(360px, 520px) 1fr', gap: 16, alignItems: 'start' }}>
+                        {!isAdmin && (
                         <div style={panelStyle}>
                             <h3 style={{ marginTop: 0 }}>광고 캠페인 작성 / 수정</h3>
                             <p style={mutedText}>네이버지도 링크를 넣고 자동으로 가져온 뒤, 광고용 사진/메뉴/문구를 수정해서 신청하세요.</p>
@@ -377,9 +411,15 @@ const AdminDashboard = () => {
                                 </div>
                             )}
                         </div>
+                        )}
 
                         <div style={panelStyle}>
-                            <h3 style={{ marginTop: 0 }}>{isAdmin ? '전체 광고 캠페인' : '내 광고 캠페인'}</h3>
+                            <h3 style={{ marginTop: 0 }}>{isAdmin ? '전체 광고 캠페인 관제' : '내 광고 캠페인'}</h3>
+                            {isAdmin && (
+                                <p style={mutedText}>
+                                    모든 광고주의 캠페인을 조회하고 심사/승인/반려/집행 상태를 관리합니다. 매출 현황은 소진 포인트 기준으로 집계됩니다.
+                                </p>
+                            )}
                             <CampaignTable
                                 campaigns={campaigns}
                                 isAdmin={isAdmin}
