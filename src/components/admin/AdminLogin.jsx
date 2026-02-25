@@ -46,16 +46,22 @@ const AdminLogin = () => {
     return (
         <div style={{
             display: 'flex', flexDirection: 'column', alignItems: 'center',
-            justifyContent: 'center', height: '100vh', background: '#f5f5f7'
+            justifyContent: 'center', minHeight: '100vh', background: 'var(--ios-bg)',
+            padding: '20px'
         }}>
             <form onSubmit={handleSubmit} style={{
-                background: 'white', padding: '40px', borderRadius: '20px',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.1)', width: '300px'
+                background: 'var(--ios-card-bg)',
+                padding: '28px 22px',
+                borderRadius: '20px',
+                boxShadow: 'var(--shadow-ios)',
+                border: '1px solid rgba(0,0,0,0.05)',
+                width: '100%',
+                maxWidth: '360px'
             }}>
-                <h2 style={{ marginBottom: '8px', textAlign: 'center' }}>
+                <h2 style={{ marginBottom: '8px', textAlign: 'center', fontSize: '1.25rem', letterSpacing: '-0.02em' }}>
                     {mode === 'login' ? 'Partner Login 💼' : 'Advertiser Signup ✍️'}
                 </h2>
-                <p style={{ margin: '0 0 16px 0', fontSize: '12px', color: '#666', textAlign: 'center' }}>
+                <p style={{ margin: '0 0 16px 0', fontSize: '12px', color: 'var(--ios-gray-text)', textAlign: 'center', lineHeight: 1.4 }}>
                     {mode === 'login' ? '광고주/관리자 공용 로그인' : '광고주 계정을 먼저 생성하세요'}
                 </p>
 
@@ -66,7 +72,8 @@ const AdminLogin = () => {
                     onChange={(e) => setUsername(e.target.value)}
                     style={{
                         width: '100%', padding: '12px', marginBottom: '12px',
-                        borderRadius: '8px', border: '1px solid #ddd', boxSizing: 'border-box'
+                        borderRadius: '12px', border: '1px solid var(--ios-border)', boxSizing: 'border-box',
+                        background: '#fff'
                     }}
                 />
 
@@ -77,7 +84,8 @@ const AdminLogin = () => {
                     onChange={(e) => setPassword(e.target.value)}
                     style={{
                         width: '100%', padding: '12px', marginBottom: '12px',
-                        borderRadius: '8px', border: '1px solid #ddd', boxSizing: 'border-box'
+                        borderRadius: '12px', border: '1px solid var(--ios-border)', boxSizing: 'border-box',
+                        background: '#fff'
                     }}
                 />
 
@@ -90,7 +98,8 @@ const AdminLogin = () => {
                             onChange={(e) => setCompanyName(e.target.value)}
                             style={{
                                 width: '100%', padding: '12px', marginBottom: '12px',
-                                borderRadius: '8px', border: '1px solid #ddd', boxSizing: 'border-box'
+                                borderRadius: '12px', border: '1px solid var(--ios-border)', boxSizing: 'border-box',
+                                background: '#fff'
                             }}
                         />
                         <input
@@ -100,15 +109,17 @@ const AdminLogin = () => {
                             onChange={(e) => setPhone(e.target.value)}
                             style={{
                                 width: '100%', padding: '12px', marginBottom: '12px',
-                                borderRadius: '8px', border: '1px solid #ddd', boxSizing: 'border-box'
+                                borderRadius: '12px', border: '1px solid var(--ios-border)', boxSizing: 'border-box',
+                                background: '#fff'
                             }}
                         />
                     </>
                 )}
-                {error && <p style={{ color: 'red', fontSize: '14px', marginBottom: '12px' }}>{error}</p>}
+                {error && <p style={{ color: 'var(--ios-red)', fontSize: '13px', marginBottom: '12px', lineHeight: 1.35 }}>{error}</p>}
                 <button type="submit" style={{
-                    width: '100%', padding: '12px', borderRadius: '8px',
-                    border: 'none', background: '#007AFF', color: 'white', fontWeight: 'bold', cursor: 'pointer'
+                    width: '100%', padding: '12px', borderRadius: '14px',
+                    border: 'none', background: 'var(--ios-blue)', color: 'white', fontWeight: '700', cursor: 'pointer',
+                    boxShadow: '0 4px 10px rgba(0, 122, 255, 0.22)'
                 }}>
                     {loading ? '처리 중...' : (mode === 'login' ? 'Login' : '회원가입')}
                 </button>
@@ -119,8 +130,9 @@ const AdminLogin = () => {
                         setError(null);
                     }}
                     style={{
-                        width: '100%', marginTop: '10px', padding: '10px', borderRadius: '8px',
-                        border: '1px solid #ddd', background: 'white', color: '#333', cursor: 'pointer'
+                        width: '100%', marginTop: '10px', padding: '10px', borderRadius: '14px',
+                        border: '1px solid rgba(0,0,0,0.07)', background: '#fff', color: '#1f2937', cursor: 'pointer',
+                        fontWeight: 600
                     }}
                 >
                     {mode === 'login' ? '광고주 회원가입' : '로그인으로 돌아가기'}

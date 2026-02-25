@@ -285,7 +285,8 @@ const AdminDashboard = () => {
     if (loading) return <div style={{ padding: 24 }}>Loading dashboard...</div>;
 
     return (
-        <div style={{ maxWidth: 1280, margin: '0 auto', padding: 24 }}>
+        <div style={{ minHeight: '100vh', background: 'var(--ios-bg)', padding: '16px' }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto' }}>
             <Header profile={profile} onLogout={logout} />
 
             <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
@@ -532,14 +533,28 @@ const AdminDashboard = () => {
                 </div>
             )}
         </div>
+        </div>
     );
 };
 
 const Header = ({ profile, onLogout }) => (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, gap: 12 }}>
+    <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 16,
+        gap: 12,
+        padding: '14px 16px',
+        borderRadius: 16,
+        background: 'rgba(242, 242, 247, 0.82)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        border: '1px solid rgba(0,0,0,0.04)',
+        boxShadow: 'var(--shadow-ios)'
+    }}>
         <div>
-            <h1 style={{ margin: 0 }}>광고 운영 대시보드</h1>
-            <div style={{ color: '#666', fontSize: 13 }}>
+            <h1 style={{ margin: 0, fontSize: '1.25rem', letterSpacing: '-0.02em' }}>광고 운영 대시보드</h1>
+            <div style={{ color: 'var(--ios-gray-text)', fontSize: 13 }}>
                 {profile?.companyName || profile?.username} ({profile?.role || 'advertiser'})
             </div>
         </div>
@@ -630,8 +645,8 @@ const Field = ({ label, children }) => (
 
 const StatCard = ({ title, value }) => (
     <div style={panelStyle}>
-        <div style={{ color: '#666', fontSize: 12 }}>{title}</div>
-        <div style={{ fontSize: 24, fontWeight: 800, marginTop: 6 }}>{value}</div>
+        <div style={{ color: 'var(--ios-gray-text)', fontSize: 12, fontWeight: 600 }}>{title}</div>
+        <div style={{ fontSize: 24, fontWeight: 800, marginTop: 6, color: '#111827', letterSpacing: '-0.03em' }}>{value}</div>
     </div>
 );
 
@@ -642,11 +657,11 @@ const formatTime = (isoString) => {
 };
 
 const panelStyle = {
-    background: '#fff',
-    border: '1px solid #eee',
-    borderRadius: 12,
+    background: 'var(--ios-card-bg)',
+    border: '1px solid rgba(0,0,0,0.05)',
+    borderRadius: 16,
     padding: 16,
-    boxShadow: '0 2px 10px rgba(0,0,0,0.03)'
+    boxShadow: 'var(--shadow-ios)'
 };
 
 const tableStyle = {
@@ -657,28 +672,31 @@ const tableStyle = {
 
 const thStyle = {
     padding: '10px 8px',
-    borderBottom: '1px solid #eee',
-    color: '#666',
-    fontSize: 12
+    borderBottom: '1px solid rgba(0,0,0,0.06)',
+    color: 'var(--ios-gray-text)',
+    fontSize: 12,
+    fontWeight: 700
 };
 
 const tdStyle = {
     padding: '10px 8px',
-    borderBottom: '1px solid #f4f4f4',
+    borderBottom: '1px solid rgba(0,0,0,0.035)',
     verticalAlign: 'top',
-    fontSize: 13
+    fontSize: 13,
+    color: '#1f2937'
 };
 
-const mutedText = { color: '#777', fontSize: 12, lineHeight: 1.4, marginTop: 4 };
+const mutedText = { color: 'var(--ios-gray-text)', fontSize: 12, lineHeight: 1.4, marginTop: 4 };
 
 const inputStyle = {
     width: '100%',
     boxSizing: 'border-box',
-    border: '1px solid #ddd',
-    borderRadius: 8,
+    border: '1px solid var(--ios-border)',
+    borderRadius: 12,
     padding: '10px 12px',
     fontSize: 13,
-    fontFamily: 'inherit'
+    fontFamily: 'inherit',
+    background: '#fff'
 };
 
 const inputStyleSmall = {
@@ -689,19 +707,20 @@ const inputStyleSmall = {
 
 const primaryBtn = {
     border: 'none',
-    background: '#0ea5e9',
+    background: 'var(--ios-blue)',
     color: '#fff',
-    borderRadius: 8,
+    borderRadius: 14,
     padding: '10px 12px',
     fontWeight: 700,
-    cursor: 'pointer'
+    cursor: 'pointer',
+    boxShadow: '0 4px 10px rgba(0, 122, 255, 0.2)'
 };
 
 const secondaryBtn = {
-    border: '1px solid #ddd',
+    border: '1px solid rgba(0,0,0,0.07)',
     background: '#fff',
     color: '#222',
-    borderRadius: 8,
+    borderRadius: 14,
     padding: '10px 12px',
     fontWeight: 600,
     cursor: 'pointer'
@@ -715,9 +734,9 @@ const secondaryBtnSmall = {
 
 const dangerBtn = {
     border: 'none',
-    background: '#ef4444',
+    background: 'var(--ios-red)',
     color: '#fff',
-    borderRadius: 8,
+    borderRadius: 12,
     padding: '8px 12px',
     cursor: 'pointer'
 };
@@ -733,9 +752,9 @@ const TabButton = ({ active, onClick, children }) => (
         onClick={onClick}
         style={{
             ...secondaryBtn,
-            background: active ? '#eef6ff' : '#fff',
-            borderColor: active ? '#93c5fd' : '#ddd',
-            color: active ? '#1d4ed8' : '#333'
+            background: active ? 'rgba(0, 122, 255, 0.08)' : '#fff',
+            borderColor: active ? 'rgba(0, 122, 255, 0.22)' : 'rgba(0,0,0,0.07)',
+            color: active ? 'var(--ios-blue)' : '#333'
         }}
     >
         {children}
