@@ -24,7 +24,11 @@ export const get = async (req, res) => {
     // Track participant
     await trackParticipant(roomId, userId, nickname);
 
-    const data = await readRoom(roomId);
+    const data = await readRoom(roomId, {
+        injectAds: true,
+        viewerUserId: userId || null,
+        chargeAdImpression: true
+    });
     if (!data) {
         return res.status(404).json({ error: "Room not found" });
     }

@@ -13,7 +13,7 @@ export const add = async (req, res) => {
     if (!url) return res.status(400).json({ error: 'URL required' });
 
     try {
-        const roomData = await readRoom(roomId);
+        const roomData = await readRoom(roomId, { injectAds: false });
         if (!roomData) return res.status(404).json({ error: 'Room not found' });
 
         const newData = await parseUrl(url);
@@ -52,7 +52,7 @@ export const remove = async (req, res) => {
     if (!userId) return res.status(400).json({ error: 'User ID required' });
 
     try {
-        const roomData = await readRoom(roomId);
+        const roomData = await readRoom(roomId, { injectAds: false });
         if (!roomData) return res.status(404).json({ error: 'Room not found' });
 
         const index = roomData.restaurants.findIndex(r => r.id === restaurantId);
@@ -86,7 +86,7 @@ export const vote = async (req, res) => {
     if (!userId) return res.status(400).json({ error: 'userId required' });
 
     try {
-        const roomData = await readRoom(roomId);
+        const roomData = await readRoom(roomId, { injectAds: false });
         if (!roomData) return res.status(404).json({ error: 'Room not found' });
 
         const restaurant = roomData.restaurants.find(r => r.id === restaurantId);

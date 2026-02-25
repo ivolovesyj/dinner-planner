@@ -40,6 +40,11 @@ const roomSchema = new mongoose.Schema({
         nickname: String,
         lastActive: Date
     }],
+    // Prevent duplicate ad impression charges per room+user+campaign
+    adImpressionKeys: {
+        type: [String],
+        default: []
+    },
     adminMemo: { type: String, default: "" },
     restaurants: [restaurantSchema],
     ladderGame: {

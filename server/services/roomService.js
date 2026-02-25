@@ -10,10 +10,21 @@ import { randomUUID } from 'crypto';
  * @param {string} roomId 
  * @returns {Promise<Object|null>}
  */
-export const readRoom = async (roomId) => {
+export const readRoom = async (roomId, options = {}) => {
     try {
-        const room = await Room.findOne({ roomId }).lean();
-        if (!room) return null;
+        const {
+            injectAds = true,
+            viewerUserId = null,
+            chargeAdImpression = true
+        } = options;
+
+        const roomDoc = await Room.findOne({ roomId });
+        if (!roomDoc) return null;
+        const room = roomDoc.toObject();
+
+        if (!injectAds) {
+            return room;
+        }
 
         // --- Ad Injection Logic ---
         // 1. Identify Context (Stations)
@@ -95,8 +106,26 @@ export const readRoom = async (roomId) => {
                 room.restaurants.splice(injectionIndex, 0, adData);
 
                 // Track Impression + point charge (async)
+                const impressionKey = viewerUserId ? `${ad._id}:${viewerUserId}` : null;
+                const shouldAttemptCharge = Boolean(chargeAdImpression && viewerUserId);
+
                 (async () => {
                     try {
+                        if (shouldAttemptCharge) {
+                            const markResult = await Room.updateOne(
+                                { roomId },
+                                { $addToSet: { adImpressionKeys: impressionKey } }
+                            ).exec();
+
+                            // Already charged for this user+room+campaign
+                            if (!markResult.modifiedCount) {
+                                return;
+                            }
+                        } else {
+                            // Without a stable user id, skip charging to avoid duplicate over-billing on polling.
+                            return;
+                        }
+
                         ad.impressions = (ad.impressions || 0) + 1;
                         ad.budget = {
                             ...(ad.budget?.toObject?.() || ad.budget || {}),
