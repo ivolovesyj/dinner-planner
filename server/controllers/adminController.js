@@ -597,14 +597,6 @@ export const submitFeedback = async (req, res) => {
     }
 };
 
-export default {
-    login, signup, me,
-    getCampaigns, createCampaign, updateCampaign, submitCampaign, reviewCampaign, updateCampaignStatus, parseCampaignLink,
-    chargePoints,
-    getFeedbacks, getRooms,
-    updateMemo, deleteRoom, trackAdClick, trackAdVote, submitFeedback
-};
-
 /**
  * POST /api/ads/:adId/vote - Track ad like/dislike vote
  */
@@ -647,4 +639,12 @@ export const trackAdVote = async (req, res) => {
         console.error('Ad vote failed:', error);
         res.status(500).json({ error: 'Ad vote failed' });
     }
+};
+
+export default {
+    login, signup, me,
+    getCampaigns, createCampaign, updateCampaign, submitCampaign, reviewCampaign, updateCampaignStatus, parseCampaignLink,
+    chargePoints,
+    getFeedbacks, getRooms,
+    updateMemo, deleteRoom, trackAdClick, trackAdVote, submitFeedback
 };
