@@ -54,6 +54,13 @@ const MapView = ({ restaurants, isExpanded, onToggle, onMarkerClick }) => {
         if (!markers.current.length) {
             map.setCenter(new window.naver.maps.LatLng(DEFAULT_CENTER.lat, DEFAULT_CENTER.lng));
             map.setZoom(14);
+            // Do not lock initial fit yet. Geocoding results may arrive shortly.
+            return;
+        }
+
+        if (markers.current.length === 1) {
+            map.setCenter(markers.current[0].getPosition());
+            map.setZoom(16);
             initialBoundsFitted.current = true;
             return;
         }
@@ -61,6 +68,9 @@ const MapView = ({ restaurants, isExpanded, onToggle, onMarkerClick }) => {
         const markerBounds = new window.naver.maps.LatLngBounds();
         markers.current.forEach((marker) => markerBounds.extend(marker.getPosition()));
         map.fitBounds(markerBounds, { top: 40, right: 40, bottom: 40, left: 40 });
+        if (typeof map.getZoom === 'function' && map.getZoom() > 17) {
+            map.setZoom(17);
+        }
         initialBoundsFitted.current = true;
     };
 
@@ -199,7 +209,7 @@ const MapView = ({ restaurants, isExpanded, onToggle, onMarkerClick }) => {
 
                                 // Only fit bounds if we haven't done it yet
                                 if (pendingGeocodes === 0 && (hasValidResult || geocodedMarkersAdded > 0)) {
-                                    if (!initialBoundsFitted.current) {
+                                    if (isExpanded || !initialBoundsFitted.current) {
                                         fitMapToCurrentMarkers(map);
                                     }
                                 }
@@ -254,10 +264,16 @@ const MapView = ({ restaurants, isExpanded, onToggle, onMarkerClick }) => {
 
     // Resize handling
     useEffect(() => {
-        if (mapInstance.current && isExpanded && window.naver && window.naver.maps) {
+        if (!isExpanded) {
+            initialBoundsFitted.current = false;
+            return;
+        }
+
+        if (mapInstance.current && window.naver && window.naver.maps) {
             window.naver.maps.Event.trigger(mapInstance.current, 'resize');
             // Re-fit after expanding because fitBounds while collapsed can calculate against zero-height container.
             setTimeout(() => fitMapToCurrentMarkers(mapInstance.current), 0);
+            setTimeout(() => fitMapToCurrentMarkers(mapInstance.current), 180);
         }
     }, [isExpanded]);
 
