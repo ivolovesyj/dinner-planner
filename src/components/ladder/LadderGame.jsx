@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
-import axios from 'axios';
 import './LadderGame.css';
 import { X } from 'lucide-react';
 
@@ -13,8 +12,9 @@ const LadderIcon = ({ size = 20, style = {}, color = "currentColor" }) => (
     </svg>
 );
 
-function LadderGame({ roomData, roomId, onTrigger, onReset, onClose, onComplete, apiBase, nickname }) {
+function LadderGame({ roomData, roomId, onTrigger, onStart, onReset, onClose, onComplete }) {
     const canvasRef = useRef(null);
+    const autoPlayKeyRef = useRef(null);
     const [isFinished, setIsFinished] = useState(false);
     const [isAnimating, setIsAnimating] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
@@ -27,6 +27,9 @@ function LadderGame({ roomData, roomId, onTrigger, onReset, onClose, onComplete,
     if (!roomData) return null;
 
     const ladderData = roomData.ladderGame;
+    const ladderStatus = ladderData?.status === 'playing' ? 'running' : ladderData?.status;
+    const isServerCompleted = ladderStatus === 'completed';
+    const shouldShowResult = isFinished || isServerCompleted;
 
     // Fix: Define candidates in strictly mapped order of candidateIds to ensure visual/logical match
     const candidates = ladderData ? ladderData.candidateIds.map(id =>
@@ -36,13 +39,16 @@ function LadderGame({ roomData, roomId, onTrigger, onReset, onClose, onComplete,
     // reset wrapper to show loading state
     const handleReset = useCallback(async () => {
         setIsResetting(true);
-        // Add a small delay for better UX if the server is too fast (prevents flickering)
-        await new Promise(r => setTimeout(r, 600));
-        await onReset();
-        // State will be reset when component re-renders or unmounts, or we can clear it here if needed
-        // But since onReset usually causes roomData update, we rely on useEffect below to stop loading if needed.
-        // Actually, onReset just triggers parent update. UseEffect will clear selection.
-        setIsResetting(false);
+        try {
+            // Add a small delay for better UX if the server is too fast (prevents flickering)
+            await new Promise(r => setTimeout(r, 600));
+            await onReset();
+            // State will be reset when component re-renders or unmounts, or we can clear it here if needed
+            // But since onReset usually causes roomData update, we rely on useEffect below to stop loading if needed.
+            // Actually, onReset just triggers parent update. UseEffect will clear selection.
+        } finally {
+            setIsResetting(false);
+        }
     }, [onReset]);
 
     // Smart Close Logic - FIXED: Don't auto-reset anymore
@@ -54,17 +60,18 @@ function LadderGame({ roomData, roomId, onTrigger, onReset, onClose, onComplete,
     useLayoutEffect(() => {
         // Only set finished from server status if we are NOT currently animating
         // This prevents polling from cutting off the animation prematurely
-        if (ladderData?.status === 'completed' && !isAnimating) {
+        if (isServerCompleted && !isAnimating) {
             setIsFinished(true);
             setShowSelector(false);
         }
-    }, [ladderData, isAnimating]);
+    }, [isServerCompleted, isAnimating]);
 
     // Auto-selection removed per user request for cleaner reset
     // Fix: Valid candidates persists until cleared. We must force clear selectedIds when game resets.
     useEffect(() => {
         if (!ladderData) {
             setSelectedIds([]);
+            autoPlayKeyRef.current = null;
         }
     }, [ladderData]);
 
@@ -221,18 +228,16 @@ function LadderGame({ roomData, roomId, onTrigger, onReset, onClose, onComplete,
         setIsAnimating(false);
         setIsFinished(true);
 
-        // Mark as completed on server using proper API URL
-        if (roomData.roomId && apiBase) {
+        // Mark as completed on server (idempotent on the backend)
+        if (onComplete) {
             try {
-                await axios.patch(`${apiBase}/rooms/${roomData.roomId}/ladder/complete`);
-                // Optimistically update parent state
-                if (onComplete) onComplete();
+                await onComplete();
             } catch (err) {
                 console.error('Failed to mark ladder complete:', err);
                 // Still show result locally even if server call fails
             }
         }
-    }, [ladderData, isAnimating, drawStaticLadder, roomData.roomId, apiBase, onComplete]);
+    }, [ladderData, isAnimating, drawStaticLadder, onComplete]);
 
     // View Switching Logic
     useEffect(() => {
@@ -243,6 +248,48 @@ function LadderGame({ roomData, roomId, onTrigger, onReset, onClose, onComplete,
             setIsFinished(false);
         }
     }, [isValidGame]);
+
+    const getLadderGameKey = useCallback((data) => {
+        if (!data) return null;
+        return JSON.stringify({
+            c: data.candidateIds || [],
+            s: data.startCol,
+            b: data.bridges || [],
+            t: data.createdAt || null
+        });
+    }, []);
+
+    // Auto-play when a ladder exists and is not completed.
+    useEffect(() => {
+        if (!ladderData || showSelector) return;
+        if (isAnimating || isFinished || isServerCompleted) return;
+
+        const gameKey = getLadderGameKey(ladderData);
+        if (!gameKey) return;
+        if (autoPlayKeyRef.current === gameKey) return;
+        autoPlayKeyRef.current = gameKey;
+
+        let cancelled = false;
+
+        const run = async () => {
+            try {
+                if (onStart) {
+                    await onStart();
+                }
+            } catch (err) {
+                console.error('Failed to mark ladder running:', err);
+            }
+
+            if (cancelled) return;
+            await startLadder();
+        };
+
+        run();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [ladderData, showSelector, isAnimating, isFinished, isServerCompleted, getLadderGameKey, onStart, startLadder]);
 
     // Helper: Calculate the full path for a given ladder data
     // This ensures both the visual drawing and the winner calculation use EXACTLY the same logic.
@@ -294,14 +341,14 @@ function LadderGame({ roomData, roomId, onTrigger, onReset, onClose, onComplete,
 
             let highlightPath = [];
             // If game is finished or completed, calculate and draw the full path
-            if (isFinished || ladderData.status === 'completed') {
+            if (shouldShowResult) {
                 const result = calculateLadderPath(ladderData);
                 if (result) highlightPath = result.path;
             }
 
             drawStaticLadder(ctx, ladderData, highlightPath);
         }
-    }, [showSelector, ladderData, drawStaticLadder, isFinished]);
+    }, [showSelector, ladderData, drawStaticLadder, shouldShowResult]);
 
     const toggleCandidate = (id) => {
         setSelectedIds(prev => {
@@ -456,7 +503,7 @@ function LadderGame({ roomData, roomId, onTrigger, onReset, onClose, onComplete,
                         </div>
 
                         {/* Fallback Reset Button for Debug/Stuck State */}
-                        {!isFinished && !isAnimating && candidates.length < 2 && (
+                        {!shouldShowResult && !isAnimating && candidates.length < 2 && (
                             <div style={{ marginTop: '10px' }}>
                                 <button className="btn btn-ladder-reset" onClick={onReset} style={{ background: '#ff4757', color: 'white' }}>
                                     오류 발생: 게임 리셋하기
@@ -464,16 +511,18 @@ function LadderGame({ roomData, roomId, onTrigger, onReset, onClose, onComplete,
                             </div>
                         )}
 
-                        {!isFinished && !isAnimating && candidates.length >= 2 && (
+                        {!shouldShowResult && !isAnimating && candidates.length >= 2 && (
                             <div className="ready-actions" style={{ display: 'flex', gap: '10px' }}>
-                                <button className="btn btn-primary" onClick={startLadder}>사다리 시작!</button>
+                                <div style={{ alignSelf: 'center', color: '#4e5968', fontSize: '0.9rem', fontWeight: 600 }}>
+                                    사다리 진행 중...
+                                </div>
                                 <button className="btn btn-ladder-reset" onClick={handleReset} style={{ background: '#f1f3f5', color: '#4e5968', fontSize: '0.85rem' }}>
                                     다시 고르기
                                 </button>
                             </div>
                         )}
 
-                        {isFinished && (
+                        {shouldShowResult && (
                             <div className="ladder-result-overlay">
                                 <div className="ladder-winner-tag">🎉 오늘의 맛집 당첨!</div>
                                 <div className="ladder-winner-name" id="ladder-winner-name">

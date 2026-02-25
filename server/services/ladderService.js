@@ -14,6 +14,10 @@ export const triggerLadderGame = async (roomId, candidateIds, nickname) => {
         throw new Error("Room not found");
     }
 
+    if (room.ladderGame?.candidateIds?.length >= 2) {
+        throw new Error("Game already exists");
+    }
+
     // Generate Ladder Logic on Server for consistency
     const cols = candidateIds.length;
     const bridges = [];
@@ -49,11 +53,44 @@ export const triggerLadderGame = async (roomId, candidateIds, nickname) => {
         startCol,
         bridges,
         triggeredBy: nickname || "익명",
+        status: 'ready',
         createdAt: new Date()
     };
 
     await room.save();
     return room.ladderGame;
+};
+
+/**
+ * Mark ladder game as running
+ * @param {string} roomId
+ * @returns {Promise<Object>}
+ */
+export const startLadderGame = async (roomId) => {
+    const room = await Room.findOne({ roomId });
+    if (!room || !room.ladderGame) {
+        throw new Error("Game not found");
+    }
+
+    const currentStatus = room.ladderGame.status || 'playing';
+    if (currentStatus === 'completed') {
+        return { success: true, status: 'completed' };
+    }
+
+    if (currentStatus === 'running') {
+        return { success: true, status: 'running' };
+    }
+
+    // Legacy "playing" is treated as already running.
+    if (currentStatus === 'playing') {
+        room.ladderGame.status = 'running';
+        await room.save();
+        return { success: true, status: 'running' };
+    }
+
+    room.ladderGame.status = 'running';
+    await room.save();
+    return { success: true, status: 'running' };
 };
 
 /**
@@ -67,7 +104,9 @@ export const completeLadderGame = async (roomId) => {
         throw new Error("Game not found");
     }
 
-    room.ladderGame.status = 'completed';
+    if (room.ladderGame.status !== 'completed') {
+        room.ladderGame.status = 'completed';
+    }
     await room.save();
     return { success: true };
 };
@@ -82,4 +121,4 @@ export const resetLadderGame = async (roomId) => {
     return { status: "ok" };
 };
 
-export default { triggerLadderGame, completeLadderGame, resetLadderGame };
+export default { triggerLadderGame, startLadderGame, completeLadderGame, resetLadderGame };

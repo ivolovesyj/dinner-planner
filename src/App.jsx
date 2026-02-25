@@ -18,7 +18,7 @@ import { useRoom } from './hooks/useRoom';
 import { logEvent, logPageView } from './utils/ga4';
 
 // Constants
-import { STORAGE_KEYS, APP_CONFIG, API_BASE_URL } from './constants';
+import { STORAGE_KEYS, APP_CONFIG } from './constants';
 
 // Custom Ladder Icon
 const LadderIcon = ({ size = 20, style = {}, color = "currentColor" }) => (
@@ -53,6 +53,7 @@ function App() {
     handleDeleteRestaurant,
     handleVote,
     handleLadderTrigger,
+    handleLadderStart,
     handleLadderComplete,
     handleLadderReset,
     fetchRoom
@@ -285,6 +286,16 @@ function App() {
     }
   };
 
+  const onLadderStart = async () => {
+    try {
+      await handleLadderStart();
+      fetchRoom(true);
+    } catch (err) {
+      console.error("Ladder start failed", err);
+      throw err;
+    }
+  };
+
   // Map Marker Click Handler
   const handleMarkerClick = (id) => {
     const el = document.getElementById(id);
@@ -471,12 +482,11 @@ function App() {
               roomData={roomData || { restaurants }}
               roomId={roomId}
               onTrigger={onLadderTrigger}
+              onStart={onLadderStart}
               // ...
               onReset={onLadderReset}
               onClose={() => setShowLadder(false)}
               onComplete={handleLadderComplete}
-              apiBase={API_BASE_URL}
-              nickname={nickname}
             />
           )
         }

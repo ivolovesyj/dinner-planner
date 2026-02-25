@@ -1,5 +1,5 @@
 // Ladder Controller - Ladder Game Endpoints
-import { triggerLadderGame, completeLadderGame, resetLadderGame } from '../services/ladderService.js';
+import { triggerLadderGame, startLadderGame, completeLadderGame, resetLadderGame } from '../services/ladderService.js';
 
 /**
  * POST /api/rooms/:roomId/ladder/trigger - Trigger new ladder game
@@ -20,7 +20,27 @@ export const trigger = async (req, res) => {
         if (err.message === "Room not found") {
             return res.status(404).json({ error: "Room not found" });
         }
+        if (err.message === "Game already exists") {
+            return res.status(409).json({ error: "Ladder game already exists. Reset first." });
+        }
         res.status(500).json({ error: "Failed to trigger ladder game" });
+    }
+};
+
+/**
+ * PATCH /api/rooms/:roomId/ladder/start - Mark ladder game as running
+ */
+export const start = async (req, res) => {
+    try {
+        const { roomId } = req.params;
+        const result = await startLadderGame(roomId);
+        res.json(result);
+    } catch (err) {
+        console.error("Ladder start failed:", err);
+        if (err.message === "Game not found") {
+            return res.status(404).json({ error: "Game not found" });
+        }
+        res.status(500).json({ error: "Failed to start game" });
     }
 };
 
@@ -54,4 +74,4 @@ export const reset = async (req, res) => {
     }
 };
 
-export default { trigger, complete, reset };
+export default { trigger, start, complete, reset };

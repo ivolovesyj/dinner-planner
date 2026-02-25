@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { getRoom, createRoom as createRoomApi } from '../api/roomApi';
 import { addRestaurant, deleteRestaurant, voteRestaurant } from '../api/restaurantApi';
-import { triggerLadder, completeLadder, resetLadder } from '../api/ladderApi';
+import { triggerLadder, startLadder, completeLadder, resetLadder } from '../api/ladderApi';
 import { usePolling } from './usePolling';
 import { POLLING_INTERVAL, STORAGE_KEYS } from '../constants';
 
@@ -116,6 +116,22 @@ export const useRoom = (initialRoomId = null) => {
         }
     }, [roomId]);
 
+    const handleLadderStart = useCallback(async () => {
+        if (!roomId) return;
+
+        try {
+            const result = await startLadder(roomId);
+            setRoomData(prev => prev?.ladderGame
+                ? { ...prev, ladderGame: { ...prev.ladderGame, status: result.status || 'running' } }
+                : prev
+            );
+            return result;
+        } catch (err) {
+            setError(err.message);
+            throw err;
+        }
+    }, [roomId]);
+
     const handleLadderComplete = useCallback(async () => {
         if (!roomId) return;
 
@@ -170,6 +186,7 @@ export const useRoom = (initialRoomId = null) => {
         handleDeleteRestaurant,
         handleVote,
         handleLadderTrigger,
+        handleLadderStart,
         handleLadderComplete,
         handleLadderReset
     };

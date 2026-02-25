@@ -28,6 +28,16 @@ export const completeLadder = async (roomId) => {
 };
 
 /**
+ * Mark ladder game as running
+ * @param {string} roomId
+ * @returns {Promise<Object>}
+ */
+export const startLadder = async (roomId) => {
+    const response = await client.patch(`/api/rooms/${roomId}/ladder/start`);
+    return response.data;
+};
+
+/**
  * Reset ladder game
  * @param {string} roomId 
  * @returns {Promise<Object>}
@@ -39,6 +49,7 @@ export const resetLadder = async (roomId) => {
 
 export default {
     triggerLadder,
+    startLadder,
     completeLadder,
     resetLadder
 };

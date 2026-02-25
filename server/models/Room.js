@@ -51,7 +51,7 @@ const roomSchema = new mongoose.Schema({
             y: Number
         }],
         triggeredBy: String,
-        status: { type: String, default: 'playing' }, // playing | completed
+        status: { type: String, default: 'ready' }, // ready | running | completed (legacy: playing)
         createdAt: Date
     }
 });
