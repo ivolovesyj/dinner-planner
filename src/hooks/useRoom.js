@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { getRoom, createRoom as createRoomApi } from '../api/roomApi';
-import { addRestaurant, deleteRestaurant, voteRestaurant } from '../api/restaurantApi';
+import { addRestaurant, deleteRestaurant, voteRestaurant, voteAd } from '../api/restaurantApi';
 import { triggerLadder, startLadder, completeLadder, resetLadder } from '../api/ladderApi';
 import { usePolling } from './usePolling';
 import { POLLING_INTERVAL, STORAGE_KEYS } from '../constants';
@@ -93,6 +93,11 @@ export const useRoom = (initialRoomId = null) => {
         if (!roomId) return;
 
         try {
+            if (String(restaurantId).startsWith('ad_')) {
+                await voteAd(restaurantId, type, getUserId());
+                await fetchRoom(true);
+                return roomData;
+            }
             const data = await voteRestaurant(roomId, restaurantId, type, getUserId(), getNickname(), reason);
             setRoomData(data);
             return data;
@@ -100,7 +105,7 @@ export const useRoom = (initialRoomId = null) => {
             setError(err.message);
             throw err;
         }
-    }, [roomId]);
+    }, [roomId, fetchRoom, roomData]);
 
     // Ladder handlers
     const handleLadderTrigger = useCallback(async (candidateIds) => {

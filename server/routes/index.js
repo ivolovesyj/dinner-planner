@@ -34,6 +34,7 @@ router.use('/api/admin', adminRoutes);
 
 // Ad click tracking
 router.post('/api/ads/:adId/click', adminController.trackAdClick);
+router.post('/api/ads/:adId/vote', adminController.trackAdVote);
 
 // Feedback submission
 router.post('/api/feedback', adminController.submitFeedback);

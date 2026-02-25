@@ -55,6 +55,21 @@ export const voteRestaurant = async (roomId, restaurantId, type, userId, nicknam
 };
 
 /**
+ * Vote for sponsored ad card
+ * @param {string} adId - ad_xxx
+ * @param {string} type - 'up' or 'down'
+ * @param {string} userId
+ * @returns {Promise<Object>}
+ */
+export const voteAd = async (adId, type, userId) => {
+    const response = await client.post(`/api/ads/${adId}/vote`, {
+        type,
+        userId
+    });
+    return response.data;
+};
+
+/**
  * Parse URL (legacy endpoint)
  * @param {string} url 
  * @returns {Promise<Object>}
@@ -68,5 +83,6 @@ export default {
     addRestaurant,
     deleteRestaurant,
     voteRestaurant,
+    voteAd,
     parseUrl
 };

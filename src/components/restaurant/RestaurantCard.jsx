@@ -84,6 +84,16 @@ const RestaurantCard = ({ data, rank, userId, onVote, onDelete }) => {
         onVote(data.id, 'up');
     };
 
+    const handleAdClickTrack = () => {
+        if (!data.isSponsored) return;
+        try {
+            const API_BASE = 'https://gooddinner.fly.dev/api';
+            axios.post(`${API_BASE}/ads/${data.id}/click`);
+        } catch (err) {
+            // ignore tracking errors
+        }
+    };
+
     // Determine user's vote status
     const userVote = (userId && data.userVotes) ? data.userVotes[userId] : null;
 
@@ -122,55 +132,6 @@ const RestaurantCard = ({ data, rank, userId, onVote, onDelete }) => {
         if (rank === 3) return 'rank-bronze';
         return 'rank-default';
     };
-
-    // --- Sponsored Card Render ---
-    if (data.isSponsored) {
-        const handleAdClick = (e) => {
-            // Track Click
-            try {
-                // Determine API BASE using the same logic as App.jsx or relative path
-                // For safety/simplicity, using full path if needed, or just relative /api
-                // We'll use relative /api assuming proxy/CORS setup or hardcode for now
-                const API_BASE = 'https://gooddinner.fly.dev/api';
-                axios.post(`${API_BASE}/ads/${data.id}/click`);
-            } catch (err) {
-                // Ignore tracking errors
-            }
-        };
-
-        return (
-            <div className="card sponsored-card">
-                <a
-                    href={data.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="card-link-wrapper"
-                    onClick={handleAdClick}
-                >
-                    <div className="card-image-container">
-                        <div className="sponsored-badge">추천 (광고)</div>
-                        <img src={data.image} alt={data.name} className="card-image" />
-                    </div>
-                    <div className="card-info-clickable">
-                        <div className="card-header">
-                            <h3 className="card-title">{data.name}</h3>
-                            <div className="card-meta-row">
-                                <span className="card-sponsor-name">Sponsored by {data.sponsorName}</span>
-                            </div>
-                        </div>
-                        <div className="card-content">
-                            <p className="sponsored-desc">{data.description}</p>
-                            {data.menu && data.menu !== 'Sponsored' && (
-                                <p className="sponsored-desc" style={{ marginTop: '6px', color: '#4e5968' }}>
-                                    {data.menu}
-                                </p>
-                            )}
-                        </div>
-                    </div>
-                </a>
-            </div>
-        );
-    }
 
     return (
         <div id={data.id} className={`card ${isExpanded ? 'expanded' : 'folded'}`}>
@@ -311,7 +272,7 @@ const RestaurantCard = ({ data, rank, userId, onVote, onDelete }) => {
                     )}
                 </div>
 
-                <a href={data.url} target="_blank" rel="noopener noreferrer" className="card-link">
+                <a href={data.url} target="_blank" rel="noopener noreferrer" className="card-link" onClick={handleAdClickTrack}>
                     <div className="card-info-clickable">
                         <div className="card-header">
                             <h3 className="card-title">{data.name}</h3>

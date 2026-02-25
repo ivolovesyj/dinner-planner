@@ -602,5 +602,49 @@ export default {
     getCampaigns, createCampaign, updateCampaign, submitCampaign, reviewCampaign, updateCampaignStatus, parseCampaignLink,
     chargePoints,
     getFeedbacks, getRooms,
-    updateMemo, deleteRoom, trackAdClick, submitFeedback
+    updateMemo, deleteRoom, trackAdClick, trackAdVote, submitFeedback
+};
+
+/**
+ * POST /api/ads/:adId/vote - Track ad like/dislike vote
+ */
+export const trackAdVote = async (req, res) => {
+    const { adId } = req.params;
+    const { userId, type } = req.body;
+
+    if (!userId) return res.status(400).json({ error: 'userId required' });
+    if (!['up', 'down'].includes(type)) return res.status(400).json({ error: 'type must be up or down' });
+
+    try {
+        const realId = adId.replace('ad_', '');
+        const campaign = await AdCampaign.findById(realId);
+        if (!campaign) return res.status(404).json({ error: 'Campaign not found' });
+
+        if (!campaign.userVotes) campaign.userVotes = new Map();
+        const prevVote = campaign.userVotes.get(userId);
+
+        const dec = (voteType) => {
+            if (voteType === 'up') campaign.likes = Math.max((campaign.likes || 0) - 1, 0);
+            if (voteType === 'down') campaign.dislikes = Math.max((campaign.dislikes || 0) - 1, 0);
+        };
+        const inc = (voteType) => {
+            if (voteType === 'up') campaign.likes = (campaign.likes || 0) + 1;
+            if (voteType === 'down') campaign.dislikes = (campaign.dislikes || 0) + 1;
+        };
+
+        if (prevVote === type) {
+            dec(prevVote);
+            campaign.userVotes.delete(userId);
+        } else {
+            if (prevVote) dec(prevVote);
+            inc(type);
+            campaign.userVotes.set(userId, type);
+        }
+
+        await campaign.save();
+        res.json({ status: 'ok', likes: campaign.likes || 0, dislikes: campaign.dislikes || 0 });
+    } catch (error) {
+        console.error('Ad vote failed:', error);
+        res.status(500).json({ error: 'Ad vote failed' });
+    }
 };

@@ -72,7 +72,10 @@ export const readRoom = async (roomId) => {
                     image: ad.creative?.imageUrl || ad.imageUrl,
                     url: ad.creative?.linkUrl || ad.linkUrl,
                     sponsorName: ad.sponsorName,
-                    likes: 0, dislikes: 0, tags: ['Sponsored'],
+                    likes: ad.likes || 0,
+                    dislikes: ad.dislikes || 0,
+                    userVotes: ad.userVotes ? Object.fromEntries(ad.userVotes) : {},
+                    tags: ['Sponsored'],
                     category: 'Advertisement',
                     menu: ad.creative?.menuPreview || 'Sponsored'
                 };

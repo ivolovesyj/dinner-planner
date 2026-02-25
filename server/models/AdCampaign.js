@@ -64,6 +64,12 @@ const AdCampaignSchema = new mongoose.Schema({
     priority: { type: Number, default: 0 },       // Higher shows first
     impressions: { type: Number, default: 0 },
     clicks: { type: Number, default: 0 },
+    likes: { type: Number, default: 0 },
+    dislikes: { type: Number, default: 0 },
+    userVotes: {
+        type: Map,
+        of: String // 'up' or 'down'
+    },
 
     createdAt: { type: Date, default: Date.now }
 });
