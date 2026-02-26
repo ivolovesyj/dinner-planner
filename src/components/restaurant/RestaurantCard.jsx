@@ -47,7 +47,7 @@ const RestaurantCard = ({ data, rank, userId, onVote, onDelete }) => {
         }
     };
 
-    const isOwner = userId && data.ownerId && userId === data.ownerId;
+    const isOwner = !data.isPreview && userId && data.ownerId && userId === data.ownerId;
     const images = (data.images && data.images.length > 0) ? data.images : [data.image || ''];
 
     const nextImage = (e) => {

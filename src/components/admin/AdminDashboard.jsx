@@ -16,19 +16,56 @@ import {
 } from '../../api/adminApi';
 import RestaurantCard from '../restaurant/RestaurantCard';
 
+const STATION_OPTIONS = [
+    '강남역', '역삼역', '선릉역', '삼성역', '잠실역', '신천역', '석촌역', '송파역',
+    '홍대입구역', '합정역', '상수역', '신촌역', '이대역', '연남동', '망원역',
+    '을지로입구역', '을지로3가역', '종각역', '광화문역', '시청역', '서울역',
+    '성수역', '뚝섬역', '건대입구역', '왕십리역', '한양대역',
+    '신림역', '서울대입구역', '봉천역', '사당역', '교대역',
+    '여의도역', '샛강역', '당산역', '영등포구청역',
+    '용산역', '이태원역', '한남역', '압구정로데오역', '압구정역',
+    '마포역', '공덕역', '충무로역', '혜화역', '종로3가역'
+];
+
 const emptyForm = {
     id: null,
     sourceUrl: '',
     parsedSource: null,
-    targetStations: '',
+    targetStations: [],
     title: '',
     description: '',
-    imageUrl: '',
+    imageUrls: ['', '', '', '', ''],
     menuPreview: '',
+    tagsText: '',
     linkUrl: '',
     budgetPoints: 10000,
     impressionCost: 4,
     clickCost: 250
+};
+
+const makeEmptyForm = () => ({
+    ...emptyForm,
+    targetStations: [...emptyForm.targetStations],
+    imageUrls: [...emptyForm.imageUrls]
+});
+
+const normalizeFiveImages = (imagesLike) => {
+    const list = Array.isArray(imagesLike) ? [...imagesLike] : [];
+    const trimmed = list.slice(0, 5);
+    while (trimmed.length < 5) trimmed.push('');
+    return trimmed;
+};
+
+const mergeFirstFiveImages = (existingImages, parsedImages) => {
+    const merged = [
+        ...(Array.isArray(existingImages) ? existingImages : []),
+        ...(Array.isArray(parsedImages) ? parsedImages : [])
+    ]
+        .map((v) => (v || '').trim())
+        .filter(Boolean)
+        .filter((v, idx, arr) => arr.indexOf(v) === idx)
+        .slice(0, 5);
+    return normalizeFiveImages(merged);
 };
 
 const AdminDashboard = () => {
@@ -38,7 +75,7 @@ const AdminDashboard = () => {
     const [campaigns, setCampaigns] = useState([]);
     const [feedbacks, setFeedbacks] = useState([]);
     const [rooms, setRooms] = useState([]);
-    const [campaignForm, setCampaignForm] = useState(emptyForm);
+    const [campaignForm, setCampaignForm] = useState(makeEmptyForm);
     const [campaignFormLoading, setCampaignFormLoading] = useState(false);
     const [linkParsing, setLinkParsing] = useState(false);
     const [chargeAmount, setChargeAmount] = useState(10000);
@@ -99,18 +136,25 @@ const AdminDashboard = () => {
         window.location.href = '/admin/login';
     };
 
-    const resetCampaignForm = () => setCampaignForm(emptyForm);
+    const resetCampaignForm = () => setCampaignForm(makeEmptyForm());
 
     const onSelectCampaign = (campaign) => {
         setCampaignForm({
             id: campaign._id,
             sourceUrl: campaign.source?.naverMapUrl || '',
             parsedSource: campaign.source?.parsedRestaurant || null,
-            targetStations: (campaign.targetStations || []).join(', '),
+            targetStations: campaign.targetStations || [],
             title: campaign.creative?.title || campaign.title || '',
             description: campaign.creative?.description || campaign.description || '',
-            imageUrl: campaign.creative?.imageUrl || campaign.imageUrl || '',
+            imageUrls: normalizeFiveImages(
+                campaign.creative?.imageUrls?.length
+                    ? campaign.creative.imageUrls
+                    : (campaign.source?.parsedRestaurant?.images?.length
+                        ? campaign.source.parsedRestaurant.images
+                        : [campaign.creative?.imageUrl || campaign.imageUrl || ''])
+            ),
             menuPreview: campaign.creative?.menuPreview || '',
+            tagsText: (campaign.creative?.tags || campaign.source?.parsedRestaurant?.tags || []).join(', '),
             linkUrl: campaign.creative?.linkUrl || campaign.linkUrl || '',
             budgetPoints: campaign.budget?.totalPointsLimit || 10000,
             impressionCost: campaign.pricing?.impressionCost || 4,
@@ -131,6 +175,7 @@ const AdminDashboard = () => {
                     category: parsed.category || '',
                     image: parsed.image || parsed.images?.[0] || '',
                     images: parsed.images || [],
+                    tags: parsed.tags || [],
                     location: parsed.location || '',
                     station: parsed.station || '',
                     menu: parsed.menu || '',
@@ -138,10 +183,11 @@ const AdminDashboard = () => {
                 },
                 title: prev.title || parsed.name || '',
                 description: prev.description || parsed.description || '',
-                imageUrl: prev.imageUrl || parsed.image || parsed.images?.[0] || '',
+                imageUrls: mergeFirstFiveImages(prev.imageUrls, parsed.images || [parsed.image].filter(Boolean)),
                 menuPreview: prev.menuPreview || parsed.menu || '',
+                tagsText: prev.tagsText || (Array.isArray(parsed.tags) ? parsed.tags.join(', ') : ''),
                 linkUrl: prev.linkUrl || parsed.url || prev.sourceUrl,
-                targetStations: prev.targetStations || (parsed.station ? parsed.station.split(' ')[0] : '')
+                targetStations: (prev.targetStations && prev.targetStations.length > 0) ? prev.targetStations : (parsed.station ? [parsed.station.split(' ')[0]] : [])
             }));
         } catch (err) {
             alert(err.response?.data?.error || '링크 파싱 실패');
@@ -151,9 +197,11 @@ const AdminDashboard = () => {
     };
 
     const buildCampaignPayload = () => {
-        const targetStations = campaignForm.targetStations
+        const targetStations = (campaignForm.targetStations || []).map(s => s.trim()).filter(Boolean);
+        const imageUrls = normalizeFiveImages(campaignForm.imageUrls).filter(Boolean);
+        const tags = campaignForm.tagsText
             .split(',')
-            .map(s => s.trim())
+            .map((t) => t.trim().replace(/^#/, ''))
             .filter(Boolean);
 
         return {
@@ -165,13 +213,15 @@ const AdminDashboard = () => {
             creative: {
                 title: campaignForm.title,
                 description: campaignForm.description,
-                imageUrl: campaignForm.imageUrl,
+                imageUrl: imageUrls[0] || '',
+                imageUrls,
                 menuPreview: campaignForm.menuPreview,
+                tags,
                 linkUrl: campaignForm.linkUrl || campaignForm.sourceUrl
             },
             title: campaignForm.title,
             description: campaignForm.description,
-            imageUrl: campaignForm.imageUrl,
+            imageUrl: imageUrls[0] || '',
             linkUrl: campaignForm.linkUrl || campaignForm.sourceUrl,
             sponsorName: profile?.companyName || localStorage.getItem('adminName') || '',
             budget: { totalPointsLimit: Number(campaignForm.budgetPoints) || 10000 },
@@ -286,15 +336,16 @@ const AdminDashboard = () => {
     const livePreviewCard = useMemo(() => {
         const parsed = campaignForm.parsedSource || {};
         const rawImages = [
-            campaignForm.imageUrl,
+            ...(campaignForm.imageUrls || []),
             ...(Array.isArray(parsed.images) ? parsed.images : []),
             parsed.image
         ].filter(Boolean);
         const images = rawImages.filter((img, idx) => rawImages.indexOf(img) === idx);
-        const targetStation = campaignForm.targetStations
+        const targetStation = (campaignForm.targetStations || [])[0] || '';
+        const previewTags = campaignForm.tagsText
             .split(',')
-            .map((s) => s.trim())
-            .filter(Boolean)[0] || '';
+            .map((t) => t.trim().replace(/^#/, ''))
+            .filter(Boolean);
 
         return {
             id: 'ad_preview',
@@ -309,7 +360,7 @@ const AdminDashboard = () => {
             station: parsed.station || targetStation,
             location: parsed.location || '',
             menu: campaignForm.menuPreview || parsed.menu || '메뉴/혜택 문구가 여기에 표시됩니다.',
-            tags: parsed.category ? [parsed.category] : [],
+            tags: previewTags.length ? previewTags : (parsed.tags?.length ? parsed.tags : (parsed.category ? [parsed.category] : [])),
             likes: 0,
             dislikes: 0,
             userVotes: {},
@@ -394,34 +445,76 @@ const AdminDashboard = () => {
                                 </div>
                             )}
                             <Field label="타겟 역 (쉼표 구분)">
-                                <input style={inputStyle} value={campaignForm.targetStations} onChange={(e) => setCampaignForm(prev => ({ ...prev, targetStations: e.target.value }))} placeholder="강남역, 역삼역" />
+                                <select
+                                    multiple
+                                    size={6}
+                                    style={{ ...inputStyle, minHeight: 140 }}
+                                    value={campaignForm.targetStations}
+                                    onChange={(e) => {
+                                        const selected = Array.from(e.target.selectedOptions).map((opt) => opt.value);
+                                        setCampaignForm(prev => ({ ...prev, targetStations: selected }));
+                                    }}
+                                >
+                                    {Array.from(new Set([...STATION_OPTIONS, ...(campaignForm.parsedSource?.station ? [campaignForm.parsedSource.station.split(' ')[0]] : []), ...(campaignForm.targetStations || [])])).map((station) => (
+                                        <option key={station} value={station}>{station}</option>
+                                    ))}
+                                </select>
+                                <p style={mutedText}>Ctrl/Cmd 또는 Shift로 여러 역을 선택할 수 있습니다.</p>
                             </Field>
                             <Field label="광고 제목">
                                 <input style={inputStyle} value={campaignForm.title} onChange={(e) => setCampaignForm(prev => ({ ...prev, title: e.target.value }))} />
                             </Field>
-                            <Field label="광고 설명">
-                                <textarea style={{ ...inputStyle, minHeight: 70 }} value={campaignForm.description} onChange={(e) => setCampaignForm(prev => ({ ...prev, description: e.target.value }))} />
+                            <Field label="광고 설명 (카드 소개 문구)">
+                                <textarea style={{ ...inputStyle, minHeight: 70 }} value={campaignForm.description} onChange={(e) => setCampaignForm(prev => ({ ...prev, description: e.target.value }))} placeholder="예: 점심 특선 / 예약 혜택 / 매장 분위기 소개" />
                             </Field>
-                            <Field label="광고 이미지 URL">
-                                <input style={inputStyle} value={campaignForm.imageUrl} onChange={(e) => setCampaignForm(prev => ({ ...prev, imageUrl: e.target.value }))} />
+                            <Field label="광고 이미지 URL (최대 5개)">
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 6 }}>
+                                    {normalizeFiveImages(campaignForm.imageUrls).map((img, idx) => (
+                                        <input
+                                            key={idx}
+                                            style={inputStyle}
+                                            value={img}
+                                            placeholder={`이미지 URL ${idx + 1}`}
+                                            onChange={(e) => setCampaignForm(prev => {
+                                                const next = normalizeFiveImages(prev.imageUrls);
+                                                next[idx] = e.target.value;
+                                                return { ...prev, imageUrls: next };
+                                            })}
+                                        />
+                                    ))}
+                                </div>
                             </Field>
                             <Field label="메뉴/혜택 문구">
                                 <textarea style={{ ...inputStyle, minHeight: 70 }} value={campaignForm.menuPreview} onChange={(e) => setCampaignForm(prev => ({ ...prev, menuPreview: e.target.value }))} />
+                            </Field>
+                            <Field label="태그 (쉼표 구분)">
+                                <input style={inputStyle} value={campaignForm.tagsText} onChange={(e) => setCampaignForm(prev => ({ ...prev, tagsText: e.target.value }))} placeholder="조개요리, 해산물, 술집" />
                             </Field>
                             <Field label="랜딩 링크">
                                 <input style={inputStyle} value={campaignForm.linkUrl} onChange={(e) => setCampaignForm(prev => ({ ...prev, linkUrl: e.target.value }))} />
                             </Field>
 
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: isAdmin ? '1fr 1fr 1fr' : '1fr', gap: 8 }}>
                                 <Field label="예산 포인트">
                                     <input type="number" style={inputStyle} value={campaignForm.budgetPoints} onChange={(e) => setCampaignForm(prev => ({ ...prev, budgetPoints: e.target.value }))} />
                                 </Field>
-                                <Field label="노출당 포인트">
-                                    <input type="number" style={inputStyle} value={campaignForm.impressionCost} onChange={(e) => setCampaignForm(prev => ({ ...prev, impressionCost: e.target.value }))} />
-                                </Field>
-                                <Field label="클릭당 포인트">
-                                    <input type="number" style={inputStyle} value={campaignForm.clickCost} onChange={(e) => setCampaignForm(prev => ({ ...prev, clickCost: e.target.value }))} />
-                                </Field>
+                                {isAdmin ? (
+                                    <>
+                                        <Field label="노출당 포인트">
+                                            <input type="number" style={inputStyle} value={campaignForm.impressionCost} onChange={(e) => setCampaignForm(prev => ({ ...prev, impressionCost: e.target.value }))} />
+                                        </Field>
+                                        <Field label="클릭당 포인트">
+                                            <input type="number" style={inputStyle} value={campaignForm.clickCost} onChange={(e) => setCampaignForm(prev => ({ ...prev, clickCost: e.target.value }))} />
+                                        </Field>
+                                    </>
+                                ) : (
+                                    <div style={{ marginTop: 2 }}>
+                                        <div style={{ ...miniTagStyle, background: '#eef6ff', color: '#0369a1', marginBottom: 6 }}>
+                                            노출당 {Number(campaignForm.impressionCost || 4)}P / 클릭당 {Number(campaignForm.clickCost || 250)}P (운영 기준)
+                                        </div>
+                                        <p style={mutedText}>노출/클릭 단가는 운영 정책으로 관리되며 광고주가 직접 수정하지 않습니다.</p>
+                                    </div>
+                                )}
                             </div>
 
                             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>

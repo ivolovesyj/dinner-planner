@@ -22,6 +22,7 @@ const AdCampaignSchema = new mongoose.Schema({
             category: { type: String, default: '' },
             image: { type: String, default: '' },
             images: { type: [String], default: [] },
+            tags: { type: [String], default: [] },
             location: { type: String, default: '' },
             station: { type: String, default: '' },
             menu: { type: String, default: '' },
@@ -32,7 +33,9 @@ const AdCampaignSchema = new mongoose.Schema({
         title: { type: String, default: '' },
         description: { type: String, default: '' },
         imageUrl: { type: String, default: '' },
+        imageUrls: { type: [String], default: [] },
         menuPreview: { type: String, default: '' },
+        tags: { type: [String], default: [] },
         linkUrl: { type: String, default: '' }
     },
     pricing: {

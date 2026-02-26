@@ -76,8 +76,10 @@ export const readRoom = async (roomId, options = {}) => {
                 const injectionIndex = Math.min(room.restaurants.length, 1);
                 const source = ad.source?.parsedRestaurant || {};
                 const sourceImages = Array.isArray(source.images) ? source.images.filter(Boolean) : [];
+                const creativeImages = Array.isArray(ad.creative?.imageUrls) ? ad.creative.imageUrls.filter(Boolean) : [];
                 const creativeImage = ad.creative?.imageUrl || ad.imageUrl || '';
                 const mergedImages = [
+                    ...creativeImages,
                     ...(creativeImage ? [creativeImage] : []),
                     ...sourceImages
                 ].filter(Boolean).filter((img, idx, arr) => arr.indexOf(img) === idx);
@@ -94,7 +96,9 @@ export const readRoom = async (roomId, options = {}) => {
                     likes: ad.likes || 0,
                     dislikes: ad.dislikes || 0,
                     userVotes: ad.userVotes ? Object.fromEntries(ad.userVotes) : {},
-                    tags: Array.isArray(source.tags) && source.tags.length ? source.tags : (source.category ? [source.category] : []),
+                    tags: Array.isArray(ad.creative?.tags) && ad.creative.tags.length
+                        ? ad.creative.tags
+                        : (Array.isArray(source.tags) && source.tags.length ? source.tags : (source.category ? [source.category] : [])),
                     category: source.category || '광고',
                     menu: ad.creative?.menuPreview || source.menu || '정보 없음',
                     location: source.location || '',
