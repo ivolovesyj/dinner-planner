@@ -18,7 +18,7 @@ const AdminLogin = () => {
         try {
             if (mode === 'signup') {
                 if (password !== passwordConfirm) {
-                    setError('로그인 비밀번호와 로그인 비밀번호 확인이 일치하지 않습니다.');
+                    setError('비밀번호가 서로 일치하지 않습니다.');
                     setLoading(false);
                     return;
                 }
