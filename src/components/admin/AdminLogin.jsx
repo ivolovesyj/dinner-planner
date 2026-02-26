@@ -74,7 +74,7 @@ const AdminLogin = () => {
 
                 <input
                     type="text"
-                    placeholder={mode === 'signup' ? '로그인 아이디' : '사용자명'}
+                    placeholder={mode === 'signup' ? '로그인 아이디' : '아이디'}
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     style={{
