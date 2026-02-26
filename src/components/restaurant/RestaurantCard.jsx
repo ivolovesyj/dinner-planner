@@ -85,6 +85,7 @@ const RestaurantCard = ({ data, rank, userId, onVote, onDelete }) => {
     };
 
     const handleAdClickTrack = () => {
+        if (data.isPreview) return;
         if (!data.isSponsored) return;
         try {
             const API_BASE = 'https://gooddinner.fly.dev/api';
@@ -92,6 +93,14 @@ const RestaurantCard = ({ data, rank, userId, onVote, onDelete }) => {
         } catch (err) {
             // ignore tracking errors
         }
+    };
+
+    const handleCardLinkClick = (e) => {
+        if (data.isPreview) {
+            e.preventDefault();
+            return;
+        }
+        handleAdClickTrack();
     };
 
     // Determine user's vote status
@@ -282,7 +291,7 @@ const RestaurantCard = ({ data, rank, userId, onVote, onDelete }) => {
                     )}
                 </div>
 
-                <a href={data.url} target="_blank" rel="noopener noreferrer" className="card-link" onClick={handleAdClickTrack}>
+                <a href={data.isPreview ? '#' : data.url} target="_blank" rel="noopener noreferrer" className="card-link" onClick={handleCardLinkClick}>
                     <div className="card-info-clickable">
                         <div className="card-header">
                             <h3 className="card-title">{data.name}</h3>

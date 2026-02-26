@@ -14,6 +14,7 @@ import {
     updateCampaignStatus,
     updateMemo
 } from '../../api/adminApi';
+import RestaurantCard from '../restaurant/RestaurantCard';
 
 const emptyForm = {
     id: null,
@@ -282,6 +283,40 @@ const AdminDashboard = () => {
         };
     }, [rooms]);
 
+    const livePreviewCard = useMemo(() => {
+        const parsed = campaignForm.parsedSource || {};
+        const rawImages = [
+            campaignForm.imageUrl,
+            ...(Array.isArray(parsed.images) ? parsed.images : []),
+            parsed.image
+        ].filter(Boolean);
+        const images = rawImages.filter((img, idx) => rawImages.indexOf(img) === idx);
+        const targetStation = campaignForm.targetStations
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean)[0] || '';
+
+        return {
+            id: 'ad_preview',
+            isSponsored: true,
+            isPreview: true,
+            name: campaignForm.title || parsed.name || '광고 제목 미리보기',
+            description: campaignForm.description || parsed.description || '',
+            image: images[0] || '',
+            images,
+            url: campaignForm.linkUrl || campaignForm.sourceUrl || '#',
+            category: parsed.category || '광고',
+            station: parsed.station || targetStation,
+            location: parsed.location || '',
+            menu: campaignForm.menuPreview || parsed.menu || '메뉴/혜택 문구가 여기에 표시됩니다.',
+            tags: parsed.category ? [parsed.category] : [],
+            likes: 0,
+            dislikes: 0,
+            userVotes: {},
+            ownerId: 'preview-user'
+        };
+    }, [campaignForm]);
+
     if (loading) return <div style={{ padding: 24 }}>Loading dashboard...</div>;
 
     return (
@@ -414,22 +449,40 @@ const AdminDashboard = () => {
                         </div>
                         )}
 
-                        <div style={panelStyle}>
-                            <h3 style={{ marginTop: 0 }}>{isAdmin ? '전체 광고 캠페인 관제' : '내 광고 캠페인'}</h3>
-                            {isAdmin && (
-                                <p style={mutedText}>
-                                    모든 광고주의 캠페인을 조회하고 심사/승인/반려/집행 상태를 관리합니다. 매출 현황은 소진 포인트 기준으로 집계됩니다.
-                                </p>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                            {!isAdmin && (
+                                <div style={panelStyle}>
+                                    <h3 style={{ marginTop: 0, marginBottom: 6 }}>실시간 노출 미리보기</h3>
+                                    <p style={mutedText}>작성/수정한 내용이 실제 이용자 카드 형태로 바로 반영됩니다.</p>
+                                    <div style={{ marginTop: 10 }}>
+                                        <RestaurantCard
+                                            data={livePreviewCard}
+                                            rank={1}
+                                            userId="preview-user"
+                                            onVote={() => {}}
+                                            onDelete={() => {}}
+                                        />
+                                    </div>
+                                </div>
                             )}
-                            <CampaignTable
-                                campaigns={campaigns}
-                                isAdmin={isAdmin}
-                                onSelect={onSelectCampaign}
-                                onToggleStatus={handleToggleCampaignStatus}
-                                onReview={handleReview}
-                                reviewReasonMap={reviewReasonMap}
-                                setReviewReasonMap={setReviewReasonMap}
-                            />
+
+                            <div style={panelStyle}>
+                                <h3 style={{ marginTop: 0 }}>{isAdmin ? '전체 광고 캠페인 관제' : '내 광고 캠페인'}</h3>
+                                {isAdmin && (
+                                    <p style={mutedText}>
+                                        모든 광고주의 캠페인을 조회하고 심사/승인/반려/집행 상태를 관리합니다. 매출 현황은 소진 포인트 기준으로 집계됩니다.
+                                    </p>
+                                )}
+                                <CampaignTable
+                                    campaigns={campaigns}
+                                    isAdmin={isAdmin}
+                                    onSelect={onSelectCampaign}
+                                    onToggleStatus={handleToggleCampaignStatus}
+                                    onReview={handleReview}
+                                    reviewReasonMap={reviewReasonMap}
+                                    setReviewReasonMap={setReviewReasonMap}
+                                />
+                            </div>
                         </div>
                     </div>
 
