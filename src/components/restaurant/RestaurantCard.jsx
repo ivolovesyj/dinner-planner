@@ -317,6 +317,12 @@ const RestaurantCard = ({ data, rank, userId, onVote, onDelete }) => {
                 </a>
 
                 <div className="card-content">
+                    {data.description && (
+                        <div className="card-description">
+                            {data.description}
+                        </div>
+                    )}
+
                     <div className="card-tags">
                         {(data.tags || []).map((tag, idx) => (
                             <span key={idx} className="tag">#{tag}</span>

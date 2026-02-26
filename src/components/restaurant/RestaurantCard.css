@@ -283,6 +283,14 @@
     padding: 16px;
 }
 
+.card-description {
+    font-size: 13px;
+    line-height: 1.45;
+    color: #4b5563;
+    margin-bottom: 10px;
+    white-space: pre-wrap;
+}
+
 .card-info-clickable {
     padding: 16px 16px 12px 16px;
     /* Padding for the top section */

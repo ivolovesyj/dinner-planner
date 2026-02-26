@@ -26,6 +26,7 @@ const STATION_OPTIONS = [
     '용산역', '이태원역', '한남역', '압구정로데오역', '압구정역',
     '마포역', '공덕역', '충무로역', '혜화역', '종로3가역'
 ];
+const SORTED_STATION_OPTIONS = [...new Set(STATION_OPTIONS)].sort((a, b) => a.localeCompare(b, 'ko'));
 
 const emptyForm = {
     id: null,
@@ -80,6 +81,7 @@ const AdminDashboard = () => {
     const [linkParsing, setLinkParsing] = useState(false);
     const [chargeAmount, setChargeAmount] = useState(10000);
     const [reviewReasonMap, setReviewReasonMap] = useState({});
+    const [stationSearch, setStationSearch] = useState('');
 
     const role = profile?.role || localStorage.getItem('adminRole') || 'advertiser';
     const isAdmin = role === 'admin';
@@ -444,27 +446,19 @@ const AdminDashboard = () => {
                                     </div>
                                 </div>
                             )}
-                            <Field label="타겟 역 (쉼표 구분)">
-                                <select
-                                    multiple
-                                    size={6}
-                                    style={{ ...inputStyle, minHeight: 140 }}
-                                    value={campaignForm.targetStations}
-                                    onChange={(e) => {
-                                        const selected = Array.from(e.target.selectedOptions).map((opt) => opt.value);
-                                        setCampaignForm(prev => ({ ...prev, targetStations: selected }));
-                                    }}
-                                >
-                                    {Array.from(new Set([...STATION_OPTIONS, ...(campaignForm.parsedSource?.station ? [campaignForm.parsedSource.station.split(' ')[0]] : []), ...(campaignForm.targetStations || [])])).map((station) => (
-                                        <option key={station} value={station}>{station}</option>
-                                    ))}
-                                </select>
-                                <p style={mutedText}>Ctrl/Cmd 또는 Shift로 여러 역을 선택할 수 있습니다.</p>
+                            <Field label="타겟 역">
+                                <StationMultiSelect
+                                    selected={campaignForm.targetStations}
+                                    onChange={(next) => setCampaignForm(prev => ({ ...prev, targetStations: next }))}
+                                    search={stationSearch}
+                                    onSearchChange={setStationSearch}
+                                    autoStation={campaignForm.parsedSource?.station ? campaignForm.parsedSource.station.split(' ')[0] : ''}
+                                />
                             </Field>
                             <Field label="광고 제목">
                                 <input style={inputStyle} value={campaignForm.title} onChange={(e) => setCampaignForm(prev => ({ ...prev, title: e.target.value }))} />
                             </Field>
-                            <Field label="광고 설명 (카드 소개 문구)">
+                            <Field label="광고 설명 (카드 펼침 상단 소개 문구)">
                                 <textarea style={{ ...inputStyle, minHeight: 70 }} value={campaignForm.description} onChange={(e) => setCampaignForm(prev => ({ ...prev, description: e.target.value }))} placeholder="예: 점심 특선 / 예약 혜택 / 매장 분위기 소개" />
                             </Field>
                             <Field label="광고 이미지 URL (최대 5개)">
@@ -512,7 +506,6 @@ const AdminDashboard = () => {
                                         <div style={{ ...miniTagStyle, background: '#eef6ff', color: '#0369a1', marginBottom: 6 }}>
                                             노출당 {Number(campaignForm.impressionCost || 4)}P / 클릭당 {Number(campaignForm.clickCost || 250)}P (운영 기준)
                                         </div>
-                                        <p style={mutedText}>노출/클릭 단가는 운영 정책으로 관리되며 광고주가 직접 수정하지 않습니다.</p>
                                     </div>
                                 )}
                             </div>
@@ -782,6 +775,94 @@ const CampaignTable = ({ campaigns, isAdmin, onSelect, onToggleStatus, onReview,
         </table>
     </div>
 );
+
+const StationMultiSelect = ({ selected = [], onChange, search, onSearchChange, autoStation }) => {
+    const mergedOptions = useMemo(
+        () => [...new Set([...SORTED_STATION_OPTIONS, ...(autoStation ? [autoStation] : []), ...selected])].sort((a, b) => a.localeCompare(b, 'ko')),
+        [autoStation, selected]
+    );
+
+    const keyword = (search || '').trim();
+    const filtered = keyword
+        ? mergedOptions.filter((station) => station.toLowerCase().includes(keyword.toLowerCase()))
+        : mergedOptions;
+
+    const toggleStation = (station) => {
+        const has = selected.includes(station);
+        onChange(has ? selected.filter((s) => s !== station) : [...selected, station]);
+    };
+
+    return (
+        <div style={{ border: '1px solid var(--ios-border)', borderRadius: 12, padding: 10, background: '#fff' }}>
+            <input
+                style={{ ...inputStyle, marginBottom: 8 }}
+                placeholder="역 검색 (예: 강남, 홍대)"
+                value={search}
+                onChange={(e) => onSearchChange(e.target.value)}
+            />
+
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 8, minHeight: 28 }}>
+                {selected.length > 0 ? selected.map((station) => (
+                    <button
+                        key={station}
+                        type="button"
+                        onClick={() => toggleStation(station)}
+                        style={{
+                            border: '1px solid rgba(0,122,255,0.15)',
+                            background: 'rgba(0,122,255,0.08)',
+                            color: 'var(--ios-blue)',
+                            borderRadius: 999,
+                            padding: '4px 8px',
+                            fontSize: 12,
+                            fontWeight: 700,
+                            cursor: 'pointer'
+                        }}
+                    >
+                        {station} ×
+                    </button>
+                )) : (
+                    <span style={{ ...mutedText, marginTop: 2 }}>선택한 역이 없습니다.</span>
+                )}
+            </div>
+
+            <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+                gap: 6,
+                maxHeight: 220,
+                overflowY: 'auto',
+                paddingRight: 4
+            }}>
+                {filtered.map((station) => {
+                    const active = selected.includes(station);
+                    return (
+                        <button
+                            key={station}
+                            type="button"
+                            onClick={() => toggleStation(station)}
+                            style={{
+                                textAlign: 'left',
+                                border: active ? '1px solid rgba(0,122,255,0.2)' : '1px solid rgba(0,0,0,0.06)',
+                                background: active ? 'rgba(0,122,255,0.08)' : '#fff',
+                                color: active ? 'var(--ios-blue)' : '#1f2937',
+                                borderRadius: 10,
+                                padding: '8px 10px',
+                                fontSize: 12,
+                                fontWeight: active ? 700 : 600,
+                                cursor: 'pointer'
+                            }}
+                        >
+                            {station}
+                        </button>
+                    );
+                })}
+                {filtered.length === 0 && (
+                    <div style={{ ...mutedText, gridColumn: '1 / -1', padding: '6px 2px' }}>검색 결과가 없습니다.</div>
+                )}
+            </div>
+        </div>
+    );
+};
 
 const StatusBadge = ({ status }) => {
     const colorMap = {
