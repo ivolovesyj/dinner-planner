@@ -458,10 +458,7 @@ const AdminDashboard = () => {
                             <Field label="광고 제목">
                                 <input style={inputStyle} value={campaignForm.title} onChange={(e) => setCampaignForm(prev => ({ ...prev, title: e.target.value }))} />
                             </Field>
-                            <Field label="광고 설명 (카드 펼침 상단 소개 문구)">
-                                <textarea style={{ ...inputStyle, minHeight: 70 }} value={campaignForm.description} onChange={(e) => setCampaignForm(prev => ({ ...prev, description: e.target.value }))} placeholder="예: 점심 특선 / 예약 혜택 / 매장 분위기 소개" />
-                            </Field>
-                            <Field label="광고 이미지 URL (최대 5개)">
+                            <Field label="사진 링크 (최대 5개)">
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 6 }}>
                                     {normalizeFiveImages(campaignForm.imageUrls).map((img, idx) => (
                                         <input
@@ -478,11 +475,14 @@ const AdminDashboard = () => {
                                     ))}
                                 </div>
                             </Field>
-                            <Field label="메뉴/혜택 문구">
-                                <textarea style={{ ...inputStyle, minHeight: 70 }} value={campaignForm.menuPreview} onChange={(e) => setCampaignForm(prev => ({ ...prev, menuPreview: e.target.value }))} />
+                            <Field label="고객에게 전하고 싶은 한 마디">
+                                <textarea style={{ ...inputStyle, minHeight: 70 }} value={campaignForm.description} onChange={(e) => setCampaignForm(prev => ({ ...prev, description: e.target.value }))} placeholder="예: 점심 특선 / 예약 혜택 / 매장 분위기 소개" />
                             </Field>
                             <Field label="태그 (쉼표 구분)">
                                 <input style={inputStyle} value={campaignForm.tagsText} onChange={(e) => setCampaignForm(prev => ({ ...prev, tagsText: e.target.value }))} placeholder="조개요리, 해산물, 술집" />
+                            </Field>
+                            <Field label="메뉴/혜택 문구">
+                                <textarea style={{ ...inputStyle, minHeight: 70 }} value={campaignForm.menuPreview} onChange={(e) => setCampaignForm(prev => ({ ...prev, menuPreview: e.target.value }))} />
                             </Field>
                             <Field label="랜딩 링크">
                                 <input style={inputStyle} value={campaignForm.linkUrl} onChange={(e) => setCampaignForm(prev => ({ ...prev, linkUrl: e.target.value }))} />
