@@ -5,6 +5,7 @@ const AdminLogin = () => {
     const [mode, setMode] = useState('login');
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [passwordConfirm, setPasswordConfirm] = useState('');
     const [companyName, setCompanyName] = useState('');
     const [phone, setPhone] = useState('');
     const [error, setError] = useState(null);
@@ -16,6 +17,11 @@ const AdminLogin = () => {
         setLoading(true);
         try {
             if (mode === 'signup') {
+                if (password !== passwordConfirm) {
+                    setError('로그인 비밀번호와 로그인 비밀번호 확인이 일치하지 않습니다.');
+                    setLoading(false);
+                    return;
+                }
                 await signupApi({
                     username,
                     password,
@@ -25,6 +31,7 @@ const AdminLogin = () => {
                 alert('광고주 계정이 생성되었습니다. 로그인해주세요.');
                 setMode('login');
                 setPassword('');
+                setPasswordConfirm('');
                 return;
             }
 
@@ -67,7 +74,7 @@ const AdminLogin = () => {
 
                 <input
                     type="text"
-                    placeholder="사용자명"
+                    placeholder={mode === 'signup' ? '로그인 아이디' : '사용자명'}
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     style={{
@@ -79,7 +86,7 @@ const AdminLogin = () => {
 
                 <input
                     type="password"
-                    placeholder="비밀번호"
+                    placeholder={mode === 'signup' ? '로그인 비밀번호' : '비밀번호'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     style={{
@@ -91,6 +98,17 @@ const AdminLogin = () => {
 
                 {mode === 'signup' && (
                     <>
+                        <input
+                            type="password"
+                            placeholder="로그인 비밀번호 확인"
+                            value={passwordConfirm}
+                            onChange={(e) => setPasswordConfirm(e.target.value)}
+                            style={{
+                                width: '100%', padding: '12px', marginBottom: '12px',
+                                borderRadius: '12px', border: '1px solid var(--ios-border)', boxSizing: 'border-box',
+                                background: '#fff'
+                            }}
+                        />
                         <input
                             type="text"
                             placeholder="회사명(식당명)"
@@ -128,6 +146,7 @@ const AdminLogin = () => {
                     onClick={() => {
                         setMode(prev => prev === 'login' ? 'signup' : 'login');
                         setError(null);
+                        setPasswordConfirm('');
                     }}
                     style={{
                         width: '100%', marginTop: '10px', padding: '10px', borderRadius: '14px',
