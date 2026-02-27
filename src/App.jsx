@@ -1,5 +1,5 @@
 // App.jsx - Refactored with Layered Architecture
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import './App.css';
 import { Loader2, Share, RotateCw } from 'lucide-react';
 
@@ -66,6 +66,7 @@ function App() {
   const [showNicknameModal, setShowNicknameModal] = useState(false);
   const [userId, setUserId] = useState(null);
   const [roomError, setRoomError] = useState(null);
+  const inputRef = useRef(null);
 
   // Map State
   const [isMapExpanded, setIsMapExpanded] = useState(false);
@@ -286,6 +287,13 @@ function App() {
     }
   };
 
+  const handleFocusInput = () => {
+    const inputEl = inputRef.current;
+    if (!inputEl) return;
+    inputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    inputEl.focus();
+  };
+
   const onLadderStart = async () => {
     try {
       await handleLadderStart();
@@ -419,7 +427,8 @@ function App() {
           ) : (
             <>
               <input
-                type="text" className="header-input" placeholder="식당 네이버/카카오 링크 붙여넣기"
+                ref={inputRef}
+                type="text" className="header-input" placeholder="네이버/카카오 식당 링크 붙여넣기 (자동 등록)"
                 value={inputVal} onChange={(e) => setInputVal(e.target.value)}
                 onPaste={handlePaste} onKeyDown={handleKeyDown}
               />
@@ -433,8 +442,24 @@ function App() {
       <main className="app-content">
         {restaurants.length === 0 ? (
           <div className="empty-state">
-            <p>상단에 링크를 붙여넣어 투표을 시작하세요!</p>
-            <div className="share-hint" onClick={handleShare}>친구 초대하기 🔗</div>
+            <div className="empty-cta-card">
+              <div className="empty-cta-eyebrow">처음 1개만 등록하면 바로 시작돼요</div>
+              <h2>링크 하나로 바로 투표 시작</h2>
+              <p>
+                네이버/카카오 식당 링크를 붙여넣으면
+                <br />
+                식당명 · 사진 · 메뉴 · 위치가 자동 등록돼요.
+              </p>
+              <div className="empty-cta-steps">
+                <span>1) 링크 붙여넣기</span>
+                <span>2) 자동 등록</span>
+                <span>3) 투표 시작</span>
+              </div>
+              <div className="empty-cta-actions">
+                <button className="empty-cta-btn primary" onClick={handleFocusInput}>링크 붙여넣기</button>
+                <button className="empty-cta-btn ghost" onClick={handleShare}>친구 초대하기 🔗</button>
+              </div>
+            </div>
           </div>
         ) : (
           <div className="restaurant-list">

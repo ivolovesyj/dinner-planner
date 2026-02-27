@@ -142,11 +142,12 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  height: 60vh;
+  justify-content: flex-start;
+  min-height: 58vh;
   color: var(--ios-gray-text);
   text-align: center;
   font-size: 15px;
+  padding-top: 16px;
 }
 
 /* Removed FAB styles */
@@ -522,6 +523,99 @@
   padding: 8px 16px;
   background: rgba(0, 122, 255, 0.1);
   border-radius: 20px;
+}
+
+.empty-cta-card {
+  width: 100%;
+  background: linear-gradient(165deg, #ffffff 0%, #f3f8ff 100%);
+  border: 1px solid rgba(49, 130, 246, 0.12);
+  box-shadow: 0 10px 24px rgba(49, 130, 246, 0.12);
+  border-radius: 20px;
+  padding: 18px 16px;
+}
+
+.empty-cta-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #1d4ed8;
+  background: rgba(49, 130, 246, 0.12);
+}
+
+.empty-cta-card h2 {
+  margin: 10px 0 8px;
+  font-size: 24px;
+  line-height: 1.25;
+  letter-spacing: -0.03em;
+  color: #111827;
+}
+
+.empty-cta-card p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: #4b5563;
+}
+
+.empty-cta-steps {
+  margin-top: 12px;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.empty-cta-steps span {
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 999px;
+  padding: 5px 9px;
+  font-size: 12px;
+  color: #4e5968;
+  font-weight: 700;
+}
+
+.empty-cta-actions {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.empty-cta-btn {
+  border: none;
+  border-radius: 14px;
+  min-height: 44px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.empty-cta-btn.primary {
+  background: var(--ios-blue);
+  color: #fff;
+  box-shadow: 0 6px 14px rgba(49, 130, 246, 0.24);
+}
+
+.empty-cta-btn.ghost {
+  background: #fff;
+  color: #2563eb;
+  border: 1px solid rgba(49, 130, 246, 0.2);
+}
+
+@media (max-width: 400px) {
+  .empty-cta-card h2 {
+    font-size: 21px;
+  }
+
+  .empty-cta-actions {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Feature Bar (Toolbox) */
